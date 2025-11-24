@@ -29,7 +29,7 @@ Options Menu::getUserChoice() {
 
     case PRESENT_INSTRUCTIONS:
         showInstructions();
-        break;
+		return PRESENT_INSTRUCTIONS;
 
     case INVALID:
     default:
@@ -38,7 +38,7 @@ Options Menu::getUserChoice() {
         printCentered("Invalid choice. Please try again.", 12);
         std::cout << std::endl << std::endl;
         system("pause");
-        break;
+		return INVALID;
     }
 }
 
@@ -57,20 +57,19 @@ void Menu::showInstructions() {
 
     printCentered("Player 1:  W=Up  X=Down  A=Left  D=Right  S=Stay  E=Drop", 11);
     printCentered("Player 2:  I=Up  M=Down  J=Left  L=Right  K=Stay  O=Drop", 12);
-    printCentered("Movement is continuous in the chosen direction until stopped.", 13);
 
-    printCentered("--------------------------------------------------------------", 15);
-    printCentered("Game Elements", 16);
+    printCentered("--------------------------------------------------------------", 14);
+    printCentered("Game Elements", 15);
 
-    printCentered("$ : Player 1    & : Player 2    W : Wall", 18);
-    printCentered("# : Spring      K : Key         1-9 : Door", 19);
+    printCentered("$ : Player 1    & : Player 2    W : Wall", 17);
+    printCentered("# : Spring      K : Key         1-9 : Door", 18);
 
-    printCentered("--------------------------------------------------------------", 21);
-    printCentered("Other Keys", 22);
+    printCentered("--------------------------------------------------------------", 20);
+    printCentered("Other Keys", 21);
 
-    printCentered("ESC : Pause game. While paused: ESC=resume, H=main menu.", 23);
+    printCentered("ESC : Pause game. While paused: ESC=resume, H=main menu.", 22);
 
-    printCentered("Press any key to return to the main menu...", 25);
+    printCentered("Press any key to return to the main menu...", 24);
 
     _getch();
 
@@ -85,7 +84,8 @@ Options Menu::runOnce()
     {
         displayMenu();
         Options choice = getUserChoice();
-
+		if (choice == START_GAME || choice == EXIT_GAME)
+			return choice;
     }
 }
 
