@@ -28,9 +28,8 @@ Options Menu::getUserChoice() {
         return EXIT_GAME;
 
     case PRESENT_INSTRUCTIONS:
-        showInstructions();
-		return PRESENT_INSTRUCTIONS;
-
+        return PRESENT_INSTRUCTIONS;
+       
     case INVALID:
     default:
 
@@ -84,7 +83,16 @@ Options Menu::runOnce()
     {
         displayMenu();
         Options choice = getUserChoice();
-		if (choice == START_GAME || choice == EXIT_GAME)
+        if(choice == PRESENT_INSTRUCTIONS)
+        {
+            showInstructions();
+            if (_kbhit())
+            {
+                continue; // חזור לתפריט הראשי לאחר הצגת ההוראות
+            }
+            
+		}
+		else            // אחרת זה או להתחיל את המשחק או לצאת
 			return choice;
     }
 }
