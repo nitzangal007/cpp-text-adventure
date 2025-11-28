@@ -1,9 +1,10 @@
 #include "Point.h"
+#include "Screens.h"
 
 
 void Point::move() {
-	x = (x + diff_x + MAX_X) % MAX_X;
-	y = (y + diff_y + MAX_Y) % MAX_Y;
+	x = (x + diff_x + Screens::MAX_X) % Screens::MAX_X;
+	y = (y + diff_y + Screens::MAX_Y) % Screens::MAX_Y;
 }
 
 void Point::setDirection(Direction dir) {

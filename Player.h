@@ -8,7 +8,11 @@ public:
         First,
         Second
     };
-
+    enum Carriers {
+        KEY = 'K',
+        BOMB = '@',
+        TORCH = '!'
+    };
 private:
     static constexpr int NUM_KEYS = 5;
     Id   id;          // which player (1 or 2)
@@ -30,10 +34,7 @@ public:
     }
 
     // movement
-    void move() {
-		pos.draw(' '); // erase previous position
-		pos.move();
-    }
+    void move();
 
     void stop()
     {

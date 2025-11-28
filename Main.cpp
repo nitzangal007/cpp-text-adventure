@@ -11,11 +11,11 @@ int main() {
 	hideCursor();
 	Menu menu;
 
-
+	
 	while (TRUE) {
 		cls();
 		Options PlayerChoice = menu.runOnce();
-		if(PlayerChoice == EXIT_GAME) {
+		if (PlayerChoice == EXIT_GAME) {
 			break;
 		}
 		else {
@@ -24,9 +24,8 @@ int main() {
 			game.initGame();
 			game.runGame();
 		}
-		
-		
+
+
 	}
 
 }
-	

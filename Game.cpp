@@ -7,8 +7,7 @@ void Game::initGame() {
 	cls();
 	player1.draw();
 	player2.draw();
-	}
-
+}
 
 void Game::runGame() {
 	const char ESC = 27;
@@ -46,7 +45,7 @@ void Game::runGame() {
 					return;
 				}
 			}
-			
+
 
 		}
 		if (!paused)
@@ -59,7 +58,7 @@ void Game::runGame() {
 			player2.draw();
 			Sleep(100);
 		}
-		
+
 
 	}
 
@@ -67,4 +66,3 @@ void Game::runGame() {
 
 
 }
-

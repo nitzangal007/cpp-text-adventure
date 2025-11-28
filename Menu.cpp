@@ -7,12 +7,12 @@
 
 
 void Menu::displayMenu() {
-	cls();
-	printCentered("=== Main Menu ===", 5);
-	printCentered("1. Start Game", 7);
-	printCentered("8. Instructions", 8);
-	printCentered("9. Exit", 9);
-	std::cout << std::endl;
+    cls();
+    printCentered("=== Main Menu ===", 5);
+    printCentered("1. Start Game", 7);
+    printCentered("8. Instructions", 8);
+    printCentered("9. Exit", 9);
+    std::cout << std::endl;
 }
 
 Options Menu::getUserChoice() {
@@ -29,7 +29,7 @@ Options Menu::getUserChoice() {
 
     case PRESENT_INSTRUCTIONS:
         return PRESENT_INSTRUCTIONS;
-       
+
     case INVALID:
     default:
 
@@ -37,13 +37,13 @@ Options Menu::getUserChoice() {
         printCentered("Invalid choice. Please try again.", 12);
         std::cout << std::endl << std::endl;
         system("pause");
-		return INVALID;
+        return INVALID;
     }
 }
 
 
 void Menu::showInstructions() {
-	cls();
+    cls();
     printCentered("========================= INSTRUCTIONS =========================", 1);
 
     printCentered("Goal: Guide both players through the adventure world.", 3);
@@ -74,27 +74,23 @@ void Menu::showInstructions() {
 
 }
 
-#include <limits> // אם אתה משתמש ב-numeric_limits ב-getUserChoice
-#include "utils.h" // בשביל gotoxy אם תרצה
-
 Options Menu::runOnce()
 {
     while (true)
     {
         displayMenu();
         Options choice = getUserChoice();
-        if(choice == PRESENT_INSTRUCTIONS)
+        if (choice == PRESENT_INSTRUCTIONS)
         {
             showInstructions();
             if (_kbhit())
             {
-                continue; // חזור לתפריט הראשי לאחר הצגת ההוראות
+                continue; 
             }
-            
-		}
-		else            // אחרת זה או להתחיל את המשחק או לצאת
-			return choice;
+
+        }
+		else if (choice == START_GAME || choice == EXIT_GAME)
+            return choice;
     }
 }
-
 

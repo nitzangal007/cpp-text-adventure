@@ -2,12 +2,12 @@
 #include <conio.h>
 #include "Player.h"
 #include "Point.h"
-#include "Screen.h"
+
 
 
 enum class GameResult { BackToMenu, QuitProgram };
-	
-	
+
+
 
 
 class Game
@@ -30,4 +30,3 @@ public:
 
 
 };
-
