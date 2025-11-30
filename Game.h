@@ -2,6 +2,7 @@
 #include <conio.h>
 #include "Player.h"
 #include "Point.h"
+#include "Screens.h"
 
 
 
@@ -12,6 +13,7 @@ enum class GameResult { BackToMenu, QuitProgram };
 
 class Game
 {
+	Screens currentScreen;
 	Player player1;
 	Player player2;
 
@@ -21,6 +23,9 @@ public:
 		player2(Player::Id::Second, Point(10, 10, 0, 0, '&'), "ilmjk", '&')
 	{
 	}
+
+
+
 	void initGame();
 	void runGame();
 

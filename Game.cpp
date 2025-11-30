@@ -5,6 +5,7 @@ void Game::initGame() {
 	int screen = 1;
 
 	cls();
+	currentScreen.init();
 	player1.draw();
 	player2.draw();
 }
@@ -15,6 +16,7 @@ void Game::runGame() {
 	bool running = true;
 	while (running)
 	{
+		
 		if (_kbhit())
 		{
 			char ch = _getch();
@@ -31,6 +33,7 @@ void Game::runGame() {
 				{
 					player1.handleKeyPress(ch);
 					player2.handleKeyPress(ch);
+					
 				}
 
 			}
@@ -39,6 +42,7 @@ void Game::runGame() {
 				{
 					cls();
 					paused = false;
+					
 				}
 				else if (ch == 'H' || ch == 'h')
 				{
@@ -50,6 +54,7 @@ void Game::runGame() {
 		}
 		if (!paused)
 		{
+			currentScreen.drawCurrent();
 			player1.move();
 			player2.move();
 
