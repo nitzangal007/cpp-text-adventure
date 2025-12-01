@@ -1,7 +1,6 @@
 #pragma once
 #include <conio.h>
 #include "Player.h"
-#include "Point.h"
 #include "Screens.h"
 
 
@@ -23,9 +22,10 @@ public:
 		player2(Player::Id::Second, Point(10, 10, 0, 0, '&'), "ilmjk", '&')
 	{
 	}
-
-
-
+	void updatePlayerMovement(Player& player);
+	void updateSwitchRows();
+	void collectItemIfPossible(Player& player);
+	void drawStatusBar();
 	void initGame();
 	void runGame();
 

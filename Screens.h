@@ -16,6 +16,7 @@ public:
     static constexpr char WALL = 'W';
     static constexpr char KEY = 'K';
     static constexpr char BOMB = '@';
+    static constexpr char TORCH = '!';
     static constexpr char OBSTACLE = '*';
     static constexpr char SWITCH_ON = '/';
     static constexpr char SWITCH_OFF = '\\';
@@ -34,6 +35,16 @@ private:
     void buildFirstScreen();
     void buildSecondScreen();
     void buildFinalScreen();
+	// Internal checkers
+    bool isFirstScreen() const {
+		return (current == ScreenId::First);
+    }
+    bool isSecondScreen() const {
+		return (current == ScreenId::Second);
+    }
+    bool isFinalScreen() const {
+		return (current == ScreenId::Final);
+    }
 
 public:
     Screens();
@@ -54,9 +65,9 @@ public:
 
     // ---- Board access (current screen) ----
 
-  //  bool isInside(const Point& p) const {
-//		return (p.getX() >= 0 && p.getX() < MAX_X && p.getY() >= 0 && p.getY() < MAX_Y);
-//}
+    bool isInside(const Point& p) const {
+	return (p.getX() >= 0 && p.getX() < MAX_X && p.getY() >= 0 && p.getY() < MAX_Y);
+    }
     char getCharAt(const Point& p) const {
 		return boards[int(current)][p.getY()][p.getX()];
     }
@@ -80,6 +91,9 @@ public:
     bool isBomb(const Point& p) const {
         return (getCharAt(p) == BOMB);
     }
+	bool isTorch(const Point& p) const {
+		return (getCharAt(p) == TORCH);
+	}
     bool isObstacle(const Point& p) const {
         return (getCharAt(p) == OBSTACLE);
     }
@@ -102,7 +116,7 @@ public:
 
     // ---- helpers ----
     // Remove a door (digit '1'..'9') from this position (used when player opens it)
-    void clearDoorAt(const Point& p) {
+    void makePassage(const Point& p) {
 		setCharAt(p, EMPTY_SPACE);
     }
     // Explicitly set the switch at p to ON or OFF (Game decides when to call).
@@ -112,6 +126,8 @@ public:
     void setSwitchOff(const Point& p) {
 		setCharAt(p, SWITCH_OFF);
     }
+    bool hasSwitchInRow(int row) const;
+    void setRowWallsRaised(int row, bool raised);
     // Remove walls/obstacles around center in some radius.
     // (radius: Game decides value, e.g. from exercise spec)
     void clearExplosionArea(const Point& center, int radius);

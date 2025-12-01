@@ -8,24 +8,18 @@ public:
         First,
         Second
     };
-    enum Carriers {
-        KEY = 'K',
-        BOMB = '@',
-        TORCH = '!'
-    };
 private:
     static constexpr int NUM_KEYS = 5;
     Id   id;          // which player (1 or 2)
     Point pos;        // current position on the board
     char symbol;      // how the player is drawn on screen
-	char heldItem = ' '; // item currently held by the player
-	char keys[NUM_KEYS]; // keys collected by the player
+	char keys[NUM_KEYS]; // control keys for this player
     
 
     // inventory / state flags (you'll decide what you really need)
-    bool hasKey = false;
-    bool hasTorch = false;
-    bool hasBomb = false;
+    bool hasKeyFlag = false;
+    bool hasTorchFlag = false;
+    bool hasBombFlag = false;
 
 public:
     // constructor
@@ -53,13 +47,13 @@ public:
     }
 
     // getters
-    Id getId() {
+    Id getId() const {
 		return id;
     }
-    const Point& getPosition() {
+    const Point& getPosition() const {
 		return pos;
     }
-    char getSymbol() {
+    char getSymbol() const {
 		return symbol;
     }
 
@@ -74,39 +68,33 @@ public:
 
 
     // inventory interface (you can refine this later)
-    bool hasKeyItem(){
-		return hasKey;
+    bool hasKey() const{
+		return hasKeyFlag;
 	}
-    void giveKey() {
-		hasKey = true;
-		heldItem = 'K';
+    void collectKey() {
+		hasKeyFlag = true;
     }
     void removeKey() {
-		hasKey = false;
-		heldItem = ' ';
+		hasKeyFlag = false;
     }
 
-    bool hasTorchItem() {
-		return hasTorch;
+    bool hasTorch() const {
+		return hasTorchFlag;
     }
-    void giveTorch() {
-		hasTorch = true;
-        heldItem = '!';
+    void collectTorch() {
+		hasTorchFlag = true;
     }
     void removeTorch() {
-		hasTorch = false;
-		heldItem = ' ';
+        hasTorchFlag = false;   
     }
 
-    bool hasBombItem() {
-		return hasBomb;
+    bool hasBomb() const {
+		return hasBombFlag;
     }
-    void giveBomb() {
-		hasBomb = true;
-		heldItem = '@';
+    void collectBomb() {
+		hasBombFlag = true;   
     }
     void removeBomb() {
-		hasBomb = false;
-		heldItem = ' ';
+		hasBombFlag = false;    
     }
 };
