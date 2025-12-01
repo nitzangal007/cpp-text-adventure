@@ -93,7 +93,7 @@ void Screens::init()
   //  buildSecondScreen();
   //  buildFinalScreen();
 	current = ScreenId::First;
-	drawCurrent();
+
 }
 
 

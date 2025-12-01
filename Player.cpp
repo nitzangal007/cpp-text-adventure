@@ -18,3 +18,13 @@ void Player::handleKeyPress(char key_pressed) {
         ++index;
     }
 }
+
+void Player::reset(const Point& startPos)
+{
+    pos = startPos;
+    pos.setDirection(Direction::STAY);
+
+    hasKeyFlag = false;
+    hasBombFlag = false;
+    hasTorchFlag = false;
+}

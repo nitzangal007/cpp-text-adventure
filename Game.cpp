@@ -1,4 +1,4 @@
-#include "Game.h"
+﻿#include "Game.h"
 #include <Windows.h>
 void Game::updatePlayerMovement(Player& player)
 {
@@ -9,6 +9,7 @@ void Game::updatePlayerMovement(Player& player)
 		currentScreen.makePassage(nextPos);
 		player.removeKey();
 		player.move();
+		
 	}
 	if (currentScreen.isFreeCellForPlayer(nextPos))
 	{
@@ -81,27 +82,66 @@ void Game::initGame() {
 	// Initialize game state, load resources, etc.
 	cls();
 	currentScreen.init();
+	player1.reset(player1Start);
+	player2.reset(player2Start);
 	player1.draw();
 	player2.draw();
 	drawStatusBar();
 }
 
-void Game::runGame() {
+void Game::run()
+{
+	Menu menu;
+	bool done = false;
+	while (!done) {
+		
+		Options choice = menu.runOnce();
+
+		switch (choice) {
+		case START_GAME:
+
+			initGame();
+			runGame();      // זה המשחק הבודד – מה שיש לכם היום
+			break;
+
+		case PRESENT_INSTRUCTIONS:
+			menu.showInstructions();   // או איך שקראת לפונקציה
+			break;
+
+		case EXIT_GAME:
+			done = true;    // יוצאים מהלולאה → חוזרים למיין → התוכנית נגמרת
+			break;
+
+
+		}
+	}
+}
+void Game::runGame()
+{
 	const char ESC = 27;
 	bool paused = false;
 	bool running = true;
+
+	cls();
+	drawStatusBar();
+	player1.draw();
+	player2.draw();
+
+
 	while (running)
 	{
-		
 		if (_kbhit())
 		{
 			char ch = _getch();
+
 			if (!paused)
 			{
+				// מצב משחק רגיל
 				if (ch == ESC)
 				{
-					paused = true;
+					// נכנסים ל-PAUSE
 					cls();
+					paused = true;
 					printCentered("Game paused,", 8);
 					printCentered("press ESC again to continue or H to go back to the main menu,", 9);
 				}
@@ -110,23 +150,30 @@ void Game::runGame() {
 					player1.handleKeyPress(ch);
 					player2.handleKeyPress(ch);
 				}
-
 			}
-			else {
+			else
+			{
+				// מצב PAUSE
 				if (ch == ESC)
 				{
-					cls();
+					// ESC שוב → ממשיכים מהמשחק
 					paused = false;
-					
+
+					// מוחקים את הודעת ה-PAUSE ומחזירים את המסך כמו שהיה
+					cls();
+					currentScreen.drawCurrent();
+					drawStatusBar();
+					player1.draw();
+					player2.draw();
 				}
-				else if (ch == 'H' || ch == 'h')
+				else if (ch == 'h' || ch == 'H')
 				{
-					return;
+					// חוזרים למניו – המשחק הזה נגמר
+					return;   // יוצא מ-runGame וחוזר ל-Game::run → תפריט
 				}
 			}
-
-
 		}
+
 		if (!paused)
 		{
 			updatePlayerMovement(player1);
@@ -135,20 +182,17 @@ void Game::runGame() {
 			collectItemIfPossible(player1);
 			collectItemIfPossible(player2);
 
-			updateSwitchRows();      
-
+			updateSwitchRows();
+			
 			currentScreen.drawCurrent();
-			drawStatusBar();
 			player1.draw();
 			player2.draw();
-
-			Sleep(100);
+			drawStatusBar();
 		}
 
-
+		Sleep(100);
 	}
-
-
-
-
 }
+
+
+
