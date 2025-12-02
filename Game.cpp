@@ -2,6 +2,10 @@
 #include <Windows.h>
 void Game::updatePlayerMovement(Player& player)
 {
+	if (playerIsReadyForNextScreen(player))
+	{
+		return;
+	}
 	Point nextPos = player.getPosition();
 	nextPos.move();
 	if (currentScreen.isDoor(nextPos) && player.hasKey())
@@ -9,9 +13,22 @@ void Game::updatePlayerMovement(Player& player)
 		currentScreen.makePassage(nextPos);
 		player.removeKey();
 		player.move();
-		
 	}
-	if (currentScreen.isFreeCellForPlayer(nextPos))
+	else if (isExitWaitPosition(nextPos))
+	{
+		player.move();
+		player.stop();
+		if (player.getId() == Player::Id::First)
+		{
+			player1ReadyForNextScreen = true;
+		}
+		else
+		{
+			player2ReadyForNextScreen = true;
+		}
+		return;
+	}
+	else if (currentScreen.isFreeCellForPlayer(nextPos))
 	{
 		player.move();
 		
@@ -54,7 +71,6 @@ void Game::collectItemIfPossible(Player& player)
 		if (bomb.active && pos.getX() == bomb.pos.getX() &&
 			pos.getY() == bomb.pos.getY())
 		{
-			// can't collect an active bomb
 			return;
 		}
 		player.collectBomb();
@@ -95,7 +111,7 @@ void Game::tryPlaceBomb(Player& player)
 	{
 		bomb.active = true;
 		bomb.pos = player.getPosition();
-		bomb.ticksLeft = 5; // for example, 5 ticks until explosion
+		bomb.ticksLeft = 5; 
 		player.removeBomb();
 		}
 	
@@ -115,22 +131,21 @@ void Game::explodeBomb()
 	const int R2 = RADIUS * RADIUS;
 	Point center = bomb.pos;
 
-	// 1. הורסים את האזור במפה
+	
 	currentScreen.clearExplosionArea(center, RADIUS);
 
-	// 2. אם שחקן 1 בתוך הפיצוץ - מאפסים אותו
+
 	if (isPlayerInExplosion(player1, center, R2))
 	{
 		player1.reset(player1Start);
 	}
 
-	// 3. כנ"ל לגבי שחקן 2
+
 	if (isPlayerInExplosion(player2, center, R2))
 	{
 		player2.reset(player2Start);
 	}
 
-	// 4. מכבים את הבומבה
 	
 	bomb.active = false;
 	bomb.ticksLeft = 0;
@@ -143,6 +158,61 @@ bool Game::isPlayerInExplosion(const Player& player, const Point& center, int ra
 	int dy = p.getY() - center.getY();
 
 	return (dx * dx + dy * dy <= radiusSquared);
+}
+
+bool Game::playerIsReadyForNextScreen(const Player& player) const
+{
+	if (Player::Id::First == player.getId())
+	{
+		return player1ReadyForNextScreen;
+	}
+	else
+	{
+		return player2ReadyForNextScreen;
+	}
+}
+
+bool Game::isExitWaitPosition(const Point& p) const
+{
+	for (const ExitInfo& exit : exits)
+	{
+		if (exit.waitPos.getX() == p.getX() &&
+			exit.waitPos.getY() == p.getY())
+		{
+			return true;
+		}
+	}
+	return false;
+	
+}
+
+void Game::tryAdvanceToNextScreen()
+{
+	for (const ExitInfo& exit : exits)
+	{
+		if (currentScreen.getCurrentScreen() != exit.from)
+			continue;
+		if (!playerIsReadyForNextScreen(player1) ||
+			!playerIsReadyForNextScreen(player2))
+		{
+			return;
+		}
+
+		currentScreen.setCurrentScreen(exit.to);
+
+		player1.reset(exit.nextStartP1);
+		player2.reset(exit.nextStartP2);
+
+		player1ReadyForNextScreen = false;
+		player2ReadyForNextScreen = false;
+
+		cls();
+		currentScreen.drawCurrent();
+		player1.draw();
+		player2.draw();
+		drawStatusBar();
+		return;
+	}
 }
 
 
@@ -159,6 +229,36 @@ void Game::initGame() {
 	drawStatusBar();
 	
 }
+void Game::updateLogic()
+{
+	updatePlayerMovement(player1);
+	updatePlayerMovement(player2);
+
+	if (!playerIsReadyForNextScreen(player1))
+		collectItemIfPossible(player1);
+
+	if (!playerIsReadyForNextScreen(player2))
+		collectItemIfPossible(player2);
+
+	updateSwitchRows();
+
+	if (bomb.active)
+	{
+		bomb.ticksLeft--;
+		if (bomb.ticksLeft <= 0)
+		{
+			explodeBomb();
+		}
+	}
+	tryAdvanceToNextScreen();
+}
+void Game::render()
+{
+	currentScreen.drawCurrent();
+	player1.draw();
+	player2.draw();
+	drawStatusBar();
+}
 
 void Game::run()
 {
@@ -172,15 +272,15 @@ void Game::run()
 		case START_GAME:
 
 			initGame();
-			runGame();      // זה המשחק הבודד – מה שיש לכם היום
+			runGame();     
 			break;
 
 		case PRESENT_INSTRUCTIONS:
-			menu.showInstructions();   // או איך שקראת לפונקציה
+			menu.showInstructions();  
 			break;
 
 		case EXIT_GAME:
-			done = true;    // יוצאים מהלולאה → חוזרים למיין → התוכנית נגמרת
+			done = true;  
 			break;
 
 
@@ -194,9 +294,8 @@ void Game::runGame()
 	bool running = true;
 
 	cls();
-	drawStatusBar();
-	player1.draw();
-	player2.draw();
+	render();
+	
 
 
 	while (running)
@@ -230,55 +329,35 @@ void Game::runGame()
 			}
 			else
 			{
-				// מצב PAUSE
+				
 				if (ch == ESC)
 				{
-					// ESC שוב → ממשיכים מהמשחק
+					
 					paused = false;
 
-					// מוחקים את הודעת ה-PAUSE ומחזירים את המסך כמו שהיה
+				
 					cls();
-					currentScreen.drawCurrent();
-					drawStatusBar();
-					player1.draw();
-					player2.draw();
+					render();
 				}
 				else if (ch == 'h' || ch == 'H')
 				{
-					// חוזרים למניו – המשחק הזה נגמר
-					return;   // יוצא מ-runGame וחוזר ל-Game::run → תפריט
+					
+					return;  
 				}
 			}
 		}
 
 		if (!paused)
 		{
-			updatePlayerMovement(player1);
-			updatePlayerMovement(player2);
-
-			collectItemIfPossible(player1);
-			collectItemIfPossible(player2);
-
-			updateSwitchRows();
-		
-
-			if (bomb.active)
-			{
-				bomb.ticksLeft--;
-				if (bomb.ticksLeft <= 0)
-				{
-					explodeBomb();
-				}
-			}
-			currentScreen.drawCurrent();
-			player1.draw();
-			player2.draw();
-			drawStatusBar();
+			updateLogic();
+			render();
 		}
 
 		Sleep(100);
 	}
 }
+
+
 
 
 
