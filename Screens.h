@@ -21,6 +21,7 @@ public:
     static constexpr char SWITCH_ON = '/';
     static constexpr char SWITCH_OFF = '\\';
     static constexpr char RIDDLE = '?';
+    static const char BOMB_PLANTED = '@';
 
     
     // Doors: '1'..'9' (no constant needed, we check by range)
@@ -129,9 +130,12 @@ public:
     bool hasSwitchInRow(int row) const;
     void setRowWallsRaised(int row, bool raised);
     // Remove walls/obstacles around center in some radius.
+   
+
+    void placeBombAt(int x, int y);
+
     // (radius: Game decides value, e.g. from exercise spec)
     void clearExplosionArea(const Point& center, int radius);
-
     
 
 };

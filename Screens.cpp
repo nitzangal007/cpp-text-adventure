@@ -10,7 +10,7 @@ namespace
 		 "W                                                  W                           W", // 2
 		 "W                                                  W                           W", // 3
 		 "W                                                 \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 4
-		 "W                                                  W         W                 W", // 5
+		 "W                                  @                W         W                 W", // 5
 		 "W                                                  W         W                 W", // 6
 		 "W                                                  W         W                 W", // 7
 		 "W                                                 \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 8
@@ -74,6 +74,47 @@ void Screens::setRowWallsRaised(int row, bool raised)
 		{
 			if (ch == WALL)
 				boards[screenIndex][row][x] = WALL;
+		}
+	}
+}
+
+void Screens::placeBombAt(int x, int y)										// ??? ???? ?????? ?????
+{
+
+	int s = static_cast<int>(current);
+
+	boards[s][y][x] = BOMB;   // '@'
+	gotoxy(x, y);
+	std::cout << BOMB;
+
+}
+
+void Screens::clearExplosionArea(const Point& center, int radius)
+{
+	int s = static_cast<int>(current);
+	int cx = center.getX();
+	int cy = center.getY();
+	int r2 = radius * radius;
+
+	for (int dy = -radius; dy <= radius; ++dy)
+	{
+		for (int dx = -radius; dx <= radius; ++dx)
+		{
+			if (dx * dx + dy * dy > r2)
+				continue;
+
+			int x = cx + dx;
+			int y = cy + dy;
+
+			if (x < 0 || x >= MAX_X || y < 0 || y >= MAX_Y)
+				continue;
+
+			char& tile = boards[s][y][x];
+
+			if (tile == WALL || tile == OBSTACLE || tile == BOMB)
+			{
+				tile = EMPTY_SPACE;
+			}
 		}
 	}
 }

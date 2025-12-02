@@ -13,12 +13,21 @@ enum class GameResult { BackToMenu, QuitProgram };
 
 class Game
 {
+	struct Bomb {								
+		bool active = false;
+		Point pos;
+		int  ticksLeft = 0;                      // time left until explosion
+	};
+
 	Screens currentScreen;
 	Player player1;
 	Player player2;
-
 	Point   player1Start;
 	Point   player2Start;
+	Bomb bomb;
+
+
+	
 
 public:
 	Game() :player1(Player::Id::First, Point(5, 5, 0, 0, '$'), "wdxas", '$'),
@@ -35,7 +44,10 @@ public:
 	void updateSwitchRows();
 	void collectItemIfPossible(Player& player);
 	void drawStatusBar();
-	
+	void tryPlaceBomb(Player& player);
+	void explodeBomb();
+	bool isPlayerInExplosion(const Player& player, const Point& center, int radiusSquared) ;
+		
 
 
 

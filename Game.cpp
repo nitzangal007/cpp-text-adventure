@@ -51,6 +51,12 @@ void Game::collectItemIfPossible(Player& player)
 	}
 	else if (currentScreen.isBomb(pos))
 	{
+		if (bomb.active && pos.getX() == bomb.pos.getX() &&
+			pos.getY() == bomb.pos.getY())
+		{
+			// can't collect an active bomb
+			return;
+		}
 		player.collectBomb();
 		currentScreen.makePassage(pos);
 	}
@@ -78,15 +84,80 @@ void Game::drawStatusBar()
 	std::cout << "Player 2: Key[" << key2 << "] Bomb[" << bomb2 << "] Torch[" << torch2 << "]";
 }
 
+void Game::tryPlaceBomb(Player& player)
+{
+	if(bomb.active)
+		return; // already a bomb active
+	else if(!player.hasBomb())
+		return; // player has no bomb to place
+	
+	else
+	{
+		bomb.active = true;
+		bomb.pos = player.getPosition();
+		bomb.ticksLeft = 5; // for example, 5 ticks until explosion
+		player.removeBomb();
+		}
+	
+	int x = bomb.pos.getX();
+	int y = bomb.pos.getY();
+	currentScreen.placeBombAt(x, y);
+
+}
+
+void Game::explodeBomb()
+{
+
+	if (!bomb.active)
+		return;
+
+	const int RADIUS = 2;
+	const int R2 = RADIUS * RADIUS;
+	Point center = bomb.pos;
+
+	// 1. הורסים את האזור במפה
+	currentScreen.clearExplosionArea(center, RADIUS);
+
+	// 2. אם שחקן 1 בתוך הפיצוץ - מאפסים אותו
+	if (isPlayerInExplosion(player1, center, R2))
+	{
+		player1.reset(player1Start);
+	}
+
+	// 3. כנ"ל לגבי שחקן 2
+	if (isPlayerInExplosion(player2, center, R2))
+	{
+		player2.reset(player2Start);
+	}
+
+	// 4. מכבים את הבומבה
+	
+	bomb.active = false;
+	bomb.ticksLeft = 0;
+}
+
+bool Game::isPlayerInExplosion(const Player& player, const Point& center, int radiusSquared)
+{
+	Point p = player.getPosition();
+	int dx = p.getX() - center.getX();
+	int dy = p.getY() - center.getY();
+
+	return (dx * dx + dy * dy <= radiusSquared);
+}
+
+
+
 void Game::initGame() {
 	// Initialize game state, load resources, etc.
 	cls();
 	currentScreen.init();
 	player1.reset(player1Start);
 	player2.reset(player2Start);
+	bomb.active = false;
 	player1.draw();
 	player2.draw();
 	drawStatusBar();
+	
 }
 
 void Game::run()
@@ -145,6 +216,12 @@ void Game::runGame()
 					printCentered("Game paused,", 8);
 					printCentered("press ESC again to continue or H to go back to the main menu,", 9);
 				}
+				else if (ch == 'E' || ch == 'e') {
+					tryPlaceBomb(player1);
+				}
+				else if (ch == 'O' || ch == 'o') {
+					tryPlaceBomb(player2);
+				}
 				else
 				{
 					player1.handleKeyPress(ch);
@@ -183,7 +260,16 @@ void Game::runGame()
 			collectItemIfPossible(player2);
 
 			updateSwitchRows();
-			
+		
+
+			if (bomb.active)
+			{
+				bomb.ticksLeft--;
+				if (bomb.ticksLeft <= 0)
+				{
+					explodeBomb();
+				}
+			}
 			currentScreen.drawCurrent();
 			player1.draw();
 			player2.draw();
