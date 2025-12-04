@@ -7,7 +7,7 @@ namespace
 		//01234567890123456789012345678901234567890123456789012345678901234567890123456789
 		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
 		 "W                 WWWWWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 1
-		 "W                 WWWW                                       W                 W", // 2
+		 "W     *   *         WWWW                                       W                 W", // 2
 		 "W                 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW         W                 W", // 3
 		 "W          J      WWWW @ WWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 4
 		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W", // 5
@@ -33,23 +33,24 @@ namespace
 	};
 	constexpr const char* SECOND_SCREEN_TEMPLATE[Screens::MAX_Y] = {
 		//01234567890123456789012345678901234567890123456789012345678901234567890123456789
+
 		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
-		 "WWWWWWW   \\     *     WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 1
+		 "WWWWWWW       *       WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 1
 		 "WWWWWWW               WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 2
 		 "WWWWWWW       *       ****  @ WW          WWWW        WWW         @     w     WW", // 3
-		 "WWWWWWW       *       ****    WW      4   WWWW    3   WWW               *   \\ WW", // 4
-		 "WWWWWWW               wwwwwwwwww          WWWW        WWW**WW*WW**WWW     WW", // 5
-		 "WWWWWWW       *       wwwwwwwwww          WWWW        WWW**WW*WW**WWW     WW", // 6
-		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW       WWWWWWWWWWWWWWWWWWW    \\ WW", // 7
-		 "WWWWWWWWWWWWWWWWWWWWWWWW               WWWWWW        WWWWWWWWWWWWWWWWWWW      WW", // 8
-		 "WW   *     *   WWWWWWWWW                WWWWWWWWWWWWWWW           W           WW", // 9
-		 "WW   W     W   WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWWW      ?    W           WW", // 10
-		 "WW *   ***     WWWWWWWWW@    @WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW*WWW*WWWWWWWWW", // 11
+		 "WWWWWWW       *       ****    WW      4   WWWW    3   WWW               *     WW", // 4
+		 "WWWWWWW               wwwwwwwwww          WWWW        WWW***WW***WW***WWW     WW", // 5
+		 "WWWWWWW       *       wwwwwwwwww          WWWW        WWW***WW***WW***WWW     WW", // 6
+		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW        WWWWWWWWWWWWWWWWWWW     WW", // 7
+		 "WWWWWWWWWWWWWWWWWWWWWWWW               WWWWWWW        WWWWWWWWWWWWWWWWWWW     WW", // 8
+		 "WW   *     *   WWWWWWWWW               WWWWWWWWWWWWWWW             W          WW", // 9
+		 "WW   W     W   WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW      ?      W          WW", // 10
+		 "WW *   ***     WWWWWWWWW@    @WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW**WWW**WWWWWWWWW", // 11
 		 "WW   W   W   * WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 12
 		 "WW   W   W   W WWWWWWWWW@    @WWWWWWWWWWWWWWWWWWWWWWWW H                      WW", // 13   // NUMBER 4
 		 "WW *   *   *   WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 14
 		 "WW   W   W    WWWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 15
-		 "WW             WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW   \\   \\   \\    \\       WW", // 16
+		 "WW             WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW        //   //   //    WW", // 16
 		 "WWWWWWWW WWWWWWWwwwwwwww      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 17
 		 "W                             WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 18
 		 "W                             WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 19
@@ -58,8 +59,14 @@ namespace
 		 "                                                                                ", // 22
 		 "                                                                                ", // 23
 		 "                                                                                "  // 24
+
 	};
 }
+
+
+
+
+
 
 
 
@@ -185,7 +192,7 @@ void Screens::drawCurrent() const
 
 void Screens::buildFirstScreen()
 {
-    const int screenIndex = static_cast<int>(ScreenId::Second);
+    const int screenIndex = static_cast<int>(ScreenId::First);
 
     // Copy template into boards[screenIndex]
     for (int y = 0; y < MAX_Y; ++y)
@@ -198,7 +205,7 @@ void Screens::buildFirstScreen()
 }
 void Screens::buildSecondScreen()
 {
-	const int screenIndex = static_cast<int>(ScreenId::First);
+	const int screenIndex = static_cast<int>(ScreenId::Second);
 	// Copy template into boards[screenIndex]
 	for (int y = 0; y < MAX_Y; ++y)
 	{

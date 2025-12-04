@@ -98,7 +98,7 @@ public:
 		hasBombFlag = false;    
     }
 
-
+    
 
     void reset(const Point& startPos);
 };

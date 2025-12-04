@@ -8,6 +8,28 @@ void Game::updatePlayerMovement(Player& player)
 	}
 	Point nextPos = player.getPosition();
 	nextPos.move();
+
+	if (currentScreen.isObstacle(nextPos))
+	{
+		bool Pushable = obstaclePushable(nextPos, player);
+		if (Pushable)
+		{
+			Point obstacleNewPos = nextPos;
+			obstacleNewPos.move();
+			currentScreen.setCharAt(obstacleNewPos, Screens::OBSTACLE);
+			currentScreen.makePassage(nextPos);
+			player.move();
+			return;
+		}
+		else
+		{
+			return;
+			
+		}
+		
+	}
+	
+
 	if (currentScreen.isDoor(nextPos) && player.hasKey())
 	{
 		currentScreen.makePassage(nextPos);
@@ -212,6 +234,172 @@ void Game::tryAdvanceToNextScreen()
 		player2.draw();
 		drawStatusBar();
 		return;
+	}
+}
+
+
+Player& Game::getOtherPlayer(const Player& p)
+{
+	if (p.getId() == Player::Id::First)
+		return player2;
+	else
+		return player1;
+}
+
+
+bool Game::obstaclePushable(const Point& nextPos, Player& player)				//check if obstacle(s) can be pushed
+{
+	int dx = nextPos.getX() - player.getPosition().getX();
+	int dy = nextPos.getY() - player.getPosition().getY();
+	Point currPos = player.getPosition();
+	Point obstacleCell = nextPos;
+
+	if (std::abs(dx) + std::abs(dy) != 1)								// we need to push in straight line		
+		return false;
+
+
+	std::vector<Point> group;
+	collectObstacleGroup(nextPos, group);
+
+	int obstacleSize = (int)group.size();
+
+	int availableForce = 1; 
+
+	Player& other = getOtherPlayer(player);
+
+	Point p1 = player.getPosition();
+	Point p2 = other.getPosition();
+
+	int dist = std::abs(p1.getX() - p2.getX()) +
+		std::abs(p1.getY() - p2.getY());
+	bool adjacent = (dist == 1);
+
+	Point next1 = p1; next1.move();
+	Point next2 = p2; next2.move();
+
+	int dx1 = next1.getX() - p1.getX();
+	int dy1 = next1.getY() - p1.getY();
+	int dx2 = next2.getX() - p2.getX();
+	int dy2 = next2.getY() - p2.getY();
+
+	bool sameDir = (dx1 == dx2 && dy1 == dy2);
+
+	if (adjacent && sameDir)
+		availableForce += 1;          
+
+	if (availableForce < obstacleSize)
+		return false; 
+
+	for (size_t i = 0; i < group.size(); ++i)
+	{
+		Point cell = group[i];
+		Point target(cell.getX() + dx, cell.getY() + dy, 0, 0, ' ');
+
+		if (!currentScreen.isInside(target))
+			return false;
+		if (currentScreen.isWall(target) || currentScreen.isDoor(target))
+			return false;
+
+		if (currentScreen.isObstacle(target))
+			return false;
+		
+			
+
+		int obstacleSize = (int)group.size();
+
+
+
+		moveObstacleGroup(group, dx, dy);
+
+
+
+
+	}
+}
+void Game::collectObstacleGroup(const Point& start, std::vector<Point>& group) const	// collect all connected obstacles
+{
+	const Direction dirs[4] = {
+	Direction::UP,
+	Direction::RIGHT,
+	Direction::DOWN,
+	Direction::LEFT
+	};
+
+	group.clear();      // make sure the group is empty
+
+	if (!currentScreen.isObstacle(start))								// starting point is not an obstacle
+		return;
+
+	group.push_back(start);
+	for (int i = 0; i < group.size(); i++)
+	{
+		Point current = group[i];
+		for (int d = 0; d < 4; ++d)
+		{
+			int dx = 0, dy = 0;
+			switch (dirs[d])
+			{
+			case Direction::UP:
+				dx = 0;  dy = -1;
+				break;
+			case Direction::RIGHT:
+				dx = 1;  dy = 0;
+				break;
+			case Direction::DOWN:
+				dx = 0;  dy = 1;
+				break;
+			case Direction::LEFT:
+				dx = -1; dy = 0;
+				break;
+			case Direction::STAY:
+				dx = 0;  dy = 0;
+				break;
+			}
+			int nx = current.getX() + dx;
+			int ny = current.getY() + dy;
+
+			Point neighbour(nx, ny, 0, 0, ' ');
+
+			if (!currentScreen.isInside(neighbour))
+				continue;
+
+			if (!currentScreen.isObstacle(neighbour))
+				continue;
+
+			bool alreadyInGroup = false;
+			for (size_t j = 0; j < group.size(); ++j)
+			{
+				if (group[j].getX() == neighbour.getX() &&
+					group[j].getY() == neighbour.getY())
+				{
+					alreadyInGroup = true;
+					break;
+				}
+			}
+			if (!alreadyInGroup)
+			{
+				group.push_back(neighbour);
+			}
+
+		}
+
+	}
+
+
+}
+
+void Game::moveObstacleGroup(const std::vector<Point>& group, int dx, int dy)		// move all obstacles in the group 
+{
+	
+	for (size_t i = 0; i < group.size(); ++i)								//remove * from old positions
+		currentScreen.setCharAt(group[i], Screens::EMPTY_SPACE);
+
+	
+	for (size_t i = 0; i < group.size(); ++i)								//set * in new positions
+	{
+		Point cell = group[i];
+		Point target(cell.getX() + dx, cell.getY() + dy, 0, 0, ' ');
+		currentScreen.setCharAt(target, Screens::OBSTACLE);
 	}
 }
 

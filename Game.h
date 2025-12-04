@@ -1,6 +1,7 @@
 #pragma once
 
 #include <conio.h>
+#include <vector>
 #include "Player.h"
 #include "Screens.h"
 #include "Menu.h"
@@ -135,4 +136,14 @@ private:
 
     // If both players are ready, move to the next screen
     void tryAdvanceToNextScreen();
+
+	// ---- Obstacle handling ----
+    bool obstaclePushable(const Point& nextPos, Player& player);
+
+    void collectObstacleGroup(const Point& start, std::vector<Point>& group) const;
+
+
+    void moveObstacleGroup(const std::vector<Point>& group, int dx, int dy);
+
+    Player& getOtherPlayer(const Player& p);
 };
