@@ -52,10 +52,10 @@ class Game
 public:
     // ---- Ctor / initialization ----
     Game()
-        : player1(Player::Id::First, Point(5, 5, 0, 0, '$'), "wdxas", '$'),
-        player2(Player::Id::Second, Point(10, 10, 0, 0, '&'), "ilmjk", '&'),
-        player1Start(5, 5, 0, 0, '$'),
-        player2Start(10, 10, 0, 0, '&'),
+        : player1(Player::Id::First, Point(5, 2, 0, 0, '$'), "wdxas", '$'),
+        player2(Player::Id::Second, Point(9, 2, 0, 0, '&'), "ilmjk", '&'),
+        player1Start(5, 2, 0, 0, '$'),
+        player2Start(9, 2, 0, 0, '&'),
         player1ReadyForNextScreen(false),
         player2ReadyForNextScreen(false)
     {
