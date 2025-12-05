@@ -2,14 +2,26 @@
 #include "Player.h"
 #include "utils.h"
 #include <iostream>
+#include <vector>
 
 class Screens
 {
 public:
     enum { MAX_X = 80, MAX_Y = 25 };
     enum { NUM_SCREENS = 3 };
-
     enum class ScreenId { First = 0, Second = 1, Final = 2 };
+
+    struct SwitchData
+    {
+        Point position;
+        std::vector<Point> affectedWalls;
+        bool isPermanent;
+        bool active = false;
+        bool wasOnLastFrame = false;
+
+        SwitchData() {}
+    };
+
 
     // Tile characters
     static constexpr char EMPTY_SPACE = ' ';
@@ -23,7 +35,7 @@ public:
     static constexpr char RIDDLE = '?';
     static const char BOMB_PLANTED = '@';
 
-    
+
     // Doors: '1'..'9' (no constant needed, we check by range)
 private:
     // Raw boards for all screens
@@ -32,20 +44,15 @@ private:
     // Which one we are showing/using now
     ScreenId current = ScreenId::First;
 
+    // Switch data for first screen
+    std::vector<SwitchData> firstScreenSwitches;
+
     // Internal builders for each screen
     void buildFirstScreen();
     void buildSecondScreen();
     void buildFinalScreen();
-	// Internal checkers
-    bool isFirstScreen() const {
-		return (current == ScreenId::First);
-    }
-    bool isSecondScreen() const {
-		return (current == ScreenId::Second);
-    }
-    bool isFinalScreen() const {
-		return (current == ScreenId::Final);
-    }
+    // Internal checkers
+
 
 public:
     Screens();
@@ -55,10 +62,10 @@ public:
 
     // Current screen management
     void setCurrentScreen(ScreenId id) {
-		current = id;
+        current = id;
     }
     ScreenId getCurrentScreen() const {
-		return current;
+        return current;
     }
 
     // Draw the currently active screen
@@ -67,10 +74,10 @@ public:
     // ---- Board access (current screen) ----
 
     bool isInside(const Point& p) const {
-	return (p.getX() >= 0 && p.getX() < MAX_X && p.getY() >= 0 && p.getY() < MAX_Y);
+        return (p.getX() >= 0 && p.getX() < MAX_X && p.getY() >= 0 && p.getY() < MAX_Y);
     }
     char getCharAt(const Point& p) const {
-		return boards[int(current)][p.getY()][p.getX()];
+        return boards[int(current)][p.getY()][p.getX()];
     }
     void setCharAt(const Point& p, char ch) {
         boards[int(current)][p.getY()][p.getX()] = ch;
@@ -92,9 +99,9 @@ public:
     bool isBomb(const Point& p) const {
         return (getCharAt(p) == BOMB);
     }
-	bool isTorch(const Point& p) const {
-		return (getCharAt(p) == TORCH);
-	}
+    bool isTorch(const Point& p) const {
+        return (getCharAt(p) == TORCH);
+    }
     bool isObstacle(const Point& p) const {
         return (getCharAt(p) == OBSTACLE);
     }
@@ -112,30 +119,42 @@ public:
         return (getCharAt(p) == RIDDLE);
     }
 
+    // Screen identity helpers
+    bool isFirstScreen() const {
+        return (current == ScreenId::First);
+    }
+    bool isSecondScreen() const {
+        return (current == ScreenId::Second);
+    }
+    bool isFinalScreen() const {
+        return (current == ScreenId::Final);
+    }
+
     // Used by Game before moving a player to this point
     bool isFreeCellForPlayer(const Point& p) const;
 
     // ---- helpers ----
     // Remove a door (digit '1'..'9') from this position (used when player opens it)
     void makePassage(const Point& p) {
-		setCharAt(p, EMPTY_SPACE);
+        setCharAt(p, EMPTY_SPACE);
     }
     // Explicitly set the switch at p to ON or OFF (Game decides when to call).
-	void setSwitchOn(const Point& p) {
-		setCharAt(p, SWITCH_ON);
+    void setSwitchOn(const Point& p) {
+        setCharAt(p, SWITCH_ON);
     }
     void setSwitchOff(const Point& p) {
-		setCharAt(p, SWITCH_OFF);
+        setCharAt(p, SWITCH_OFF);
     }
-    bool hasSwitchInRow(int row) const;
-    void setRowWallsRaised(int row, bool raised);
-    // Remove walls/obstacles around center in some radius.
-   
+    // --- Switch logic API for Game ---
+    void initFirstScreenSwitches();
+    void updateSwitchStates(const Player& p1, const Player& p2);
+    void applySwitchEffect(const SwitchData& s, bool active);
+
 
     void placeBombAt(int x, int y);
 
     // (radius: Game decides value, e.g. from exercise spec)
     void clearExplosionArea(const Point& center, int radius);
-    
+
 
 };

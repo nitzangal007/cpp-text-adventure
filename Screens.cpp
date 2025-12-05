@@ -7,8 +7,8 @@ namespace
 		//01234567890123456789012345678901234567890123456789012345678901234567890123456789
 		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
 		 "W                 WWWWWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 1
-		 "W     *   *         WWWW                                       W                 W", // 2
-		 "W                 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW         W                 W", // 3
+		 "W     *   *                                                  W                 W", // 2
+		 "W                 WWWWWWWWWWWWWWWWWWWWWWWWWWWW WWWWW         W                 W", // 3
 		 "W          J      WWWW @ WWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 4
 		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W", // 5
 		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W", // 6
@@ -78,42 +78,139 @@ bool Screens::isFreeCellForPlayer(const Point& p) const
 	return true;
 }
 
-bool Screens::hasSwitchInRow(int row) const
+
+void Screens::initFirstScreenSwitches()
 {
-	int screenIndex = static_cast<int>(current);
-	for (int x = 0; x < MAX_X; ++x)
+	firstScreenSwitches.clear();
+
 	{
-		const char ch = boards[screenIndex][row][x];
-		if (ch == SWITCH_ON || ch == SWITCH_OFF)
-			return true;
+		SwitchData s;
+		s.position = Point(50, 4);
+		s.isPermanent = false;
+
+		int y = 4;
+
+		// 52..60
+		for (int x = 52; x <= 60; ++x)
+			s.affectedWalls.emplace_back(x, y);
+
+		// 62..68
+		for (int x = 62; x <= 78; ++x)
+			s.affectedWalls.emplace_back(x, y);
+
+		firstScreenSwitches.push_back(s);
 	}
-	return false;
+
+	{
+		SwitchData s;
+		s.position = Point(50, 8);
+		s.isPermanent = false;
+
+		int x = 61;
+
+		// rows 1..3
+		for (int y = 1; y <= 3; ++y)
+			s.affectedWalls.emplace_back(x, y);
+
+		// rows 5..9
+		for (int y = 5; y <= 9; ++y)
+			s.affectedWalls.emplace_back(x, y);
+
+		firstScreenSwitches.push_back(s);
+	}
+
+	{
+		SwitchData s;
+		s.position = Point(50, 12);
+		s.isPermanent = false;
+
+		int y = 12;
+
+		// 52..60
+		for (int x = 52; x <= 60; ++x)
+			s.affectedWalls.emplace_back(x, y);
+
+		// 62..68
+		for (int x = 62; x <= 78; ++x)
+			s.affectedWalls.emplace_back(x, y);
+
+		firstScreenSwitches.push_back(s);
+	}
+
+	{
+		SwitchData s;
+		s.position = Point(67, 14);
+		s.isPermanent = true;
+
+		s.affectedWalls.emplace_back(51, 13);
+		s.affectedWalls.emplace_back(51, 14);
+		s.affectedWalls.emplace_back(61, 13);
+		s.affectedWalls.emplace_back(61, 14);
+		firstScreenSwitches.push_back(s);
+	}
+
+
+
 }
 
-void Screens::setRowWallsRaised(int row, bool raised)
+void Screens::updateSwitchStates(const Player& p1, const Player& p2)
 {
 	if (!isFirstScreen())
 		return;
-	int screenIndex = static_cast<int>(current);
-	for (int x = 1; x < MAX_X - 1; ++x)
+
+	for (auto& s : firstScreenSwitches)
 	{
-		const char ch = FIRST_SCREEN_TEMPLATE[row][x];
-		const char prevToCh = FIRST_SCREEN_TEMPLATE[row][x-1];
-		const char benathToCh = FIRST_SCREEN_TEMPLATE[row+1][x];
-		if(raised)
+		bool on = (p1.getPosition() == s.position || p2.getPosition() == s.position);
+
+		if (!s.isPermanent)
 		{
-			if (ch == WALL && (prevToCh == SWITCH_OFF || prevToCh == SWITCH_ON || benathToCh == WALL))
-				continue;
-			if (ch == WALL)
-				boards[screenIndex][row][x] = EMPTY_SPACE;
+			if (on && !s.active)
+			{
+				s.active = true;
+				applySwitchEffect(s, true);
+				setSwitchOn(s.position);
+			}
+			else if (!on && s.active)
+			{
+				s.active = false;
+				applySwitchEffect(s, false);
+				setSwitchOff(s.position);
+			}
 		}
 		else
 		{
-			if (ch == WALL)
-				boards[screenIndex][row][x] = WALL;
+
+			if (on && !s.wasOnLastFrame)
+			{
+				s.active = !s.active;
+				applySwitchEffect(s, s.active);
+				if (s.active)
+					setSwitchOn(s.position);
+				else
+					setSwitchOff(s.position);
+			}
+
+			s.wasOnLastFrame = on;
 		}
 	}
 }
+
+
+void Screens::applySwitchEffect(const SwitchData& s, bool active)
+{
+	int screenIndex = static_cast<int>(current);
+
+	for (const auto& wall : s.affectedWalls)
+	{
+		int x = wall.getX();
+		int y = wall.getY();
+		if (!isInside(Point(x, y)))
+			continue;
+		char& tile = boards[screenIndex][y][x];
+		tile = active ? EMPTY_SPACE : WALL;
+	}
+}
+
 
 void Screens::placeBombAt(int x, int y)									
 {

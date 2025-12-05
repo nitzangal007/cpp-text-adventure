@@ -60,26 +60,7 @@ void Game::updatePlayerMovement(Player& player)
 		player.stop();
 	}
 }
-void Game::updateSwitchRows()
-{
-	for (int y = 0; y < Screens::MAX_Y; ++y)
-	{
-		if (!currentScreen.hasSwitchInRow(y))
-			continue;
-		bool rowOpen = false;
-		auto checkPlayer = [&](const Player& player) {
-			const Point& pos = player.getPosition();
-			if (pos.getY() == y && currentScreen.isSwitch(pos))
-			{
-				rowOpen = true;
-			}
-		};
-		checkPlayer(player1);
-		checkPlayer(player2);
-		currentScreen.setRowWallsRaised(y, rowOpen);
-		
-	}
-}
+
 void Game::collectItemIfPossible(Player& player)
 {
 	const Point& pos = player.getPosition();
@@ -409,6 +390,7 @@ void Game::initGame() {
 	// Initialize game state, load resources, etc.
 	cls();
 	currentScreen.init();
+	currentScreen.initFirstScreenSwitches();
 	player1.reset(player1Start);
 	player2.reset(player2Start);
 	bomb.active = false;
@@ -428,7 +410,9 @@ void Game::updateLogic()
 	if (!playerIsReadyForNextScreen(player2))
 		collectItemIfPossible(player2);
 
-	updateSwitchRows();
+	if (currentScreen.isFirstScreen())
+		currentScreen.updateSwitchStates(player1, player2);
+	
 
 	if (bomb.active)
 	{
