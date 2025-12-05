@@ -44,8 +44,14 @@ private:
     // Which one we are showing/using now
     ScreenId current = ScreenId::First;
 
-    // Switch data for first screen
+    //data for first screen
     std::vector<SwitchData> firstScreenSwitches;
+    bool leftEntranceClosed = false;
+    bool rightEntranceClosed = false;
+    void handleGateForPlayer(const Player& p);
+    void leftGateClosed();
+    void rightGateClosed();
+
 
     // Internal builders for each screen
     void buildFirstScreen();
@@ -149,6 +155,9 @@ public:
     void initFirstScreenSwitches();
     void updateSwitchStates(const Player& p1, const Player& p2);
     void applySwitchEffect(const SwitchData& s, bool active);
+
+	// Update gate states on first screen based on players' positions
+    void updateFirstScreenGates(const Player& p1, const Player& p2);
 
 
     void placeBombAt(int x, int y);

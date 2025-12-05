@@ -500,10 +500,11 @@ void Game::updateLogic()
 	if (!playerIsReadyForNextScreen(player2))
 		collectItemIfPossible(player2);
 
-	if (currentScreen.isFirstScreen())
+	if (currentScreen.isFirstScreen()) {
 		currentScreen.updateSwitchStates(player1, player2);
-	
-
+		currentScreen.updateFirstScreenGates(player1, player2);
+	}
+		
 	if (bomb.active)
 	{
 		bomb.ticksLeft--;

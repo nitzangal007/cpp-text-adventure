@@ -149,8 +149,6 @@ void Screens::initFirstScreenSwitches()
 		firstScreenSwitches.push_back(s);
 	}
 
-
-
 }
 
 void Screens::updateSwitchStates(const Player& p1, const Player& p2)
@@ -211,6 +209,12 @@ void Screens::applySwitchEffect(const SwitchData& s, bool active)
 	}
 }
 
+void Screens::updateFirstScreenGates(const Player& p1, const Player& p2)
+{
+	handleGateForPlayer(p1);
+	handleGateForPlayer(p2);
+}
+
 
 void Screens::placeBombAt(int x, int y)									
 {
@@ -260,6 +264,9 @@ void Screens::resetCurrent()
 	if (current == ScreenId::First)
 	{
 		buildFirstScreen();
+		leftEntranceClosed = false;
+		rightEntranceClosed = false;
+
 	}
 	else if (current == ScreenId::Second)
 	{
@@ -305,6 +312,45 @@ void Screens::drawCurrent() const
 }
 
 
+
+void Screens::handleGateForPlayer(const Player& p)
+{
+	const Point& pos = p.getPosition();
+	int x = pos.getX();
+	int y = pos.getY();
+	if (!leftEntranceClosed &&
+		(y == 18) &&
+		(x == 11 || x == 12))
+	{
+		leftGateClosed();
+	}
+
+	if (!rightEntranceClosed &&
+		(y == 18) &&
+		(x == 16 || x == 17))
+	{
+		rightGateClosed();
+	}
+}
+
+void Screens::rightGateClosed()
+{
+	if (rightEntranceClosed || !isFirstScreen())
+		return;
+	rightEntranceClosed = true;
+	int screenIndex = static_cast<int>(current);
+	boards[screenIndex][18][16] = WALL;
+	boards[screenIndex][18][17] = WALL;
+}
+void Screens::leftGateClosed()
+{
+	if (leftEntranceClosed || !isFirstScreen())
+		return;
+	leftEntranceClosed = true;
+	int screenIndex = static_cast<int>(current);
+	boards[screenIndex][18][11] = WALL;
+	boards[screenIndex][18][12] = WALL;
+}
 
 void Screens::buildFirstScreen()
 {
