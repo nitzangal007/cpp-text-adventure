@@ -156,5 +156,6 @@ public:
     // (radius: Game decides value, e.g. from exercise spec)
     void clearExplosionArea(const Point& center, int radius);
 
+    void resetCurrent();
 
 };

@@ -33,7 +33,7 @@ void Game::updatePlayerMovement(Player& player)
 	if (currentScreen.isDoor(nextPos) && player.hasKey())
 	{
 		currentScreen.makePassage(nextPos);
-		player.removeKey();
+		player.removeHeldItem();
 		player.move();
 	}
 	else if (isExitWaitPosition(nextPos))
@@ -64,6 +64,11 @@ void Game::updatePlayerMovement(Player& player)
 void Game::collectItemIfPossible(Player& player)
 {
 	const Point& pos = player.getPosition();
+
+	// If player already holds any item – do NOT pick up a new one
+	if (player.hasKey() || player.hasBomb() || player.hasTorch())
+		return;
+
 	if (currentScreen.isKey(pos))
 	{
 		player.collectKey();
@@ -71,11 +76,14 @@ void Game::collectItemIfPossible(Player& player)
 	}
 	else if (currentScreen.isBomb(pos))
 	{
-		if (bomb.active && pos.getX() == bomb.pos.getX() &&
+		// Do not "collect" an already placed active bomb on the board
+		if (bomb.active &&
+			pos.getX() == bomb.pos.getX() &&
 			pos.getY() == bomb.pos.getY())
 		{
 			return;
 		}
+
 		player.collectBomb();
 		currentScreen.makePassage(pos);
 	}
@@ -85,22 +93,16 @@ void Game::collectItemIfPossible(Player& player)
 		currentScreen.makePassage(pos);
 	}
 }
+
 void Game::drawStatusBar()
 {
 	gotoxy(0, Screens::MAX_Y-4); 
 
-	char key = player1.hasKey() ? Screens::KEY : Screens::EMPTY_SPACE;
-	char bomb = player1.hasBomb() ? Screens::BOMB : Screens::EMPTY_SPACE;
-	char torch = player1.hasTorch() ? Screens::TORCH : Screens::EMPTY_SPACE;
 
-	char key2 = player2.hasKey() ? Screens::KEY : Screens::EMPTY_SPACE;
-	char bomb2 = player2.hasBomb() ? Screens::BOMB : Screens::EMPTY_SPACE;
-	char torch2 = player2.hasTorch() ? Screens::TORCH : Screens::EMPTY_SPACE;
-
-	std::cout << "Player 1: Key[" << key << "] Bomb[" << bomb << "] Torch[" << torch << "]" << std::endl;
+	std::cout << "Player 1 holding: [" << player1.getHeldItem() << "]";
 
 	gotoxy(0, Screens::MAX_Y-1); 
-	std::cout << "Player 2: Key[" << key2 << "] Bomb[" << bomb2 << "] Torch[" << torch2 << "]";
+	std::cout << "Player 2 holding: [" << player2.getHeldItem() << "]";
 }
 
 void Game::tryPlaceBomb(Player& player)
@@ -115,7 +117,7 @@ void Game::tryPlaceBomb(Player& player)
 		bomb.active = true;
 		bomb.pos = player.getPosition();
 		bomb.ticksLeft = 5; 
-		player.removeBomb();
+		player.removeHeldItem();
 		}
 	
 	int x = bomb.pos.getX();
@@ -138,15 +140,13 @@ void Game::explodeBomb()
 	currentScreen.clearExplosionArea(center, RADIUS);
 
 
-	if (isPlayerInExplosion(player1, center, R2))
-	{
-		player1.reset(player1Start);
-	}
+	bool p1Dead = isPlayerInExplosion(player1, bomb.pos, R2);
+	bool p2Dead = isPlayerInExplosion(player2, bomb.pos, R2);
 
-
-	if (isPlayerInExplosion(player2, center, R2))
+	if (p1Dead || p2Dead)
 	{
-		player2.reset(player2Start);
+		resetCurrentGame();
+		return;
 	}
 
 	
@@ -163,6 +163,17 @@ bool Game::isPlayerInExplosion(const Player& player, const Point& center, int ra
 	return (dx * dx + dy * dy <= radiusSquared);
 }
 
+void Game::resetCurrentGame()
+{
+	currentScreen.resetCurrent();
+	player1.reset(player1Start);
+	player2.reset(player2Start);
+	bomb.active = false;
+	bomb.ticksLeft = 0;
+	player1ReadyForNextScreen = false;
+	player2ReadyForNextScreen = false;
+}
+
 bool Game::playerIsReadyForNextScreen(const Player& player) const
 {
 	if (Player::Id::First == player.getId())
@@ -177,8 +188,15 @@ bool Game::playerIsReadyForNextScreen(const Player& player) const
 
 bool Game::isExitWaitPosition(const Point& p) const
 {
+	Screens::ScreenId current = currentScreen.getCurrentScreen();
+
 	for (const ExitInfo& exit : exits)
 	{
+		
+		if (exit.from != current)
+			continue;
+
+	
 		if (exit.waitPos.getX() == p.getX() &&
 			exit.waitPos.getY() == p.getY())
 		{
@@ -186,8 +204,8 @@ bool Game::isExitWaitPosition(const Point& p) const
 		}
 	}
 	return false;
-	
 }
+
 
 void Game::tryAdvanceToNextScreen()
 {
@@ -383,7 +401,6 @@ void Game::moveObstacleGroup(const std::vector<Point>& group, int dx, int dy)		/
 		currentScreen.setCharAt(target, Screens::OBSTACLE);
 	}
 }
-
 
 
 void Game::initGame() {

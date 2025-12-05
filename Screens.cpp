@@ -8,7 +8,7 @@ namespace
 		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
 		 "W                 WWWWWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 1
 		 "W     *   *                                                  W                 W", // 2
-		 "W                 WWWWWWWWWWWWWWWWWWWWWWWWWWWW WWWWW         W                 W", // 3
+		 "W                 WWWWW WWWWWWWWWWWWWWWWWWWWWW WWWWW         W                 W", // 3
 		 "W          J      WWWW @ WWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 4
 		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W", // 5
 		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W", // 6
@@ -18,7 +18,7 @@ namespace
 		 "W         W  WWWWWWWWWWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 10
 		 "W         W  WWW  *  WWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 11
 		 "W         W  WWW  W WWWWWWWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 12
-		 "W         W  WWW  W WWWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 13
+		 "W         W  WWW  W WWWWWWWWWWWWWWWWWWWWWW                                     W", // 13
 		 "W         W  WWW  W                                W         W        K        W", // 14
 		 "W         W  WWW  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW   WWWWWWWWWWWWWWWWWWWWWW", // 15
 		 "W         W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW            W   W                    W", // 16
@@ -252,6 +252,25 @@ void Screens::clearExplosionArea(const Point& center, int radius)
 		}
 	}
 }
+
+void Screens::resetCurrent()
+{
+	const int screenIndex = static_cast<int>(current);
+	// Rebuild the current screen from the template
+	if (current == ScreenId::First)
+	{
+		buildFirstScreen();
+	}
+	else if (current == ScreenId::Second)
+	{
+		buildSecondScreen();
+	}
+	// else if (current == ScreenId::Final)
+	// {
+	// 	buildFinalScreen();
+	// }
+}
+
 
 
 

@@ -14,12 +14,9 @@ private:
     Point pos;        // current position on the board
     char symbol;      // how the player is drawn on screen
 	char keys[NUM_KEYS]; // control keys for this player
-    
+	char heldItem = ' '; // currently held item symbol (if any)
 
-    // inventory / state flags (you'll decide what you really need)
-    bool hasKeyFlag = false;
-    bool hasTorchFlag = false;
-    bool hasBombFlag = false;
+    
 
 public:
     // constructor
@@ -69,36 +66,35 @@ public:
 
     // inventory interface (you can refine this later)
     bool hasKey() const{
-		return hasKeyFlag;
+        return heldItem == 'K';
 	}
     void collectKey() {
-		hasKeyFlag = true;
+		heldItem = 'K';
     }
-    void removeKey() {
-		hasKeyFlag = false;
-    }
+   
 
     bool hasTorch() const {
-		return hasTorchFlag;
+        return heldItem == '!';
     }
     void collectTorch() {
-		hasTorchFlag = true;
+        heldItem = '!';
     }
-    void removeTorch() {
-        hasTorchFlag = false;   
-    }
+  
 
     bool hasBomb() const {
-		return hasBombFlag;
+        return heldItem == '@';
     }
     void collectBomb() {
-		hasBombFlag = true;   
+        heldItem = '@';
     }
-    void removeBomb() {
-		hasBombFlag = false;    
-    }
-
     
+
+	char getHeldItem() const {
+		return heldItem;
+	}
+    void removeHeldItem() {
+        heldItem = ' ';
+    }
 
     void reset(const Point& startPos);
 };

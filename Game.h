@@ -123,6 +123,8 @@ public:
         const Point& center,
         int radiusSquared);
 
+	void resetCurrentGame();
+
 private:
     // ---- Small helper functions for multi–screen logic ----
 

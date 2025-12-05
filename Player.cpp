@@ -23,8 +23,6 @@ void Player::reset(const Point& startPos)
 {
     pos = startPos;
     pos.setDirection(Direction::STAY);
-
-    hasKeyFlag = false;
-    hasBombFlag = false;
-    hasTorchFlag = false;
+	removeHeldItem();
+    
 }
