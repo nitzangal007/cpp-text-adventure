@@ -420,3 +420,6 @@ Screen.h
 cpp-texy-adventure.vcxproj
 cpp-texy-adventure.sln
 cpp-texy-adventure.vcxproj.filters
+cpp-text-adventure.sln
+cpp-text-adventure.vcxproj
+cpp-text-adventure.vcxproj.filters

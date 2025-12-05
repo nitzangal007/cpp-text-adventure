@@ -9,6 +9,18 @@ void Game::updatePlayerMovement(Player& player)
 	Point nextPos = player.getPosition();
 	nextPos.move();
 
+
+	Player& other = getOtherPlayer(player);
+	Point otherPos = other.getPosition();
+	if (nextPos.getX() == otherPos.getX() &&
+		nextPos.getY() == otherPos.getY())
+	{
+		player.stop();
+		return;
+	}
+
+
+
 	if (currentScreen.isObstacle(nextPos))
 	{
 		bool Pushable = obstaclePushable(nextPos, player);
@@ -246,74 +258,135 @@ Player& Game::getOtherPlayer(const Player& p)
 }
 
 
-bool Game::obstaclePushable(const Point& nextPos, Player& player)				//check if obstacle(s) can be pushed
+bool Game::obstaclePushable(const Point& nextPos, Player& player)   // check if obstacle(s) can be pushed
 {
-	int dx = nextPos.getX() - player.getPosition().getX();
-	int dy = nextPos.getY() - player.getPosition().getY();
+	
 	Point currPos = player.getPosition();
-	Point obstacleCell = nextPos;
+	int dx = nextPos.getX() - currPos.getX();
+	int dy = nextPos.getY() - currPos.getY();
+	Point obstacleCell = nextPos;  
 
-	if (std::abs(dx) + std::abs(dy) != 1)								// we need to push in straight line		
+	
+	if (std::abs(dx) + std::abs(dy) != 1)
 		return false;
 
-
+	
 	std::vector<Point> group;
 	collectObstacleGroup(nextPos, group);
 
+	if (group.empty())
+		return false; 
+
 	int obstacleSize = (int)group.size();
 
-	int availableForce = 1; 
+	
+
+	int availableForce = 1;         
 
 	Player& other = getOtherPlayer(player);
+	Point otherPos = other.getPosition();
+	Point otherNext = otherPos;
+	otherNext.move();              
 
-	Point p1 = player.getPosition();
-	Point p2 = other.getPosition();
+	int odx = otherNext.getX() - otherPos.getX();
+	int ody = otherNext.getY() - otherPos.getY();
 
-	int dist = std::abs(p1.getX() - p2.getX()) +
-		std::abs(p1.getY() - p2.getY());
-	bool adjacent = (dist == 1);
 
-	Point next1 = p1; next1.move();
-	Point next2 = p2; next2.move();
+	bool sameDir = (odx == dx && ody == dy);
 
-	int dx1 = next1.getX() - p1.getX();
-	int dy1 = next1.getY() - p1.getY();
-	int dx2 = next2.getX() - p2.getX();
-	int dy2 = next2.getY() - p2.getY();
+	if (sameDir)
+	{
+		
+		bool otherBehind =
+			(otherPos.getX() == currPos.getX() - dx) &&
+			(otherPos.getY() == currPos.getY() - dy);
 
-	bool sameDir = (dx1 == dx2 && dy1 == dy2);
+		if (otherBehind)
+		{
+			++availableForce;
+		}
+		else
+		{
+		
+			int dist = std::abs(otherPos.getX() - currPos.getX()) +
+				std::abs(otherPos.getY() - currPos.getY());
+			bool adjacent = (dist == 1);  
 
-	if (adjacent && sameDir)
-		availableForce += 1;          
+			if (adjacent)
+			{
+				
+				if (currentScreen.isObstacle(otherNext))
+				{
+					
+					bool inSameGroup = false;
+					for (size_t i = 0; i < group.size(); ++i)
+					{
+						if (group[i].getX() == otherNext.getX() &&
+							group[i].getY() == otherNext.getY())
+						{
+							inSameGroup = true;
+							break;
+						}
+					}
 
+					if (inSameGroup)
+					{
+						++availableForce;   
+					}
+				}
+			}
+		}
+	}
+
+	
 	if (availableForce < obstacleSize)
-		return false; 
+		return false;
+
+
 
 	for (size_t i = 0; i < group.size(); ++i)
 	{
-		Point cell = group[i];
+		const Point& cell = group[i];
 		Point target(cell.getX() + dx, cell.getY() + dy, 0, 0, ' ');
 
+		
 		if (!currentScreen.isInside(target))
 			return false;
+
+		if (target.getX() == otherPos.getX() &&
+			target.getY() == otherPos.getY())
+		{
+			return false;
+		}
+
+		
 		if (currentScreen.isWall(target) || currentScreen.isDoor(target))
 			return false;
 
-		if (currentScreen.isObstacle(target))
-			return false;
 		
-			
+		if (currentScreen.isObstacle(target))
+		{
+			bool inSameGroup = false;
+			for (size_t j = 0; j < group.size(); ++j)
+			{
+				if (group[j].getX() == target.getX() &&
+					group[j].getY() == target.getY())
+				{
+					inSameGroup = true;
+					break;
+				}
+			}
 
-		int obstacleSize = (int)group.size();
-
-
-
-		moveObstacleGroup(group, dx, dy);
-
-
-
-
+			if (!inSameGroup)
+				return false; 
+		}
 	}
+
+
+
+	moveObstacleGroup(group, dx, dy);
+
+	return true;
 }
 void Game::collectObstacleGroup(const Point& start, std::vector<Point>& group) const	// collect all connected obstacles
 {
