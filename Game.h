@@ -103,8 +103,6 @@ public:
     // Handle movement and collisions for a single player
     void updatePlayerMovement(Player& player);
 
-    // Update rows that depend on switches (raising/lowering walls, etc.)
-    void updateSwitchRows();
 
     // If player stands on a collectible item – pick it up
     void collectItemIfPossible(Player& player);
