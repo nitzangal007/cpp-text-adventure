@@ -98,7 +98,7 @@ namespace
 
 
 
-// Check if the given position is free for player movement (not wall, obstacle, or door)
+
 bool Screens::isFreeCellForPlayer(const Point& p) const
 {
 	if (!isInside(p)) return false;
@@ -107,7 +107,7 @@ bool Screens::isFreeCellForPlayer(const Point& p) const
 	return true;
 }
 
-// First screen switches initialization
+
 void Screens::initFirstScreenSwitches()
 {
 	firstScreenSwitches.clear();
@@ -179,13 +179,13 @@ void Screens::initFirstScreenSwitches()
 	}
 
 }
-// Update switch states based on players' positions
+
 void Screens::updateSwitchStates(const Player& p1, const Player& p2)
 {
 	if (!isFirstScreen())
 		return;
 
-	for (auto& s : firstScreenSwitches) 
+	for (auto& s : firstScreenSwitches)
 	{
 		bool on = (p1.getPosition() == s.position || p2.getPosition() == s.position);
 
@@ -222,7 +222,7 @@ void Screens::updateSwitchStates(const Player& p1, const Player& p2)
 	}
 }
 
-// Apply the effect of a switch (activate or deactivate walls)
+
 void Screens::applySwitchEffect(const SwitchData& s, bool active)
 {
 	int screenIndex = static_cast<int>(current);
@@ -238,14 +238,13 @@ void Screens::applySwitchEffect(const SwitchData& s, bool active)
 	}
 }
 
-// Update gate states on first screen based on players' positions
 void Screens::updateFirstScreenGates(const Player& p1, const Player& p2)
 {
 	handleGateForPlayer(p1);
 	handleGateForPlayer(p2);
 }
 
-// Place a bomb at the specified coordinates
+
 void Screens::placeBombAt(int x, int y)									
 {
 
@@ -257,7 +256,6 @@ void Screens::placeBombAt(int x, int y)
 
 }
 
-// Clear explosion area around the center point with the given radius
 void Screens::clearExplosionArea(const Point& center, int radius)
 {
 	int screen = static_cast<int>(current);
@@ -288,7 +286,6 @@ void Screens::clearExplosionArea(const Point& center, int radius)
 	}
 }
 
-// Reset the current screen to its initial state
 void Screens::resetCurrent()
 {
 	const int screenIndex = static_cast<int>(current);

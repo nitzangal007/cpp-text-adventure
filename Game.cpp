@@ -1,7 +1,7 @@
 ﻿#include "Game.h"
 #include <Windows.h>
 
-// Internal helper to get the other player
+
 void Game::updatePlayerMovement(Player& player)
 {
 	if (playerIsReadyForNextScreen(player))
@@ -77,7 +77,6 @@ void Game::updatePlayerMovement(Player& player)
 	}
 }
 
-// If player stands on a collectible item – pick it up
 void Game::collectItemIfPossible(Player& player)
 {
 	const Point& pos = player.getPosition();
@@ -111,7 +110,6 @@ void Game::collectItemIfPossible(Player& player)
 	}
 }
 
-// Draw status bar at the bottom of the screen
 void Game::drawStatusBar()
 {
 	gotoxy(0, Screens::MAX_Y-4); 
@@ -123,7 +121,6 @@ void Game::drawStatusBar()
 	std::cout << "Player 2 holding: [" << player2.getHeldItem() << "]";
 }
 
-// Try to place a bomb at the player's current position
 void Game::tryPlaceBomb(Player& player)
 {
 	if(bomb.active)
@@ -145,7 +142,6 @@ void Game::tryPlaceBomb(Player& player)
 
 }
 
-// Handle bomb explosion: clear area, hurt players, etc.
 void Game::explodeBomb()
 {
 
@@ -174,7 +170,6 @@ void Game::explodeBomb()
 	bomb.ticksLeft = 0;
 }
 
-// Check if a given player is in the explosion radius (helper)
 bool Game::isPlayerInExplosion(const Player& player, const Point& center, int radiusSquared)
 {
 	Point p = player.getPosition();
@@ -184,7 +179,6 @@ bool Game::isPlayerInExplosion(const Player& player, const Point& center, int ra
 	return (dx * dx + dy * dy <= radiusSquared);
 }
 
-// Reset the current game state to the beginning of the current screen
 void Game::resetCurrentGame()
 {
 	currentScreen.resetCurrent();
@@ -196,7 +190,6 @@ void Game::resetCurrentGame()
 	player2ReadyForNextScreen = false;
 }
 
-// Is this player already standing on waitPos and ready for next screen?
 bool Game::playerIsReadyForNextScreen(const Player& player) const
 {
 	if (Player::Id::First == player.getId())
@@ -209,7 +202,6 @@ bool Game::playerIsReadyForNextScreen(const Player& player) const
 	}
 }
 
-// Check if a point is exactly the "waitPos" (one step after the door)
 bool Game::isExitWaitPosition(const Point& p) const
 {
 	Screens::ScreenId current = currentScreen.getCurrentScreen();
@@ -230,7 +222,7 @@ bool Game::isExitWaitPosition(const Point& p) const
 	return false;
 }
 
-// Try to advance to the next screen if both players are ready
+
 void Game::tryAdvanceToNextScreen()
 {
 	for (const ExitInfo& exit : exits)
@@ -276,7 +268,6 @@ void Game::tryAdvanceToNextScreen()
 	}
 }
 
-// Get reference to the other player
 Player& Game::getOtherPlayer(const Player& p)
 {
 	if (p.getId() == Player::Id::First)
@@ -285,7 +276,6 @@ Player& Game::getOtherPlayer(const Player& p)
 		return player1;
 }
 
-// check if obstacle(s) can be pushed
 bool Game::obstaclePushable(const Point& nextPos, Player& player)   // check if obstacle(s) can be pushed
 {
 	
@@ -416,8 +406,6 @@ bool Game::obstaclePushable(const Point& nextPos, Player& player)   // check if 
 
 	return true;
 }
-
-// Collect all connected obstacles starting from 'start' position
 void Game::collectObstacleGroup(const Point& start, std::vector<Point>& group) const	// collect all connected obstacles
 {
 	const Direction dirs[4] = {
@@ -490,7 +478,6 @@ void Game::collectObstacleGroup(const Point& start, std::vector<Point>& group) c
 
 }
 
-// Move all obstacles in the group
 void Game::moveObstacleGroup(const std::vector<Point>& group, int dx, int dy)		// move all obstacles in the group 
 {
 	
@@ -506,7 +493,7 @@ void Game::moveObstacleGroup(const std::vector<Point>& group, int dx, int dy)		/
 	}
 }
 
-// Initialize the game state
+
 void Game::initGame() {
 	// Initialize game state, load resources, etc.
 	cls();
@@ -520,8 +507,6 @@ void Game::initGame() {
 	drawStatusBar();
 	
 }
-
-// Update all game logic for one tick
 void Game::updateLogic()
 {
 	updatePlayerMovement(player1);
@@ -551,8 +536,6 @@ void Game::updateLogic()
 	tryAdvanceToNextScreen();
 
 }
-
-// Render the current game state
 void Game::render()
 {
 	currentScreen.drawCurrent();
@@ -564,7 +547,6 @@ void Game::render()
 	}
 }
 
-// Top-level entry point: show menu, start game, etc.
 void Game::run()
 {
 	Menu menu;
@@ -592,8 +574,6 @@ void Game::run()
 		}
 	}
 }
-
-// Main game loop (single run of the game)	
 void Game::runGame()
 {
 	const char ESC = 27;
