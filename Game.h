@@ -67,8 +67,8 @@ public:
             Screens::ScreenId::Second,  
             Point(43, 20, 0, 0, ' '),    
             Point(43, 21, 0, 0, ' '),  
-			player1Start,
-			player2Start
+            Point(54, 9, 0, 0, '$'),
+            Point(36, 9, 0, 0, '&')
                 
         };
 
@@ -77,7 +77,7 @@ public:
             Screens::ScreenId::Final,
             Point(43, 20, 0, 0, ' '),
             Point(43, 21, 0, 0, ' '),
-            Point(25, 5, 0, 0, '$'),
+            Point(75, 1, 0, 0, '$'),
             Point(30, 5, 0, 0, '&')
         };
 
