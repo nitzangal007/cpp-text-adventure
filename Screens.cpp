@@ -38,22 +38,22 @@ namespace
 		 "WWWWWWW       *       WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 1
 		 "WWWWWWW               WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 2
 		 "WWWWWWW       *       ****  @ WW          WWWW        WWW         @     w     WW", // 3
-		 "WWWWWWW       *       ****    WW      4   WWWW    3   WWW               *     WW", // 4
+		 "WWWWWWW       *       ****    WW      4   WWWW    3   WWW               *   //WW", // 4
 		 "WWWWWWW               wwwwwwwwww          WWWW        WWW***WW***WW***WWW     WW", // 5
 		 "WWWWWWW       *       wwwwwwwwww          WWWW        WWW***WW***WW***WWW     WW", // 6
 		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW        WWWWWWWWWWWWWWWWWWW     WW", // 7
 		 "WWWWWWWWWWWWWWWWWWWWWWWW               WWWWWWW        WWWWWWWWWWWWWWWWWWW     WW", // 8
-		 "WW   *     *   WWWWWWWWW               WWWWWWWWWWWWWWW             W          WW", // 9
+		 "WW   *     *   WWWWWWWWW               WWWWWWWWWWWWWWW             W        //WW", // 9
 		 "WW   W     W   WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW      ?      W          WW", // 10
 		 "WW *   ***     WWWWWWWWW@    @WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW**WWW**WWWWWWWWW", // 11
 		 "WW   W   W   * WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 12
 		 "WW   W   W   W WWWWWWWWW@    @WWWWWWWWWWWWWWWWWWWWWWWW H                      WW", // 13   // NUMBER 4
 		 "WW *   *   *   WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 14
 		 "WW   W   W    WWWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 15
-		 "WW             WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW        //   //   //    WW", // 16
+		 "WW             WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW    //  //   //   //    WW", // 16
 		 "WWWWWWWW WWWWWWWwwwwwwww      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 17
 		 "W                             WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 18
-		 "W                             WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 19
+		 "W                           // WWWWWWWWWWWWWWWWWWWWWWWW                       WW", // 19
 		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW1WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 20 door '1'
 		 "                                                                                ", // 21
 		 "                                                                                ", // 22

@@ -13,12 +13,14 @@ void Game::updatePlayerMovement(Player& player)
 	Player& other = getOtherPlayer(player);
 	Point otherPos = other.getPosition();
 	if (nextPos.getX() == otherPos.getX() &&
-		nextPos.getY() == otherPos.getY())
+		nextPos.getY() == otherPos.getY() && !isExitWaitPosition(nextPos))
 	{
 		player.stop();
 		return;
 	}
 
+	
+		
 
 
 	if (currentScreen.isObstacle(nextPos))
@@ -225,6 +227,7 @@ void Game::tryAdvanceToNextScreen()
 	{
 		if (currentScreen.getCurrentScreen() != exit.from)
 			continue;
+		
 		if (!playerIsReadyForNextScreen(player1) ||
 			!playerIsReadyForNextScreen(player2))
 		{
@@ -232,6 +235,9 @@ void Game::tryAdvanceToNextScreen()
 		}
 
 		currentScreen.setCurrentScreen(exit.to);
+
+		player1Start = exit.nextStartP1;
+		player2Start = exit.nextStartP2;
 
 		player1.reset(exit.nextStartP1);
 		player2.reset(exit.nextStartP2);
