@@ -18,6 +18,11 @@ class Game
         int   ticksLeft = 0;      // time left until explosion
     };
 
+    struct AutoBomb {
+        Point center;          // ????? ????? ????????? (B)
+        int   ticksLeft = 0;   // ??? ????? ????? ?? ???? "???????"
+    };
+
     // Describes how to move from one screen to the next
     struct ExitInfo {
         Screens::ScreenId from;      // which screen we exit from
@@ -42,6 +47,7 @@ class Game
 
     // Bomb state
     Bomb bomb;
+    std::vector<AutoBomb> autoBombs;
 
     // Exit/multi–screen navigation data
     ExitInfo exits[Screens::NUM_SCREENS];
@@ -68,7 +74,7 @@ public:
             Point(43, 20, 0, 0, ' '),    
             Point(43, 21, 0, 0, ' '),  
             Point(54, 9, 0, 0, '$'),
-            Point(36, 9, 0, 0, '&')
+            Point(26, 9, 0, 0, '&')
                 
         };
 
@@ -125,6 +131,8 @@ public:
 
 	void resetCurrentGame();
 
+   
+
 private:
     // ---- Small helper functions for multi–screen logic ----
 
@@ -146,4 +154,7 @@ private:
     void moveObstacleGroup(const std::vector<Point>& group, int dx, int dy);
 
     Player& getOtherPlayer(const Player& p);
+
+    bool handleAutoBombs();
+
 };

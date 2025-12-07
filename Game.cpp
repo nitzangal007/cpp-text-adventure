@@ -186,6 +186,7 @@ void Game::resetCurrentGame()
 	bomb.ticksLeft = 0;
 	player1ReadyForNextScreen = false;
 	player2ReadyForNextScreen = false;
+	autoBombs.clear();
 }
 
 bool Game::playerIsReadyForNextScreen(const Player& player) const
@@ -262,6 +263,64 @@ Player& Game::getOtherPlayer(const Player& p)
 	else
 		return player1;
 }
+
+bool Game::handleAutoBombs()
+{
+	// 1. פצצות חדשות שמופעלות בפריים הזה ע"י סוויצ'ים
+	std::vector<Point> centers;
+	currentScreen.collectPendingAutoBombs(centers);
+
+	constexpr int AUTO_BOMB_DELAY = 19;
+
+	for (const Point& c : centers)
+	{
+		AutoBomb ab;
+		ab.center = c;
+		ab.ticksLeft = AUTO_BOMB_DELAY;
+		autoBombs.push_back(ab);
+	}
+
+	// אם אין בכלל פצצות אוטומטיות פעילות – אין מה לעשות
+	if (autoBombs.empty())
+		return false;
+
+	const int RADIUS = 3;
+	const int R2 = RADIUS * RADIUS;
+
+	bool someoneDied = false;
+
+	for (size_t i = 0; i < autoBombs.size(); )
+	{
+		AutoBomb& ab = autoBombs[i];
+
+		if (ab.ticksLeft > 0)
+		{
+			// עוד לא הגיע זמן הפיצוץ – רק להוריד טיק
+			--ab.ticksLeft;
+			++i;
+			continue;
+		}
+
+		currentScreen.clearExplosionArea(ab.center, RADIUS);
+
+		// זמן פיצוץ – בודקים אם שחקנים ברדיוס
+		bool p1Dead = isPlayerInExplosion(player1, ab.center, R2);
+		bool p2Dead = isPlayerInExplosion(player2, ab.center, R2);
+
+		if (p1Dead || p2Dead)
+			someoneDied = true;
+		
+		// עכשיו מוחקים את ה-B מהמפה
+		currentScreen.setCharAt(ab.center, Screens::EMPTY_SPACE);
+
+		// ומוחקים את הפצצה מהרשימה
+		autoBombs.erase(autoBombs.begin() + i);
+		// לא מגדילים i כי מחקנו את האיבר הנוכחי
+	}
+	return someoneDied;
+}
+
+
 
 
 bool Game::obstaclePushable(const Point& nextPos, Player& player)   // check if obstacle(s) can be pushed
@@ -487,8 +546,17 @@ void Game::initGame() {
 	cls();
 	currentScreen.init();
 	currentScreen.initFirstScreenSwitches();
+	currentScreen.initSecondScreenSwitches();
+	
+	currentScreen.setCurrentScreen(Screens::ScreenId::Second);
+	player1Start = Point(54, 9, 0, 0, '$'),   // דוגמה – קואורדינטות במסך 2
+	player2Start = Point(6, 18, 0, 0, '&');
+
 	player1.reset(player1Start);
 	player2.reset(player2Start);
+	/*currentScreen.initFirstScreenSwitches();
+	player1.reset(player1Start);
+	player2.reset(player2Start);*/
 	bomb.active = false;
 	player1.draw();
 	player2.draw();
@@ -506,11 +574,16 @@ void Game::updateLogic()
 	if (!playerIsReadyForNextScreen(player2))
 		collectItemIfPossible(player2);
 
+	currentScreen.updateSwitchStates(player1, player2);
 	if (currentScreen.isFirstScreen()) {
-		currentScreen.updateSwitchStates(player1, player2);
 		currentScreen.updateFirstScreenGates(player1, player2);
 	}
-		
+	if (handleAutoBombs())
+	{
+		resetCurrentGame();
+		return;
+	}
+	
 	if (bomb.active)
 	{
 		bomb.ticksLeft--;
