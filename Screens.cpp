@@ -7,24 +7,24 @@ namespace
 		//01234567890123456789012345678901234567890123456789012345678901234567890123456789
 		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
 		 "W                 WWWWWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 1
-		 "W     *   *                                                  W                 W", // 2
-		 "W                 WWWWW WWWWWWWWWWWWWWWWWWWWWW WWWWW         W                 W", // 3
-		 "W          J      WWWW @ WWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 4
-		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W", // 5
+		 "W                 WWWW                                       W                 W", // 2
+		 "W                 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW         W                 W", // 3
+		 "W                 WWWW   WWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 4
+		 "W                 WWWW   @WWWWWWWWWWWWWWWW         W         W                 W", // 5
 		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W", // 6
-		 "W        *        WWWW   WWWWWWWWWWWWWWWWW         W         W                 W", // 7
-		 "WWWWWWWWW*WWWWWWWWWWWW   WWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 8
+		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W", // 7
+		 "WWWWWWW**WWWWWWWWWWWWW   WWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 8
 		 "W         W  *          WWWWWWWWWWWWWWWWWW         W         W                 W", // 9
-		 "W         W  WWWWWWWWWWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 10
-		 "W         W  WWW  *  WWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 11
-		 "W         W  WWW  W WWWWWWWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 12
-		 "W         W  WWW  W WWWWWWWWWWWWWWWWWWWWWW                                     W", // 13
-		 "W         W  WWW  W                                W         W        K        W", // 14
-		 "W         W  WWW  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW   WWWWWWWWWWWWWWWWWWWWWW", // 15
-		 "W         W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW            W   W                    W", // 16
-		 "W         W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW   W        W   W                    W", // 17
-		 "W         W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW   W        W   W                    W", // 18
-		 "W         ?       WWWWWWWWWWWWWWWWWWWWWWWW   W                                 W", // 19
+		 "W  WWWW   W  WWWWWWWWWWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 10
+		 "W**    *  W  WWW  *  WWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 11
+		 "W  *  * **W  WWW  W WWWWWWWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 12
+		 "W  W  W **W  WWW  W WWWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 13
+		 "W  W  W   W  WWW  W                                W         W        K        W", // 14
+		 "W   ** *  W  WWW  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW   WWWWWWWWWWWWWWWWWWWWWW", // 15
+		 "WWW   W   W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW            W   W                    W", // 16
+		 "W     W   W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW   W        W   W                    W", // 17
+		 "W  * *W   W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW   W        W   W                    W", // 18
+		 "W   *             WWWWWWWWWWWWWWWWWWWWWWWW   W                                 W", // 19
 		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW1WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 20 door '1'
 		 "                                                                                ", // 21
 		 "                                                                                ", // 22
@@ -61,6 +61,35 @@ namespace
 		 "                                                                                "  // 24
 
 	};
+	constexpr const char* FINAL_SCREEN_TEMPLATE[Screens::MAX_Y] = {
+		//01234567890123456789012345678901234567890123456789012345678901234567890123456789
+		 "################################################################################", // 0
+		 "#  ##########################################################################  #", // 1
+		 "#      ##################################################################      #", // 2
+		 "#        ##############################################################        #", // 3
+		 "#        ##                                                          ##        #", // 4
+		 "#        ##                                                          ##        #", // 5
+		 "#        ##                                                          ##        #", // 6
+		 "#        ##                                                          ##        #", // 7
+		 "#        ##                                                          ##        #", // 8
+		 "#        ##     ***   ***  *   * *****    ***  *   * ***** ****      ##        #", // 9
+		 "#        ##    *   * *   * ** ** *       *   * *   * *     *   *     ##        #", // 10
+		 "#        ##    *     *   * * * * *       *   * *   * *     *   *     ##        #", // 11
+		 "#        ##    * *** ***** *   * ****    *   * *   * ****  ****      ##        #", // 12
+		 "#        ##    *   * *   * *   * *       *   *  * *  *     * *       ##        #", // 13
+		 "#        ##    *   * *   * *   * *       *   *  * *  *     *  *      ##        #", // 14
+		 "#        ##     ***  *   * *   * *****    ***    *   ***** *   *     ##        #", // 15
+		 "#        ##                                                          ##        #", // 16
+		 "#        ##                                                          ##        #", // 17
+		 "#        ##                                                          ##        #", // 18
+		 "#        ##                                                          ##        #", // 19
+		 "#        ##                                                          ##        #", // 20
+		 "#        ##############################################################        #", // 21
+		 "#      ##################################################################      #", // 22
+		 "#  ##########################################################################  #", // 23
+		 "################################################################################", // 24
+	};
+
 }
 
 
@@ -96,7 +125,7 @@ void Screens::initFirstScreenSwitches()
 		// 62..68
 		for (int x = 62; x <= 78; ++x)
 			s.affectedWalls.emplace_back(x, y);
-
+		
 		firstScreenSwitches.push_back(s);
 	}
 
@@ -462,10 +491,7 @@ void Screens::resetCurrent()
 	{
 		buildSecondScreen();
 	}
-	// else if (current == ScreenId::Final)
-	// {
-	// 	buildFinalScreen();
-	// }
+
 }
 
 void Screens::updateDoor7ByBinaryPuzzle()
@@ -513,7 +539,7 @@ void Screens::init()
     // For now only first screen is meaningful; we still build all three
     buildFirstScreen();
     buildSecondScreen();
-  //  buildFinalScreen();
+    buildFinalScreen();
 	current = ScreenId::First;
 	pendingAutoBombs.clear();
 
@@ -600,4 +626,16 @@ void Screens::buildSecondScreen()
 	}
 
 	door7Pos.setPosition(71, 11);
+}
+void Screens::buildFinalScreen()
+{
+	const int screenIndex = static_cast<int>(ScreenId::Final);
+	// Copy template into boards[screenIndex]
+	for (int y = 0; y < MAX_Y; ++y)
+	{
+		for (int x = 0; x < MAX_X; ++x)
+		{
+			boards[screenIndex][y][x] = FINAL_SCREEN_TEMPLATE[y][x];
+		}
+	}
 }

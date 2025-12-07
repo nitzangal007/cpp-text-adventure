@@ -1,5 +1,7 @@
 ﻿#include "Game.h"
 #include <Windows.h>
+
+
 void Game::updatePlayerMovement(Player& player)
 {
 	if (playerIsReadyForNextScreen(player))
@@ -228,7 +230,6 @@ void Game::tryAdvanceToNextScreen()
 	{
 		if (currentScreen.getCurrentScreen() != exit.from)
 			continue;
-		
 		if (!playerIsReadyForNextScreen(player1) ||
 			!playerIsReadyForNextScreen(player2))
 		{
@@ -236,9 +237,6 @@ void Game::tryAdvanceToNextScreen()
 		}
 
 		currentScreen.setCurrentScreen(exit.to);
-
-		player1Start = exit.nextStartP1;
-		player2Start = exit.nextStartP2;
 
 		player1.reset(exit.nextStartP1);
 		player2.reset(exit.nextStartP2);
@@ -248,13 +246,28 @@ void Game::tryAdvanceToNextScreen()
 
 		cls();
 		currentScreen.drawCurrent();
-		player1.draw();
-		player2.draw();
-		drawStatusBar();
+
+		if (exit.to == Screens::ScreenId::Final)
+		{
+			
+			currentScreen.drawCurrent();
+
+			gotoxy(18, 18);
+			std::cout << "Press any key to return to the main menu...";
+
+			_getch();      
+			gameOver = true;
+		}
+		else
+		{
+			player1.draw();
+			player2.draw();
+			drawStatusBar();
+		}
+
 		return;
 	}
 }
-
 
 Player& Game::getOtherPlayer(const Player& p)
 {
@@ -584,6 +597,9 @@ void Game::updateLogic()
 		return;
 	}
 	
+
+
+		
 	if (bomb.active)
 	{
 		bomb.ticksLeft--;
@@ -593,13 +609,17 @@ void Game::updateLogic()
 		}
 	}
 	tryAdvanceToNextScreen();
+
 }
 void Game::render()
 {
 	currentScreen.drawCurrent();
-	player1.draw();
-	player2.draw();
-	drawStatusBar();
+	if (currentScreen.getCurrentScreen() != Screens::ScreenId::Final)
+	{
+		player1.draw();
+		player2.draw();
+		drawStatusBar();
+	}
 }
 
 void Game::run()
@@ -663,6 +683,9 @@ void Game::runGame()
 				else if (ch == 'O' || ch == 'o') {
 					tryPlaceBomb(player2);
 				}
+				else if (ch == 'R' || ch == 'r') {
+					resetCurrentGame();
+				}
 				else
 				{
 					player1.handleKeyPress(ch);
@@ -692,6 +715,12 @@ void Game::runGame()
 		if (!paused)
 		{
 			updateLogic();
+			if (gameOver)
+			{
+				gameOver = false;
+				return;
+			}
+				
 			render();
 		}
 

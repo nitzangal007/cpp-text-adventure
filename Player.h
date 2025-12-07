@@ -64,7 +64,8 @@ public:
     void handleKeyPress(char key_pressed);
 
 
-    // inventory interface (you can refine this later)
+    //* inventory interface *
+
     bool hasKey() const{
         return heldItem == 'K';
 	}
@@ -72,7 +73,7 @@ public:
 		heldItem = 'K';
     }
    
-
+    
     bool hasTorch() const {
         return heldItem == '!';
     }
