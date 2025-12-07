@@ -15,12 +15,18 @@ public:
     {
         Point position;
         std::vector<Point> affectedWalls;
+        std::vector<Point> addWhenActive;
+        std::vector<Point> autobombs;
         bool isPermanent;
         bool active = false;
         bool wasOnLastFrame = false;
+        bool oneTime = false;
+        int bitIndex = -1;
 
         SwitchData() {}
     };
+
+    
 
 
     // Tile characters
@@ -34,6 +40,7 @@ public:
     static constexpr char SWITCH_OFF = '\\';
     static constexpr char RIDDLE = '?';
     static const char BOMB_PLANTED = '@';
+    static const char AUTO_BOMB = 'B';
 
 
     // Doors: '1'..'9' (no constant needed, we check by range)
@@ -43,7 +50,7 @@ private:
 
     // Which one we are showing/using now
     ScreenId current = ScreenId::First;
-
+    Point door7Pos;
     //data for first screen
     std::vector<SwitchData> firstScreenSwitches;
     bool leftEntranceClosed = false;
@@ -53,13 +60,16 @@ private:
     void rightGateClosed();
 
 
+    //data for Second screen
+    std::vector<SwitchData> SecondScreenSwitches;
+
     // Internal builders for each screen
     void buildFirstScreen();
     void buildSecondScreen();
     void buildFinalScreen();
     // Internal checkers
 
-
+    std::vector<Point> pendingAutoBombs;
 public:
     Screens();
 
@@ -153,18 +163,24 @@ public:
     }
     // --- Switch logic API for Game ---
     void initFirstScreenSwitches();
+    void initSecondScreenSwitches();
     void updateSwitchStates(const Player& p1, const Player& p2);
     void applySwitchEffect(const SwitchData& s, bool active);
 
 	// Update gate states on first screen based on players' positions
     void updateFirstScreenGates(const Player& p1, const Player& p2);
 
+    void triggerAutoBombs(const SwitchData& s);
 
     void placeBombAt(int x, int y);
 
     // (radius: Game decides value, e.g. from exercise spec)
     void clearExplosionArea(const Point& center, int radius);
 
+    void collectPendingAutoBombs(std::vector<Point>& out);
+
     void resetCurrent();
+
+    void updateDoor7ByBinaryPuzzle();
 
 };

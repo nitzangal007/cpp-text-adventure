@@ -18,6 +18,11 @@ class Game
         int   ticksLeft = 0;      // time left until explosion
     };
 
+    struct AutoBomb {
+        Point center;          // ????? ????? ????????? (B)
+        int   ticksLeft = 0;   // ??? ????? ????? ?? ???? "???????"
+    };
+
     // Describes how to move from one screen to the next
     struct ExitInfo {
         Screens::ScreenId from;      // which screen we exit from
@@ -42,11 +47,12 @@ class Game
 
     // Bomb state
     Bomb bomb;
+    std::vector<AutoBomb> autoBombs;
 
-    // Exit/multiñscreen navigation data
+    // Exit/multi‚Äìscreen navigation data
     ExitInfo exits[Screens::NUM_SCREENS];
 
-    // Perñplayer flags for ìalready reached waitPos and ready to move to next screenî
+    // Per‚Äìplayer flags for ‚Äúalready reached waitPos and ready to move to next screen‚Äù
     bool player1ReadyForNextScreen;
     bool player2ReadyForNextScreen;
 
@@ -68,7 +74,7 @@ public:
             Point(43, 20, 0, 0, ' '),    
             Point(43, 21, 0, 0, ' '),  
             Point(54, 9, 0, 0, '$'),
-            Point(36, 9, 0, 0, '&')
+            Point(26, 9, 0, 0, '&')
                 
         };
 
@@ -86,13 +92,13 @@ public:
     // Initialize all game data (players, screens, exits, etc.)
     void initGame();
 
-    // Topñlevel entry point: show menu, start game, etc.
+    // Top‚Äìlevel entry point: show menu, start game, etc.
     void run();
 
     // Main game loop (single run of the game)
     void runGame();
 
-    // ---- Perñframe update & rendering ----
+    // ---- Per‚Äìframe update & rendering ----
 
     // Update all game logic for one tick (players, items, bomb, doors...)
     void updateLogic();
@@ -104,7 +110,7 @@ public:
     void updatePlayerMovement(Player& player);
 
 
-    // If player stands on a collectible item ñ pick it up
+    // If player stands on a collectible item ‚Äì pick it up
     void collectItemIfPossible(Player& player);
 
     // Draw items / inventory state at the bottom of the screen
@@ -125,13 +131,15 @@ public:
 
 	void resetCurrentGame();
 
+   
+
 private:
-    // ---- Small helper functions for multiñscreen logic ----
+    // ---- Small helper functions for multi‚Äìscreen logic ----
 
     // Is this player already standing on waitPos and ready for next screen?
     bool playerIsReadyForNextScreen(const Player& player) const;
 
-    // Check if a point is exactly the ìwaitPosî (one step after the door)
+    // Check if a point is exactly the ‚ÄúwaitPos‚Äù (one step after the door)
     bool isExitWaitPosition(const Point& p) const;
 
     // If both players are ready, move to the next screen
@@ -142,6 +150,8 @@ private:
     void collectObstacleGroup(const Point& start, std::vector<Point>& group) const;
     void moveObstacleGroup(const std::vector<Point>& group, int dx, int dy);
     Player& getOtherPlayer(const Player& p);
+
+    bool handleAutoBombs();
     
 	// ---- Game over handling ----
     bool gameOver = false;         

@@ -1,8 +1,8 @@
-#include "Screens.h"
+﻿#include "Screens.h"
 
 namespace
 {
-	// 80�25 template for the first screen (ScreenId::First)
+	// 80ª25 template for the first screen (ScreenId::First)
 	constexpr const char* FIRST_SCREEN_TEMPLATE[Screens::MAX_Y] = {
 		//01234567890123456789012345678901234567890123456789012345678901234567890123456789
 		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
@@ -37,23 +37,23 @@ namespace
 		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
 		 "WWWWWWW       *       WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 1
 		 "WWWWWWW               WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 2
-		 "WWWWWWW       *       ****  @ WW          WWWW        WWW         @     w     WW", // 3
-		 "WWWWWWW       *       ****    WW      4   WWWW    3   WWW               *   //WW", // 4
-		 "WWWWWWW               wwwwwwwwww          WWWW        WWW***WW***WW***WWW     WW", // 5
-		 "WWWWWWW       *       wwwwwwwwww          WWWW        WWW***WW***WW***WWW     WW", // 6
-		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW        WWWWWWWWWWWWWWWWWWW     WW", // 7
-		 "WWWWWWWWWWWWWWWWWWWWWWWW               WWWWWWW        WWWWWWWWWWWWWWWWWWW     WW", // 8
-		 "WW   *     *   WWWWWWWWW               WWWWWWWWWWWWWWW             W        //WW", // 9
-		 "WW   W     W   WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW      ?      W          WW", // 10
-		 "WW *   ***     WWWWWWWWW@    @WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW**WWW**WWWWWWWWW", // 11
-		 "WW   W   W   * WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 12
-		 "WW   W   W   W WWWWWWWWW@    @WWWWWWWWWWWWWWWWWWWWWWWW H                      WW", // 13   // NUMBER 4
-		 "WW *   *   *   WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 14
-		 "WW   W   W    WWWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 15
-		 "WW             WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW    //  //   //   //    WW", // 16
-		 "WWWWWWWW WWWWWWWwwwwwwww      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 17
+		 "WWWWWWW       *       ****  @ WW          WWWW        WWW         @     W     WW", // 3
+		 "WWWWWWW       *       ****    WW      4   WWWW    3   WWW               W    \\WW", // 4
+		 "WWWWWWW               wwwwwwwwww          WWWW        WWW***WW***WW***WWWW WW*WW", // 5
+		 "WWWWWWW       *       wwwwwwwwww          WWWW        WWW***WW***WW***WWW *   WW", // 6
+		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW        WWWWWWWWWWWWWWWWWWWWWW *WW", // 7
+		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW        WWWWWWWWWWWWWWWWWWWWWWW WW", // 8
+		 "WWWWWWWWWWWWWWWWWWWWWWWWB    BWWWWWWWWWWWWWWWWWWWWWWWW                       \\WW", // 9
+		 "WW   W  \\  *   WW WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW      ?       W         WW", // 10
+		 "WW * W W*W W *  W**WWWWWB    BWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW  WWWWWWWWWWWWWW", // 11
+		 "WW   W **W*W*WW *WWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 12
+		 "WW W W   W     *  *WWWWW      WWWWWWWWWWWWWWWWWWWWWWWW H                      WW", // 13   // NUMBER 4
+		 "WW  ** W*W*W* *WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 14
+		 "WW W   W W  *  WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 15
+		 "WW   *  W  *   WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW     \\   \\    \\    \\    WW", // 16
+		 "WWW WWWWWWWWW WWWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 17
 		 "W                             WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 18
-		 "W                           // WWWWWWWWWWWWWWWWWWWWWWWW                       WW", // 19
+		 "W                            \\WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 19
 		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW1WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 20 door '1'
 		 "                                                                                ", // 21
 		 "                                                                                ", // 22
@@ -96,9 +96,6 @@ namespace
 
 
 
-
-
-
 bool Screens::isFreeCellForPlayer(const Point& p) const
 {
 	if (!isInside(p)) return false;
@@ -116,6 +113,8 @@ void Screens::initFirstScreenSwitches()
 		SwitchData s;
 		s.position = Point(50, 4);
 		s.isPermanent = false;
+		s.oneTime = false;
+		s.bitIndex  = -1;
 
 		int y = 4;
 
@@ -134,6 +133,8 @@ void Screens::initFirstScreenSwitches()
 		SwitchData s;
 		s.position = Point(50, 8);
 		s.isPermanent = false;
+		s.oneTime = false;
+		s.bitIndex = -1;
 
 		int x = 61;
 
@@ -152,6 +153,8 @@ void Screens::initFirstScreenSwitches()
 		SwitchData s;
 		s.position = Point(50, 12);
 		s.isPermanent = false;
+		s.oneTime = false;
+		s.bitIndex = -1;
 
 		int y = 12;
 
@@ -170,6 +173,8 @@ void Screens::initFirstScreenSwitches()
 		SwitchData s;
 		s.position = Point(67, 14);
 		s.isPermanent = true;
+		s.oneTime = false;
+		s.bitIndex = -1;
 
 		s.affectedWalls.emplace_back(51, 13);
 		s.affectedWalls.emplace_back(51, 14);
@@ -180,15 +185,122 @@ void Screens::initFirstScreenSwitches()
 
 }
 
+void Screens::initSecondScreenSwitches()
+{
+	SecondScreenSwitches.clear();
+	{
+		SwitchData s;
+		s.position = Point(77, 9);
+		s.isPermanent = true;
+		s.oneTime = true;
+		s.bitIndex = -1;
+
+		int row = 10;
+		for (int x = 25; x <= 28; ++x)
+			s.affectedWalls.emplace_back(x, row);
+
+		row = 14;
+
+		for (int x = 24; x <= 29; ++x)
+			s.addWhenActive.emplace_back(x, row);
+
+		s.autobombs.emplace_back(29, 11);
+		//s.autobombs.emplace_back(29, 13);
+		s.autobombs.emplace_back(24, 11);
+		//s.autobombs.emplace_back(24, 13);
+		s.autobombs.emplace_back(24, 9);
+		s.autobombs.emplace_back(29, 9);
+
+		SecondScreenSwitches.push_back(s);
+
+	}
+	{
+
+		SwitchData s;
+		s.position = Point(77, 4);
+		s.isPermanent = true;
+		s.oneTime = false;
+		s.bitIndex = -1;
+		int row = 14;
+		for (int x = 25; x <= 28; ++x)
+			s.affectedWalls.emplace_back(x, row);
+
+		SecondScreenSwitches.push_back(s);
+		s.bitIndex  = -1;
+	}
+
+	const int y = 16;
+
+	// משמאל לימין: bit3, bit2, bit1, bit0
+	{
+		SwitchData s;
+		s.position = Point(59, y);  // השמאלי ביותר
+		s.isPermanent = true;
+		s.oneTime = false;
+		s.bitIndex = 3;            // MSB
+		SecondScreenSwitches.push_back(s);
+	}
+	{
+		SwitchData s;
+		s.position = Point(63, y);
+		s.isPermanent = true;
+		s.oneTime = false;
+		s.bitIndex = 2;
+		SecondScreenSwitches.push_back(s);
+	}
+	{
+		SwitchData s;
+		s.position = Point(68, y);
+		s.isPermanent = true;
+		s.oneTime = false;
+		s.bitIndex = 1;
+		SecondScreenSwitches.push_back(s);
+	}
+	{
+		SwitchData s;
+		s.position = Point(73, y);  // הימני ביותר
+		s.isPermanent = true;
+		s.oneTime = false;
+		s.bitIndex = 0;            // LSB
+		SecondScreenSwitches.push_back(s);
+	}
+
+	{
+		SwitchData s;
+		s.position = Point(29, 19);  // הימני ביותר
+		s.isPermanent = true;
+		s.oneTime = false;
+		s.bitIndex = -1;         
+		s.affectedWalls.emplace_back(72, 4);
+
+		SecondScreenSwitches.push_back(s);
+
+
+
+
+	}
+
+}
+
 void Screens::updateSwitchStates(const Player& p1, const Player& p2)
 {
-	if (!isFirstScreen())
-		return;
+	std::vector<SwitchData>* switches = nullptr;
 
-	for (auto& s : firstScreenSwitches)
+	if (isFirstScreen()) {
+		switches = &firstScreenSwitches;
+	}
+	else if (isSecondScreen()) {
+		switches = &SecondScreenSwitches;
+	}
+	else {
+		return;
+	}
+
+	for (auto& s : *switches)
 	{
 		bool on = (p1.getPosition() == s.position || p2.getPosition() == s.position);
 
+		// --- סוויץ' לא-קבוע: עובד רק כל עוד עומדים עליו ---
 		if (!s.isPermanent)
 		{
 			if (on && !s.active)
@@ -196,6 +308,9 @@ void Screens::updateSwitchStates(const Player& p1, const Player& p2)
 				s.active = true;
 				applySwitchEffect(s, true);
 				setSwitchOn(s.position);
+
+				for (const Point& b : s.autobombs)
+					pendingAutoBombs.push_back(b);
 			}
 			else if (!on && s.active)
 			{
@@ -204,23 +319,56 @@ void Screens::updateSwitchStates(const Player& p1, const Player& p2)
 				setSwitchOff(s.position);
 			}
 		}
+		// --- סוויץ' קבוע (isPermanent == true) ---
 		else
 		{
-
-			if (on && !s.wasOnLastFrame)
+			// סוויץ' חד-פעמי
+			if (s.oneTime)
 			{
-				s.active = !s.active;
-				applySwitchEffect(s, s.active);
-				if (s.active)
+				if (on && !s.wasOnLastFrame && !s.active)
+				{
+					s.active = true;
+					applySwitchEffect(s, true);
 					setSwitchOn(s.position);
-				else
-					setSwitchOff(s.position);
+
+					for (const Point& b : s.autobombs)
+						pendingAutoBombs.push_back(b);
+				}
+			}
+			// סוויץ' קבוע רגיל – ON/OFF בכל דריכה
+			else
+			{
+				if (on && !s.wasOnLastFrame)
+				{
+					s.active = !s.active;
+					applySwitchEffect(s, s.active);
+
+					if (s.active)
+					{
+						setSwitchOn(s.position);
+						for (const Point& b : s.autobombs)
+							pendingAutoBombs.push_back(b);
+					}
+					else
+					{
+						setSwitchOff(s.position);
+					}
+				}
 			}
 
 			s.wasOnLastFrame = on;
 		}
 	}
+
+	// עדכון דלת 7 לפי החידה – פעם אחת אחרי כל הסוויצ'ים
+	if (isSecondScreen())
+	{
+		updateDoor7ByBinaryPuzzle();
+	}
 }
+
+
+
 
 
 void Screens::applySwitchEffect(const SwitchData& s, bool active)
@@ -236,6 +384,18 @@ void Screens::applySwitchEffect(const SwitchData& s, bool active)
 		char& tile = boards[screenIndex][y][x];
 		tile = active ? EMPTY_SPACE : WALL;
 	}
+	for (const auto& p : s.addWhenActive)
+	{
+		int x = p.getX();
+		int y = p.getY();
+		if (!isInside(Point(x, y)))
+			continue;
+		char& tile = boards[screenIndex][y][x];
+		
+		tile = active ? WALL : EMPTY_SPACE;
+	}
+
+
 }
 
 void Screens::updateFirstScreenGates(const Player& p1, const Player& p2)
@@ -286,6 +446,36 @@ void Screens::clearExplosionArea(const Point& center, int radius)
 	}
 }
 
+void Screens::triggerAutoBombs(const SwitchData& s)
+{
+	const int RADIUS = 2; 
+
+	for (const Point& center : s.autobombs)
+	{
+		clearExplosionArea(center, RADIUS);
+		
+		int screenIndex = static_cast<int>(current);
+		int x = center.getX();
+		int y = center.getY();
+		if (isInside(center))
+		{
+			char& tile = boards[screenIndex][y][x];
+			if (tile == AUTO_BOMB)
+				tile = EMPTY_SPACE;
+		}
+	}
+}
+
+void Screens::collectPendingAutoBombs(std::vector<Point>& out)
+{
+
+	out.insert(out.end(), pendingAutoBombs.begin(), pendingAutoBombs.end());
+
+	
+	pendingAutoBombs.clear();
+}
+
+
 void Screens::resetCurrent()
 {
 	const int screenIndex = static_cast<int>(current);
@@ -304,8 +494,39 @@ void Screens::resetCurrent()
 
 }
 
+void Screens::updateDoor7ByBinaryPuzzle()
+{
+	if (!isSecondScreen())
+		return;
 
+	// אם לא מצאנו מיקום לדלת 7 – לא עושים כלום
+	if (door7Pos.getX() < 0 || door7Pos.getY() < 0)
+		return;
 
+	int value = 0;
+
+	// לוקחים רק סוויצ'ים שיש להם bitIndex תקף
+	for (const auto& s : SecondScreenSwitches)
+	{
+		if (s.bitIndex >= 0 && s.active)
+		{
+			value |= (1 << s.bitIndex);
+		}
+	}
+
+	char& tile = boards[(int)current][door7Pos.getY()][door7Pos.getX()];
+
+	if (value == 7)
+	{
+		// 0111 – פותחים את הדלת
+		tile = EMPTY_SPACE;
+	}
+	else
+	{
+		// כל קומבינציה אחרת – דלת סגורה עם '7'
+		tile = '7';
+	}
+}
 
 
 
@@ -320,6 +541,7 @@ void Screens::init()
     buildSecondScreen();
     buildFinalScreen();
 	current = ScreenId::First;
+	pendingAutoBombs.clear();
 
 }
 
@@ -402,6 +624,8 @@ void Screens::buildSecondScreen()
 			boards[screenIndex][y][x] = SECOND_SCREEN_TEMPLATE[y][x];
 		}
 	}
+
+	door7Pos.setPosition(71, 11);
 }
 void Screens::buildFinalScreen()
 {
