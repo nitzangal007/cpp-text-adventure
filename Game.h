@@ -64,7 +64,7 @@ public:
 
         exits[0] = ExitInfo{
             Screens::ScreenId::First,   
-            Screens::ScreenId::Second,  
+            Screens::ScreenId::Final,  
             Point(43, 20, 0, 0, ' '),    
             Point(43, 21, 0, 0, ' '),  
             Point(54, 9, 0, 0, '$'),
@@ -139,11 +139,12 @@ private:
 
 	// ---- Obstacle handling ----
     bool obstaclePushable(const Point& nextPos, Player& player);
-
     void collectObstacleGroup(const Point& start, std::vector<Point>& group) const;
-
-
     void moveObstacleGroup(const std::vector<Point>& group, int dx, int dy);
-
     Player& getOtherPlayer(const Player& p);
+    
+	// ---- Game over handling ----
+    bool gameOver = false;         
+    void showGameOverScreen();      
+
 };
