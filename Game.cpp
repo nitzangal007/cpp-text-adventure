@@ -44,8 +44,7 @@ void Game::updatePlayerMovement(Player& player)
 		}
 		
 	}
-	
-
+		
 	if (currentScreen.isDoor(nextPos) && player.hasKey())
 	{
 		currentScreen.makePassage(nextPos);
@@ -182,6 +181,18 @@ bool Game::isPlayerInExplosion(const Player& player, const Point& center, int ra
 void Game::resetCurrentGame()
 {
 	currentScreen.resetCurrent();
+	int screenIndex = static_cast<int>(currentScreen.getCurrentScreen());
+	if (currentScreen.isFirstScreen())
+	{
+		player1Start = Point(5, 2, 0, 0, '$');	
+		player2Start = Point(9, 2, 0, 0, '&');
+	}
+	else if (currentScreen.isSecondScreen())
+	{
+		player1Start = Point(54, 9, 0, 0, '$');
+		player2Start = Point(26, 9, 0, 0, '&');
+		
+	}
 	player1.reset(player1Start);
 	player2.reset(player2Start);
 	bomb.active = false;
@@ -283,7 +294,7 @@ bool Game::handleAutoBombs()
 	std::vector<Point> centers;
 	currentScreen.collectPendingAutoBombs(centers);
 
-	constexpr int AUTO_BOMB_DELAY = 19;
+	constexpr int AUTO_BOMB_DELAY = 21;
 
 	for (const Point& c : centers)
 	{
@@ -560,21 +571,18 @@ void Game::initGame() {
 	currentScreen.init();
 	currentScreen.initFirstScreenSwitches();
 	currentScreen.initSecondScreenSwitches();
-	
 	currentScreen.setCurrentScreen(Screens::ScreenId::Second);
-	player1Start = Point(54, 9, 0, 0, '$'),   // דוגמה – קואורדינטות במסך 2
-	player2Start = Point(6, 18, 0, 0, '&');
+	currentScreen.initFirstScreenSwitches();
 
-	player1.reset(player1Start);
-	player2.reset(player2Start);
-	/*currentScreen.initFirstScreenSwitches();
-	player1.reset(player1Start);
-	player2.reset(player2Start);*/
+	player1.reset(exits[0].nextStartP1);
+	player2.reset(exits[0].nextStartP2);
 	bomb.active = false;
 	player1.draw();
 	player2.draw();
 	drawStatusBar();
-	
+	ExitInfo& firstToSecond = exits[0];
+	Point player1_pos_second = firstToSecond.nextStartP1;
+	Point player2_pos_second = firstToSecond.nextStartP2;
 }
 void Game::updateLogic()
 {
@@ -619,6 +627,18 @@ void Game::render()
 		player1.draw();
 		player2.draw();
 		drawStatusBar();
+
+		const Point& p1Pos = player1.getPosition();
+		const Point& p2Pos = player2.getPosition();
+
+		if (currentScreen.isHint(p1Pos) || currentScreen.isHint(p2Pos))
+		{
+			currentScreen.printHint();   // מציג רמז
+		}
+		else
+		{
+			currentScreen.clearHint();   // מוחק רמז כשאף אחד לא על H
+		}
 	}
 }
 

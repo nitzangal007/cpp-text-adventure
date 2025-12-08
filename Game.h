@@ -70,7 +70,7 @@ public:
 
         exits[0] = ExitInfo{
             Screens::ScreenId::First,   
-            Screens::ScreenId::Final,  
+            Screens::ScreenId::Second,  
             Point(43, 20, 0, 0, ' '),    
             Point(43, 21, 0, 0, ' '),  
             Point(54, 9, 0, 0, '$'),
@@ -81,10 +81,10 @@ public:
         exits[1] = ExitInfo{
             Screens::ScreenId::Second,
             Screens::ScreenId::Final,
-            Point(43, 20, 0, 0, ' '),
-            Point(43, 21, 0, 0, ' '),
-            Point(75, 1, 0, 0, '$'),
-            Point(30, 5, 0, 0, '&')
+            Point(38, 11),
+            Point(38, 11),
+            Point(),
+            Point()
         };
 
     }

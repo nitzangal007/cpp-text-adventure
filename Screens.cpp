@@ -35,26 +35,26 @@ namespace
 		//01234567890123456789012345678901234567890123456789012345678901234567890123456789
 
 		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
-		 "WWWWWWW       *       WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 1
-		 "WWWWWWW               WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 2
-		 "WWWWWWW       *       ****  @ WW          WWWW        WWW         @     W     WW", // 3
-		 "WWWWWWW       *       ****    WW      4   WWWW    3   WWW               W    \\WW", // 4
-		 "WWWWWWW               wwwwwwwwww          WWWW        WWW***WW***WW***WWWW WW*WW", // 5
-		 "WWWWWWW       *       wwwwwwwwww          WWWW        WWW***WW***WW***WWW *   WW", // 6
-		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW        WWWWWWWWWWWWWWWWWWWWWW *WW", // 7
+		 "WWWWWWWWWWWWW         W                          * WWW     WWWWWWWWWWWWWWWWWWWWW", // 1
+		 "WWWWWWWWWWW           W         WWWW**WWWWWWWWWW*   \\  WWWWWWWWWWWWWWWWWWWWWWWWW", // 2
+		 "WWWWWWWWWWW  WWWWWWWWWWWWWWWWWWWWW       WWWWWWWWWWWWWWWW         @     W     WW", // 3
+		 "WWWWWWWWWWW  WWWWWWWWWWWWWWWWWWWW         WWWWWWWWWWWWWWW               W    \\WW", // 4
+		 "WWWWWWWWWWW  WWWWWWWWWWWWWWWWWWWWW*W***W*WWWWW        WWW***WW***WW***WWWW WW*WW", // 5
+		 "WWWWWWW           WWWWWWWWWWWWWWWW  @ @   WWWW        WWW***WW***WW***WWW *   WW", // 6
+		 "WWWWWWW           WWWWWWWWWWWWWWWW WWWWW WWWWW        WWWWWWWWWWWWWWWWWWWWWW *WW", // 7
 		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW        WWWWWWWWWWWWWWWWWWWWWWW WW", // 8
-		 "WWWWWWWWWWWWWWWWWWWWWWWWB    BWWWWWWWWWWWWWWWWWWWWWWWW                       \\WW", // 9
-		 "WW   W  \\  *   WW WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW      ?       W         WW", // 10
-		 "WW * W W*W W *  W**WWWWWB    BWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW  WWWWWWWWWWWWWW", // 11
-		 "WW   W **W*W*WW *WWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 12
-		 "WW W W   W     *  *WWWWW      WWWWWWWWWWWWWWWWWWWWWWWW H                      WW", // 13   // NUMBER 4
+		 "WWWWWWWWWWWWWWWWWWWWWWWWB    BWWWWWWWWWWWWWWWWWWWWWWWW               W       \\WW", // 9
+		 "WW *      *     WW WWWWWWWWWWWWWWWWW     WWWWWWWWWWWWW               W        WW", // 10
+		 "WW***WWW@W * *  W**WWWWWB    BWWWWWW  2  WWWWWWWWWWWWWWWWWWWWW  WWWWWWW7WWWWWWWW", // 11
+		 "WW * W **W W*WW *WWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 12
+		 "WW*W W   W W   *  *WWWWW      WWWWWWWWWWWWWWWWWWWWWWWW H                      WW", // 13   // NUMBER 4
 		 "WW  ** W*W*W* *WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 14
-		 "WW W   W W  *  WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 15
+		 "WW*W   W W  *  WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 15
 		 "WW   *  W  *   WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW     \\   \\    \\    \\    WW", // 16
 		 "WWW WWWWWWWWW WWWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 17
 		 "W                             WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 18
 		 "W                            \\WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 19
-		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW1WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 20 door '1'
+		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 20 door '1'
 		 "                                                                                ", // 21
 		 "                                                                                ", // 22
 		 "                                                                                ", // 23
@@ -94,6 +94,16 @@ namespace
 
 
 
+
+
+void Screens::clearHint() const
+{
+	if (!isSecondScreen())
+		return;
+
+	gotoxy(40, 22);
+	std::cout << "                                                          ";
+}
 
 
 bool Screens::isFreeCellForPlayer(const Point& p) const
@@ -205,9 +215,9 @@ void Screens::initSecondScreenSwitches()
 			s.addWhenActive.emplace_back(x, row);
 
 		s.autobombs.emplace_back(29, 11);
-		//s.autobombs.emplace_back(29, 13);
+		s.autobombs.emplace_back(29, 13);
 		s.autobombs.emplace_back(24, 11);
-		//s.autobombs.emplace_back(24, 13);
+		s.autobombs.emplace_back(24, 13);
 		s.autobombs.emplace_back(24, 9);
 		s.autobombs.emplace_back(29, 9);
 
@@ -231,10 +241,10 @@ void Screens::initSecondScreenSwitches()
 
 	const int y = 16;
 
-	// משמאל לימין: bit3, bit2, bit1, bit0
+	
 	{
 		SwitchData s;
-		s.position = Point(59, y);  // השמאלי ביותר
+		s.position = Point(59, y);  
 		s.isPermanent = true;
 		s.oneTime = false;
 		s.bitIndex = 3;            // MSB
@@ -258,7 +268,7 @@ void Screens::initSecondScreenSwitches()
 	}
 	{
 		SwitchData s;
-		s.position = Point(73, y);  // הימני ביותר
+		s.position = Point(73, y); 
 		s.isPermanent = true;
 		s.oneTime = false;
 		s.bitIndex = 0;            // LSB
@@ -267,7 +277,7 @@ void Screens::initSecondScreenSwitches()
 
 	{
 		SwitchData s;
-		s.position = Point(29, 19);  // הימני ביותר
+		s.position = Point(29, 19); 
 		s.isPermanent = true;
 		s.oneTime = false;
 		s.bitIndex = -1;         
@@ -275,9 +285,18 @@ void Screens::initSecondScreenSwitches()
 
 		SecondScreenSwitches.push_back(s);
 
+	}
 
+	{
+		SwitchData s;
+		s.position = Point(51, 2);
+		s.isPermanent = true;
+		s.oneTime = false;
+		s.bitIndex = -1;
+		s.affectedWalls.emplace_back(22, 1);
+		s.affectedWalls.emplace_back(22, 2);
 
-
+		SecondScreenSwitches.push_back(s);
 	}
 
 }
@@ -475,6 +494,14 @@ void Screens::collectPendingAutoBombs(std::vector<Point>& out)
 	pendingAutoBombs.clear();
 }
 
+void Screens::printHint() const
+{
+	if (!isSecondScreen())
+		return;
+	gotoxy(25, 22);
+	std::cout << "Hint: The door password is shown but in decimal";
+}
+
 
 void Screens::resetCurrent()
 {
@@ -490,6 +517,7 @@ void Screens::resetCurrent()
 	else if (current == ScreenId::Second)
 	{
 		buildSecondScreen();
+		initSecondScreenSwitches();
 	}
 
 }

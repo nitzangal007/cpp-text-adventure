@@ -41,6 +41,7 @@ public:
     static constexpr char RIDDLE = '?';
     static const char BOMB_PLANTED = '@';
     static const char AUTO_BOMB = 'B';
+	static const char HINT = 'H';
 
 
     // Doors: '1'..'9' (no constant needed, we check by range)
@@ -98,7 +99,7 @@ public:
     void setCharAt(const Point& p, char ch) {
         boards[int(current)][p.getY()][p.getX()] = ch;
     }
-
+    
 
     // ---- Classification helpers ----
 
@@ -134,6 +135,11 @@ public:
     bool isRiddle(const Point& p) const {
         return (getCharAt(p) == RIDDLE);
     }
+	bool isHint(const Point& p) const {
+		return (getCharAt(p) == HINT);
+	}
+
+    void clearHint() const;
 
     // Screen identity helpers
     bool isFirstScreen() const {
@@ -178,6 +184,8 @@ public:
     void clearExplosionArea(const Point& center, int radius);
 
     void collectPendingAutoBombs(std::vector<Point>& out);
+
+    void printHint() const;
 
     void resetCurrent();
 
