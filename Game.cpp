@@ -62,6 +62,8 @@ void Game::run()
 
 void Game::initGame() {
 	cls();
+	player1Start = Point(5, 2, 0, 0, '$');
+	player2Start = Point(9, 2, 0, 0, '&');
 	currentScreen.init();
 	currentScreen.setCurrentScreen(Screens::ScreenId::First);
 	player1.reset(player1Start);

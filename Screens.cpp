@@ -4,56 +4,56 @@
 namespace
 {
 	constexpr const char* FIRST_SCREEN_TEMPLATE[Screens::MAX_Y] = {
-		//01234567890123456789012345678901234567890123456789012345678901234567890123456789
-		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
-		 "W                 WWWWWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 1
-		 "W                 WWWW                                       W                 W",  // 2
-		 "W                 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW         W                 W", // 3
-		 "W                 WWWW   WWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 4
-		 "W                 WWWW   @WWWWWWWWWWWWWWWW         W         W                 W", // 5
-		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W", // 6
-		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W", // 7
-		 "WWWWWWW**WWWWWWWWWWWWW   WWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW",// 8
-		 "W         W  *          WWWWWWWWWWWWWWWWWW         W         W                 W",  // 9
-		 "W  WWWW   W  WWWWWWWWWWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 10
-		 "W**    *  W  WWW  *  WWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 11
-		 "W  *  * W W  WWW  W WWWWWWWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW",// 12
-		 "W  W  W W W  WWW  W WWWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 13  
-		 "W  W  W   W  WWW  W                                W         W        K        W", // 14
-		 "W   ** ** W  WWW  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW   WWWWWWWWWWWWWWWWWWWWWW", // 15
-		 "WWW   W  *W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW            W   W                    W", // 16
-		 "W    WW  *W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW   W        W   W                    W", // 17
-		 "W  WWWW   W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW   W        W   W                    W", // 18
-		 "W   *      *      WWWWWWWWWWWWWWWWWWWWWWWW   W                                 W",  // 19
-		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW1WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 20 
-		 "                                                                                ", // 21
-		 "                                                                                ", // 22
-		 "                                                                                ", // 23
-		 "                                                                                "	 // 24
+		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+		 "W                 WWWWWWWWWWWWWWWWWWWWWWWW         W         W                 W",
+		 "W                 WWWW                                       W                 W",
+		 "W                 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW         W                 W",
+		 "W                 WWWW   WWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+		 "W                 WWWW   @WWWWWWWWWWWWWWWW         W         W                 W",
+		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W",
+		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W",
+		 "WWWWWWW**WWWWWWWWWWWWW   WWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+		 "W         W  *          WWWWWWWWWWWWWWWWWW         W         W                 W",
+		 "W  WWWW   W  WWWWWWWWWWWWWWWWWWWWWWWWWWWWW         W         W                 W",
+		 "W**    *  W  WWW  *  WWWWWWWWWWWWWWWWWWWWW         W         W                 W",
+		 "W  *  * **W  WWW  W WWWWWWWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+		 "W  W  W **W  WWW  W WWWWWWWWWWWWWWWWWWWWWW         W         W                 W",
+		 "W  W  W   W  WWW  W                                W         W        K        W",
+		 "W   ** *  W  WWW  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW   WWWWWWWWWWWWWWWWWWWWWW",
+		 "WWW   W   W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW            W   W                    W",
+		 "W     W   W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW   W        W   W                    W",
+		 "W  * *W   W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW   W        W   W                    W",
+		 "W   *             WWWWWWWWWWWWWWWWWWWWWWWW   W                                 W",
+		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW1WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+		 "                                                                                ",
+		 "                                                                                ",
+		 "                                                                                ",
+		 "                                                                                "
 	};
 	constexpr const char* SECOND_SCREEN_TEMPLATE[Screens::MAX_Y] = {
-		//01234567890123456789012345678901234567890123456789012345678901234567890123456789
-		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
-		 "WWWWWWWWWWWWW         W                          * WWW     WWWWWWWWWWWWWWWWWWWWW", // 1
-		 "WWWWWWWWWWW           W         WWWW**WWWWWWWWWW*   \\  WWWWWWWWWWWWWWWWWWWWWWWWW", // 2
-		 "WWWWWWWWWWW  WWWWWWWWWWWWWWWWWWWWW       WWWWWWWWWWWWWWWW         @     W     WW", // 3
-		 "WWWWWWWWWWW  WWWWWWWWWWWWWWWWWWWW         WWWWWWWWWWWWWWW               W    \\WW", // 4
-		 "WWWWWWWWWWW  WWWWWWWWWWWWWWWWWWWWW*W***W*WWWWWWWWWWWWWWWW***WW***WW***WWWW WW*WW", // 5
-		 "WWWWWWW           WWWWWWWWWWWWWWWW  @ @      *        WWW***WW***WW***WWW *   WW", // 6
-		 "WWWWWWW           WWWWWWWWWWWWWWWW WWWWW WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW *WW", // 7
-		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW WW", // 8
-		 "WWWWWWWWWWWWWWWWWWWWWWWWB    BWWWWWWWWWWWWWWWWWWWWWWWW               W       \\WW", // 9
-		 "WW *        *  W WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW               W        WW", // 10
-		 "WW***WWW@W W   *  *WWWWWB    BWWWWWW     WWWWWWWWWWWWWWWWWWWWW  WWWWWWW7WWWWWWWW", // 11
-		 "WW * W **W W*WWW WWWWWWW      WWWWWW     WWWWWWWWWWWWW                        WW", // 12
-		 "WW*W W   W W   *  *WWWWW      WWWWWW  2  WWWWWWWWWWWWW H                      WW", // 13  
-		 "WW  ** W*W*W* *WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 14
-		 "WW*W   W W  *  WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 15
-		 "WW   *  W  *   WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW     \\   \\    \\    \\    WW", // 16
-		 "WWW WWWWWWWWW WWWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 17
-		 "W                             WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 18
-		 "W                            \\WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 19
-		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 20 
+		//0123456789012345678901234567890123456789012345678901234567890123456789012345678
+		  
+		 "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", // 0
+		 "XWWWWWWWWWWWW         W                          * WWW     WWWWWWWWWWWWWWWWWWWWX", // 1
+		 "XWWWWWWWWWW           W         WWWW**WWWWWWWWWW*   \\  WWWWWWWWWWWWWWWWWWWWWWWWX", // 2
+		 "XWWWWWWWWWW  WWWWWWWWWWWWWWWWWWWWW       WWWWWWWWWWWWWWWW         @     W     WX", // 3
+		 "XWWWWWWWWWW  WWWWWWWWWWWWWWWWWWWW         WWWWWWWWWWWWWWW               W    \\WX", // 4
+		 "XWWWWWWWWWW  WWWWWWWWWWWWWWWWWWWWW*W***W*WWWWWWWWWWWWWWWW***WW***WW***WWWW WW*WX", // 5
+		 "XWWWWWW           WWWWWWWWWWWWWWWW  @ @      *        WWW***WW***WW***WWW *   WX", // 6
+		 "XWWWWWW           WWWWWWWWWWWWWWWW WWWWW WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW *WX", // 7
+		 "XWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW WX", // 8
+		 "XWWWWWWWWWWWWWWWWWWWWWWWB    BWWWWWWWWWWWWWWWWWWWWWWWW               W       \\WX", // 9
+		 "XW *        *  W WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW               W        WX", // 10
+		 "XW***WWW@W W   *  *WWWWWB    BWWWWWW     WWWWWWWWWWWWWWWWWWWWW  WWWWWWW7WWWWWWWX", // 11
+		 "XW * W **W W*WWW WWWWWWW      WWWWWW     WWWWWWWWWWWWW                        XX", // 12
+		 "XW*W W   W W   *  *WWWWW      WWWWWW  2  WWWWWWWWWWWWW H                      XX", // 13   // NUMBER 4
+		 "XW  ** W*W*W* *WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        XX", // 14
+		 "XW*W   W W  *  WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        XX", // 15
+		 "XW   *  W  *   WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW     \\   \\    \\    \\    XX", // 16
+		 "XWW WWWWWWWWW WWWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        XX", // 17
+		 "X                             WWWWWWWWWWWWWWWWWWWWWWWW                        XX", // 18
+		 "X                            \\WWWWWWWWWWWWWWWWWWWWWWWW                        XX", // 19
+		 "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", // 20 door '1'
 		 "                                                                                ", // 21
 		 "                                                                                ", // 22
 		 "                                                                                ", // 23
@@ -138,13 +138,10 @@ void Screens::drawCurrent() const
 	for (int y = 0; y < MAX_Y; ++y)
 	{
 		gotoxy(0, y);
-		std::string line;
-		line.reserve(MAX_X);
 		for (int x = 0; x < MAX_X; ++x)
 		{
-			line += boards[screenIndex][y][x];
+			std::cout << boards[screenIndex][y][x];
 		}
-		std::cout << line;
 	}
 }
 
@@ -197,10 +194,15 @@ bool Screens::isHint(const Point& p) const {
 	return (getCharAt(p) == HINT);
 }
 
+bool Screens::isunbreakable_wall(const Point& p) const
+{
+	return (getCharAt(p) == unbreakable_wall);
+}
+
 bool Screens::isFreeCellForPlayer(const Point& p) const
 {
 	if (!isInside(p)) return false;
-	if (isWall(p) || isObstacle(p) || isDoor(p))
+	if (isWall(p) || isObstacle(p) || isDoor(p) || isunbreakable_wall(p))
 		return false;
 	return true;
 }
@@ -567,7 +569,7 @@ bool Screens::tryPushObstacle(const Point& nextPos, const Player& player, const 
 			return false;
 		}
 
-		if (isWall(target) || isDoor(target))
+		if (isWall(target) || isDoor(target) || isunbreakable_wall(target))
 			return false;
 
 		if (isObstacle(target))
@@ -640,8 +642,6 @@ void Screens::collectPendingAutoBombs(std::vector<Point>& out)						// we used c
 	out.insert(out.end(), pendingAutoBombs.begin(), pendingAutoBombs.end());
 	pendingAutoBombs.clear();
 }
-
-
 
 // ==========================================
 // Internal Helpers

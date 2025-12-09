@@ -27,6 +27,7 @@ public:
     static const char BOMB_PLANTED = '@';
     static const char AUTO_BOMB = 'B';
     static const char HINT = 'H';
+    static const char  unbreakable_wall = 'X';
 
     struct SwitchData
     {
@@ -98,6 +99,7 @@ public:
     bool isSwitchOff(const Point& p) const;
     bool isRiddle(const Point& p) const;
     bool isHint(const Point& p) const;
+    bool isunbreakable_wall(const Point& p) const;
 
     // Checks if a cell is walkable (not wall/obstacle/door)
     bool isFreeCellForPlayer(const Point& p) const;
