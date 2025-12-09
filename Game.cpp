@@ -15,7 +15,7 @@ Game::Game()
 		Point(43, 20, 0, 0, ' '),
 		Point(43, 21, 0, 0, ' '),
 		Point(54, 9, 0, 0, '$'),
-		Point(26, 9, 0, 0, '&')
+		Point(25, 9, 0, 0, '&')
 	};
 
 	exits[1] = ExitInfo{
@@ -93,8 +93,8 @@ void Game::runGame()
 				{
 					cls();
 					paused = true;
-					printCentered("Game paused,", 8);
-					printCentered("press ESC again to continue or H to go back to the main menu,", 9);
+					printCentered("       Game Paused        ", 8);
+					printCentered("Press ESC to continue or H for Menu", 9);
 				}
 				else if (ch == 'E' || ch == 'e') {
 					tryPlaceBomb(player1);
@@ -236,6 +236,8 @@ void Game::render()
 		{
 			currentScreen.clearHint();   
 		}
+
+
 	}
 }
 
