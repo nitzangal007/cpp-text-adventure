@@ -64,8 +64,6 @@ void Game::initGame() {
 	cls();
 	currentScreen.init();
 	currentScreen.setCurrentScreen(Screens::ScreenId::First);
-	currentScreen.initFirstScreenSwitches();
-	currentScreen.initSecondScreenSwitches();
 	player1.reset(player1Start);
 	player2.reset(player2Start);
 	bomb.active = false;

@@ -46,27 +46,27 @@ void Menu::showInstructions() {
     cls();
     printCentered("========================= INSTRUCTIONS =========================", 1);
 
-    printCentered("Goal: Guide both players through the adventure world.", 3);
-    printCentered("Use their movement and abilities to overcome obstacles,", 4);
-    printCentered("activate springs, collect keys, and open doors.", 5);
-    printCentered("Only when both players reach the final room, you win.", 6);
+    printCentered("Goal: Guide both players to the final room to win.", 3);
+    printCentered("Use keys, springs, and teamwork to overcome obstacles.", 4);
 
-    printCentered("--------------------------------------------------------------", 8);
-    printCentered("Player Controls", 9);
+    printCentered("--------------------------------------------------------------", 6);
+    printCentered("Player Controls", 7);
 
-    printCentered("Player 1:  W=Up  X=Down  A=Left  D=Right  S=Stay  E=Drop", 11);
-    printCentered("Player 2:  I=Up  M=Down  J=Left  L=Right  K=Stay  O=Drop", 12);
+    printCentered("Player 1:  W=Up  X=Down  A=Left  D=Right  S=Stay  E=Drop", 9);
+    printCentered("Player 2:  I=Up  M=Down  J=Left  L=Right  K=Stay  O=Drop", 10);
 
-    printCentered("--------------------------------------------------------------", 14);
-    printCentered("Game Elements", 15);
+    printCentered("--------------------------------------------------------------", 12);
+    printCentered("Game Elements", 13);
 
-    printCentered("$ : Player 1    & : Player 2    W : Wall", 17);
-    printCentered("# : Spring      K : Key         1-9 : Door", 18);
+    printCentered("$ : Player 1    & : Player 2    W : Wall", 15);
+    printCentered("# : Spring      K : Key         1-9 : Door", 16);
+    printCentered("B : Auto Bomb   H : Hint", 17);
 
-    printCentered("--------------------------------------------------------------", 20);
-    printCentered("Other Keys", 21);
+    printCentered("--------------------------------------------------------------", 19);
+    printCentered("Other Keys", 20);
 
-    printCentered("ESC : Pause game. While paused: ESC=resume, H=main menu.", 22);
+    printCentered("ESC : Pause/Resume    H : Main Menu (Paused)", 21);
+    printCentered("R   : Restart Level", 22);
 
     printCentered("Press any key to return to the main menu...", 24);
 

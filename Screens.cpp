@@ -98,7 +98,9 @@ Screens::Screens() = default;
 void Screens::init()
 {
 	buildFirstScreen();
+	initFirstScreenSwitches();
 	buildSecondScreen();
+	initSecondScreenSwitches();
 	buildFinalScreen();
 	current = ScreenId::First;
 	pendingAutoBombs.clear();
@@ -109,6 +111,7 @@ void Screens::resetCurrent()
 	if (current == ScreenId::First)
 	{
 		buildFirstScreen();
+		initFirstScreenSwitches();
 		leftEntranceClosed = false;
 		rightEntranceClosed = false;
 	}
