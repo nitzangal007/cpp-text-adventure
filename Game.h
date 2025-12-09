@@ -81,8 +81,8 @@ public:
         exits[1] = ExitInfo{
             Screens::ScreenId::Second,
             Screens::ScreenId::Final,
-            Point(38, 11),
-            Point(38, 11),
+            Point(38, 13),
+            Point(38, 13),
             Point(),
             Point()
         };

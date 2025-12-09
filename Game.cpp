@@ -349,11 +349,11 @@ void Game::initGame() {
 	// Initialize game state, load resources, etc.
 	cls();
 	currentScreen.init();
-	currentScreen.setCurrentScreen(Screens::ScreenId::Second);
+	currentScreen.setCurrentScreen(Screens::ScreenId::First);
 	currentScreen.initFirstScreenSwitches();
 	currentScreen.initSecondScreenSwitches();
-	player1.reset(exits[0].nextStartP1);
-	player2.reset(exits[0].nextStartP2);
+	player1.reset(player1Start);
+	player2.reset(player2Start);
 	bomb.active = false;
 	player1.draw();
 	player2.draw();
