@@ -1,4 +1,5 @@
 ﻿#include "Screens.h"
+#include <cmath>
 
 namespace
 {
@@ -9,7 +10,7 @@ namespace
 		 "W                 WWWWWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 1
 		 "W                 WWWW                                       W                 W", // 2
 		 "W                 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW         W                 W", // 3
-		 "W                 WWWW   WWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 4
+		 "W         @       WWWW   WWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 4
 		 "W                 WWWW   @WWWWWWWWWWWWWWWW         W         W                 W", // 5
 		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W", // 6
 		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W", // 7
@@ -43,7 +44,7 @@ namespace
 		 "WWWWWWW           WWWWWWWWWWWWWWWW  @ @   WWWW        WWW***WW***WW***WWW *   WW", // 6
 		 "WWWWWWW           WWWWWWWWWWWWWWWW WWWWW WWWWW        WWWWWWWWWWWWWWWWWWWWWW *WW", // 7
 		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW        WWWWWWWWWWWWWWWWWWWWWWW WW", // 8
-		 "WWWWWWWWWWWWWWWWWWWWWWWWB    BWWWWWWWWWWWWWWWWWWWWWWWW               W       \\WW", // 9
+		 "WWWWWWWWWWWWWWWWWWWWWWWWB    BWWWWWWWWWWWWWWWWWWWWWWWW    @          W       \\WW", // 9
 		 "WW *      *     WW WWWWWWWWWWWWWWWWW     WWWWWWWWWWWWW               W        WW", // 10
 		 "WW***WWW@W * *  W**WWWWWB    BWWWWWW  2  WWWWWWWWWWWWWWWWWWWWW  WWWWWWW7WWWWWWWW", // 11
 		 "WW * W **W W*WW *WWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 12
@@ -665,5 +666,195 @@ void Screens::buildFinalScreen()
 		{
 			boards[screenIndex][y][x] = FINAL_SCREEN_TEMPLATE[y][x];
 		}
+	}
+}
+
+bool Screens::tryPushObstacle(const Point& nextPos, const Player& player, const Player& otherPlayer)
+{
+	Point currPos = player.getPosition();
+	int dx = nextPos.getX() - currPos.getX();
+	int dy = nextPos.getY() - currPos.getY();
+
+	if (std::abs(dx) + std::abs(dy) != 1)
+		return false;
+
+	std::vector<Point> group;
+	collectObstacleGroup(nextPos, group);
+
+	if (group.empty())
+		return false;
+
+	int obstacleSize = (int)group.size();
+	int availableForce = 1;
+
+	Point otherPos = otherPlayer.getPosition();
+	Point otherNext = otherPos;
+	otherNext.move();
+
+	int odx = otherNext.getX() - otherPos.getX();
+	int ody = otherNext.getY() - otherPos.getY();
+
+	bool sameDir = (odx == dx && ody == dy);
+
+	if (sameDir)
+	{
+		bool otherBehind =
+			(otherPos.getX() == currPos.getX() - dx) &&
+			(otherPos.getY() == currPos.getY() - dy);
+
+		if (otherBehind)
+		{
+			++availableForce;
+		}
+		else
+		{
+			int dist = std::abs(otherPos.getX() - currPos.getX()) +
+				std::abs(otherPos.getY() - currPos.getY());
+			bool adjacent = (dist == 1);
+
+			if (adjacent)
+			{
+				if (isObstacle(otherNext))
+				{
+					bool inSameGroup = false;
+					for (size_t i = 0; i < group.size(); ++i)
+					{
+						if (group[i].getX() == otherNext.getX() &&
+							group[i].getY() == otherNext.getY())
+						{
+							inSameGroup = true;
+							break;
+						}
+					}
+
+					if (inSameGroup)
+					{
+						++availableForce;
+					}
+				}
+			}
+		}
+	}
+
+	if (availableForce < obstacleSize)
+		return false;
+
+	for (size_t i = 0; i < group.size(); ++i)
+	{
+		const Point& cell = group[i];
+		Point target(cell.getX() + dx, cell.getY() + dy, 0, 0, ' ');
+
+		if (!isInside(target))
+			return false;
+
+		if (target.getX() == otherPos.getX() &&
+			target.getY() == otherPos.getY())
+		{
+			return false;
+		}
+
+		if (isWall(target) || isDoor(target))
+			return false;
+
+		if (isObstacle(target))
+		{
+			bool inSameGroup = false;
+			for (size_t j = 0; j < group.size(); ++j)
+			{
+				if (group[j].getX() == target.getX() &&
+					group[j].getY() == target.getY())
+				{
+					inSameGroup = true;
+					break;
+				}
+			}
+
+			if (!inSameGroup)
+				return false;
+		}
+	}
+
+	moveObstacleGroup(group, dx, dy);
+	return true;
+}
+
+void Screens::collectObstacleGroup(const Point& start, std::vector<Point>& group) const
+{
+	const Direction dirs[4] = {
+	Direction::UP,
+	Direction::RIGHT,
+	Direction::DOWN,
+	Direction::LEFT
+	};
+
+	group.clear();
+
+	if (!isObstacle(start))
+		return;
+
+	group.push_back(start);
+	for (int i = 0; i < group.size(); i++)
+	{
+		Point current = group[i];
+		for (int d = 0; d < 4; ++d)
+		{
+			int dx = 0, dy = 0;
+			switch (dirs[d])
+			{
+			case Direction::UP:
+				dx = 0;  dy = -1;
+				break;
+			case Direction::RIGHT:
+				dx = 1;  dy = 0;
+				break;
+			case Direction::DOWN:
+				dx = 0;  dy = 1;
+				break;
+			case Direction::LEFT:
+				dx = -1; dy = 0;
+				break;
+			case Direction::STAY:
+				dx = 0;  dy = 0;
+				break;
+			}
+			int nx = current.getX() + dx;
+			int ny = current.getY() + dy;
+
+			Point neighbour(nx, ny, 0, 0, ' ');
+
+			if (!isInside(neighbour))
+				continue;
+
+			if (!isObstacle(neighbour))
+				continue;
+
+			bool alreadyInGroup = false;
+			for (size_t j = 0; j < group.size(); ++j)
+			{
+				if (group[j].getX() == neighbour.getX() &&
+					group[j].getY() == neighbour.getY())
+				{
+					alreadyInGroup = true;
+					break;
+				}
+			}
+			if (!alreadyInGroup)
+			{
+				group.push_back(neighbour);
+			}
+		}
+	}
+}
+
+void Screens::moveObstacleGroup(const std::vector<Point>& group, int dx, int dy)
+{
+	for (size_t i = 0; i < group.size(); ++i)
+		setCharAt(group[i], Screens::EMPTY_SPACE);
+
+	for (size_t i = 0; i < group.size(); ++i)
+	{
+		Point cell = group[i];
+		Point target(cell.getX() + dx, cell.getY() + dy, 0, 0, ' ');
+		setCharAt(target, Screens::OBSTACLE);
 	}
 }

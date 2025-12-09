@@ -27,12 +27,9 @@ void Game::updatePlayerMovement(Player& player)
 
 	if (currentScreen.isObstacle(nextPos))
 	{
-		bool Pushable = obstaclePushable(nextPos, player);
+		bool Pushable = currentScreen.tryPushObstacle(nextPos, player, getOtherPlayer(player));
 		if (Pushable)
 		{
-			Point obstacleNewPos = nextPos;
-			obstacleNewPos.move();
-			currentScreen.setCharAt(obstacleNewPos, Screens::OBSTACLE);
 			currentScreen.makePassage(nextPos);
 			player.move();
 			return;
@@ -40,9 +37,7 @@ void Game::updatePlayerMovement(Player& player)
 		else
 		{
 			return;
-			
 		}
-		
 	}
 		
 	if (currentScreen.isDoor(nextPos) && player.hasKey())
@@ -133,7 +128,7 @@ void Game::tryPlaceBomb(Player& player)
 		bomb.pos = player.getPosition();
 		bomb.ticksLeft = 5; 
 		player.removeHeldItem();
-		}
+	}
 	
 	int x = bomb.pos.getX();
 	int y = bomb.pos.getY();
@@ -147,7 +142,7 @@ void Game::explodeBomb()
 	if (!bomb.active)
 		return;
 
-	const int RADIUS = 2;
+	const int RADIUS = 3;
 	const int R2 = RADIUS * RADIUS;
 	Point center = bomb.pos;
 
@@ -347,242 +342,23 @@ bool Game::handleAutoBombs()
 
 
 
-bool Game::obstaclePushable(const Point& nextPos, Player& player)   // check if obstacle(s) can be pushed
-{
-	
-	Point currPos = player.getPosition();
-	int dx = nextPos.getX() - currPos.getX();
-	int dy = nextPos.getY() - currPos.getY();
-	Point obstacleCell = nextPos;  
 
-	
-	if (std::abs(dx) + std::abs(dy) != 1)
-		return false;
-
-	
-	std::vector<Point> group;
-	collectObstacleGroup(nextPos, group);
-
-	if (group.empty())
-		return false; 
-
-	int obstacleSize = (int)group.size();
-
-	
-
-	int availableForce = 1;         
-
-	Player& other = getOtherPlayer(player);
-	Point otherPos = other.getPosition();
-	Point otherNext = otherPos;
-	otherNext.move();              
-
-	int odx = otherNext.getX() - otherPos.getX();
-	int ody = otherNext.getY() - otherPos.getY();
-
-
-	bool sameDir = (odx == dx && ody == dy);
-
-	if (sameDir)
-	{
-		
-		bool otherBehind =
-			(otherPos.getX() == currPos.getX() - dx) &&
-			(otherPos.getY() == currPos.getY() - dy);
-
-		if (otherBehind)
-		{
-			++availableForce;
-		}
-		else
-		{
-		
-			int dist = std::abs(otherPos.getX() - currPos.getX()) +
-				std::abs(otherPos.getY() - currPos.getY());
-			bool adjacent = (dist == 1);  
-
-			if (adjacent)
-			{
-				
-				if (currentScreen.isObstacle(otherNext))
-				{
-					
-					bool inSameGroup = false;
-					for (size_t i = 0; i < group.size(); ++i)
-					{
-						if (group[i].getX() == otherNext.getX() &&
-							group[i].getY() == otherNext.getY())
-						{
-							inSameGroup = true;
-							break;
-						}
-					}
-
-					if (inSameGroup)
-					{
-						++availableForce;   
-					}
-				}
-			}
-		}
-	}
-
-	
-	if (availableForce < obstacleSize)
-		return false;
-
-
-
-	for (size_t i = 0; i < group.size(); ++i)
-	{
-		const Point& cell = group[i];
-		Point target(cell.getX() + dx, cell.getY() + dy, 0, 0, ' ');
-
-		
-		if (!currentScreen.isInside(target))
-			return false;
-
-		if (target.getX() == otherPos.getX() &&
-			target.getY() == otherPos.getY())
-		{
-			return false;
-		}
-
-		
-		if (currentScreen.isWall(target) || currentScreen.isDoor(target))
-			return false;
-
-		
-		if (currentScreen.isObstacle(target))
-		{
-			bool inSameGroup = false;
-			for (size_t j = 0; j < group.size(); ++j)
-			{
-				if (group[j].getX() == target.getX() &&
-					group[j].getY() == target.getY())
-				{
-					inSameGroup = true;
-					break;
-				}
-			}
-
-			if (!inSameGroup)
-				return false; 
-		}
-	}
-
-
-
-	moveObstacleGroup(group, dx, dy);
-
-	return true;
-}
-void Game::collectObstacleGroup(const Point& start, std::vector<Point>& group) const	// collect all connected obstacles
-{
-	const Direction dirs[4] = {
-	Direction::UP,
-	Direction::RIGHT,
-	Direction::DOWN,
-	Direction::LEFT
-	};
-
-	group.clear();      // make sure the group is empty
-
-	if (!currentScreen.isObstacle(start))								// starting point is not an obstacle
-		return;
-
-	group.push_back(start);
-	for (int i = 0; i < group.size(); i++)
-	{
-		Point current = group[i];
-		for (int d = 0; d < 4; ++d)
-		{
-			int dx = 0, dy = 0;
-			switch (dirs[d])
-			{
-			case Direction::UP:
-				dx = 0;  dy = -1;
-				break;
-			case Direction::RIGHT:
-				dx = 1;  dy = 0;
-				break;
-			case Direction::DOWN:
-				dx = 0;  dy = 1;
-				break;
-			case Direction::LEFT:
-				dx = -1; dy = 0;
-				break;
-			case Direction::STAY:
-				dx = 0;  dy = 0;
-				break;
-			}
-			int nx = current.getX() + dx;
-			int ny = current.getY() + dy;
-
-			Point neighbour(nx, ny, 0, 0, ' ');
-
-			if (!currentScreen.isInside(neighbour))
-				continue;
-
-			if (!currentScreen.isObstacle(neighbour))
-				continue;
-
-			bool alreadyInGroup = false;
-			for (size_t j = 0; j < group.size(); ++j)
-			{
-				if (group[j].getX() == neighbour.getX() &&
-					group[j].getY() == neighbour.getY())
-				{
-					alreadyInGroup = true;
-					break;
-				}
-			}
-			if (!alreadyInGroup)
-			{
-				group.push_back(neighbour);
-			}
-
-		}
-
-	}
-
-
-}
-
-void Game::moveObstacleGroup(const std::vector<Point>& group, int dx, int dy)		// move all obstacles in the group 
-{
-	
-	for (size_t i = 0; i < group.size(); ++i)								//remove * from old positions
-		currentScreen.setCharAt(group[i], Screens::EMPTY_SPACE);
-
-	
-	for (size_t i = 0; i < group.size(); ++i)								//set * in new positions
-	{
-		Point cell = group[i];
-		Point target(cell.getX() + dx, cell.getY() + dy, 0, 0, ' ');
-		currentScreen.setCharAt(target, Screens::OBSTACLE);
-	}
-}
 
 
 void Game::initGame() {
 	// Initialize game state, load resources, etc.
 	cls();
 	currentScreen.init();
-	currentScreen.initFirstScreenSwitches();
-	currentScreen.initSecondScreenSwitches();
 	currentScreen.setCurrentScreen(Screens::ScreenId::Second);
 	currentScreen.initFirstScreenSwitches();
-
+	currentScreen.initSecondScreenSwitches();
 	player1.reset(exits[0].nextStartP1);
 	player2.reset(exits[0].nextStartP2);
 	bomb.active = false;
 	player1.draw();
 	player2.draw();
 	drawStatusBar();
-	ExitInfo& firstToSecond = exits[0];
-	Point player1_pos_second = firstToSecond.nextStartP1;
-	Point player2_pos_second = firstToSecond.nextStartP2;
+
 }
 void Game::updateLogic()
 {
@@ -628,16 +404,33 @@ void Game::render()
 		player2.draw();
 		drawStatusBar();
 
+		// Blinking Effect for imminent explosion (last 3 ticks)
+		if (bomb.active && bomb.ticksLeft <= 5) {
+			if (bomb.ticksLeft % 2 != 0) { // Blink "off" on odd ticks
+				gotoxy(bomb.pos.getX(), bomb.pos.getY());
+				std::cout << ' ';
+			}
+		}
+
+		for (const auto& ab : autoBombs) {
+			if (ab.ticksLeft <= 18) {
+				if (ab.ticksLeft % 2 != 0) {
+					gotoxy(ab.center.getX(), ab.center.getY());
+					std::cout << ' ';
+				}
+			}
+		}
+
 		const Point& p1Pos = player1.getPosition();
 		const Point& p2Pos = player2.getPosition();
 
 		if (currentScreen.isHint(p1Pos) || currentScreen.isHint(p2Pos))
 		{
-			currentScreen.printHint();   // מציג רמז
+			currentScreen.printHint();   
 		}
 		else
 		{
-			currentScreen.clearHint();   // מוחק רמז כשאף אחד לא על H
+			currentScreen.clearHint();   
 		}
 	}
 }
@@ -688,10 +481,8 @@ void Game::runGame()
 
 			if (!paused)
 			{
-				// מצב משחק רגיל
 				if (ch == ESC)
 				{
-					// נכנסים ל-PAUSE
 					cls();
 					paused = true;
 					printCentered("Game paused,", 8);

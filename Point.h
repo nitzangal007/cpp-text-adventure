@@ -38,5 +38,7 @@ public:
 	int getY() const {
 		return y;
 	}
+	int getDiffX() const { return diff_x; }
+	int getDiffY() const { return diff_y; }
 };
 

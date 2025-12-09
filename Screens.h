@@ -56,9 +56,7 @@ private:
     std::vector<SwitchData> firstScreenSwitches;
     bool leftEntranceClosed = false;
     bool rightEntranceClosed = false;
-    void handleGateForPlayer(const Player& p);
-    void leftGateClosed();
-    void rightGateClosed();
+    
 
 
     //data for Second screen
@@ -90,16 +88,16 @@ public:
 
     // ---- Board access (current screen) ----
 
+    void setCharAt(const Point& p, char ch) {
+        boards[int(current)][p.getY()][p.getX()] = ch;
+    }
+
     bool isInside(const Point& p) const {
         return (p.getX() >= 0 && p.getX() < MAX_X && p.getY() >= 0 && p.getY() < MAX_Y);
     }
     char getCharAt(const Point& p) const {
         return boards[int(current)][p.getY()][p.getX()];
     }
-    void setCharAt(const Point& p, char ch) {
-        boards[int(current)][p.getY()][p.getX()] = ch;
-    }
-    
 
     // ---- Classification helpers ----
 
@@ -173,10 +171,13 @@ public:
     void updateSwitchStates(const Player& p1, const Player& p2);
     void applySwitchEffect(const SwitchData& s, bool active);
 
+
 	// Update gate states on first screen based on players' positions
     void updateFirstScreenGates(const Player& p1, const Player& p2);
 
     void triggerAutoBombs(const SwitchData& s);
+
+
 
     void placeBombAt(int x, int y);
 
@@ -185,10 +186,35 @@ public:
 
     void collectPendingAutoBombs(std::vector<Point>& out);
 
+    
+    bool tryPushObstacle(const Point& nextPos, const Player& player, const Player& otherPlayer);
+
     void printHint() const;
 
     void resetCurrent();
 
+
+
+
     void updateDoor7ByBinaryPuzzle();
+
+private:
+    void collectObstacleGroup(const Point& start, std::vector<Point>& group) const;
+    void moveObstacleGroup(const std::vector<Point>& group, int dx, int dy);
+    void handleGateForPlayer(const Player& p);
+    void leftGateClosed();
+    void rightGateClosed();
+
+
+
+
+
+
+
+
+
+   
+
+    
 
 };

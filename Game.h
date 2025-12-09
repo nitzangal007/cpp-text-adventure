@@ -89,11 +89,12 @@ public:
 
     }
 
-    // Initialize all game data (players, screens, exits, etc.)
-    void initGame();
-
     // Top–level entry point: show menu, start game, etc.
     void run();
+
+private:
+   // Initialize all game data (players, screens, exits, etc.)
+    void initGame();
 
     // Main game loop (single run of the game)
     void runGame();
@@ -131,9 +132,6 @@ public:
 
 	void resetCurrentGame();
 
-   
-
-private:
     // ---- Small helper functions for multi–screen logic ----
 
     // Is this player already standing on waitPos and ready for next screen?
@@ -145,16 +143,12 @@ private:
     // If both players are ready, move to the next screen
     void tryAdvanceToNextScreen();
 
-	// ---- Obstacle handling ----
-    bool obstaclePushable(const Point& nextPos, Player& player);
-    void collectObstacleGroup(const Point& start, std::vector<Point>& group) const;
-    void moveObstacleGroup(const std::vector<Point>& group, int dx, int dy);
     Player& getOtherPlayer(const Player& p);
 
     bool handleAutoBombs();
     
 	// ---- Game over handling ----
     bool gameOver = false;         
-    void showGameOverScreen();      
+   
 
 };
