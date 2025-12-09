@@ -455,6 +455,28 @@ bool Game::handleAutoBombs()
 	return someoneDied;
 }
 
+
+
+
+
+
+
+void Game::initGame() {
+	// Initialize game state, load resources, etc.
+	cls();
+	currentScreen.init();
+	currentScreen.setCurrentScreen(Screens::ScreenId::First);
+	currentScreen.initFirstScreenSwitches();
+	currentScreen.initSecondScreenSwitches();
+	player1.reset(player1Start);
+	player2.reset(player2Start);
+	bomb.active = false;
+	player1.draw();
+	player2.draw();
+	drawStatusBar();
+
+}
+void Game::updateLogic()
 bool Game::isPlayerInExplosion(const Player& player, const Point& center, int radiusSquared)
 {
 	Point p = player.getPosition();

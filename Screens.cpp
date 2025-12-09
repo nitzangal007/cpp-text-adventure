@@ -31,31 +31,34 @@ namespace
 		 "                                                                                "
 	};
 	constexpr const char* SECOND_SCREEN_TEMPLATE[Screens::MAX_Y] = {
-		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
-		 "WWWWWWWWWWWWW         W                          * WWW     WWWWWWWWWWWWWWWWWWWWW",
-		 "WWWWWWWWWWW           W         WWWW**WWWWWWWWWW*   \\  WWWWWWWWWWWWWWWWWWWWWWWWW",
-		 "WWWWWWWWWWW  WWWWWWWWWWWWWWWWWWWWW       WWWWWWWWWWWWWWWW         @     W     WW",
-		 "WWWWWWWWWWW  WWWWWWWWWWWWWWWWWWWW         WWWWWWWWWWWWWWW               W    \\WW",
-		 "WWWWWWWWWWW  WWWWWWWWWWWWWWWWWWWWW*W***W*WWWWW        WWW***WW***WW***WWWW WW*WW",
-		 "WWWWWWW           WWWWWWWWWWWWWWWW  @ @   WWWW        WWW***WW***WW***WWW *   WW",
-		 "WWWWWWW           WWWWWWWWWWWWWWWW WWWWW WWWWW        WWWWWWWWWWWWWWWWWWWWWW *WW",
-		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW        WWWWWWWWWWWWWWWWWWWWWWW WW",
-		 "WWWWWWWWWWWWWWWWWWWWWWWWB    BWWWWWWWWWWWWWWWWWWWWWWWW    @          W       \\WW",
-		 "WW *      *     WW WWWWWWWWWWWWWWWWW     WWWWWWWWWWWWW               W        WW",
-		 "WW***WWW@W * *  W**WWWWWB    BWWWWWW  2  WWWWWWWWWWWWWWWWWWWWW  WWWWWWW7WWWWWWWW",
-		 "WW * W **W W*WW *WWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW",
-		 "WW*W W   W W   *  *WWWWW      WWWWWWWWWWWWWWWWWWWWWWWW H                      WW",
-		 "WW  ** W*W*W* *WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW",
-		 "WW*W   W W  *  WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW",
-		 "WW   *  W  *   WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW     \\   \\    \\    \\    WW",
-		 "WWW WWWWWWWWW WWWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW",
-		 "W                             WWWWWWWWWWWWWWWWWWWWWWWW                        WW",
-		 "W                            \\WWWWWWWWWWWWWWWWWWWWWWWW                        WW",
-		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
-		 "                                                                                ",
-		 "                                                                                ",
-		 "                                                                                ",
-		 "                                                                                "
+		//01234567890123456789012345678901234567890123456789012345678901234567890123456789
+
+		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
+		 "WWWWWWWWWWWWW         W                          * WWW     WWWWWWWWWWWWWWWWWWWWW", // 1
+		 "WWWWWWWWWWW           W         WWWW**WWWWWWWWWW*   \\  WWWWWWWWWWWWWWWWWWWWWWWWW", // 2
+		 "WWWWWWWWWWW  WWWWWWWWWWWWWWWWWWWWW       WWWWWWWWWWWWWWWW         @     W     WW", // 3
+		 "WWWWWWWWWWW  WWWWWWWWWWWWWWWWWWWW         WWWWWWWWWWWWWWW               W    \\WW", // 4
+		 "WWWWWWWWWWW  WWWWWWWWWWWWWWWWWWWWW*W***W*WWWWWWWWWWWWWWWW***WW***WW***WWWW WW*WW", // 5
+		 "WWWWWWW           WWWWWWWWWWWWWWWW  @ @      *        WWW***WW***WW***WWW *   WW", // 6
+		 "WWWWWWW           WWWWWWWWWWWWWWWW WWWWW WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW *WW", // 7
+		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW WW", // 8
+		 "WWWWWWWWWWWWWWWWWWWWWWWWB    BWWWWWWWWWWWWWWWWWWWWWWWW               W       \\WW", // 9
+		 "WW *        *  W WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW               W        WW", // 10
+		 "WW***WWW@W W   *  *WWWWWB    BWWWWWW     WWWWWWWWWWWWWWWWWWWWW  WWWWWWW7WWWWWWWW", // 11
+		 "WW * W **W W*WWW WWWWWWW      WWWWWW     WWWWWWWWWWWWW                        WW", // 12
+		 "WW*W W   W W   *  *WWWWW      WWWWWW  2  WWWWWWWWWWWWW H                      WW", // 13   // NUMBER 4
+		 "WW  ** W*W*W* *WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 14
+		 "WW*W   W W  *  WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 15
+		 "WW   *  W  *   WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW     \\   \\    \\    \\    WW", // 16
+		 "WWW WWWWWWWWW WWWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 17
+		 "W                             WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 18
+		 "W                            \\WWWWWWWWWWWWWWWWWWWWWWWW                        WW", // 19
+		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 20 door '1'
+		 "                                                                                ", // 21
+		 "                                                                                ", // 22
+		 "                                                                                ", // 23
+		 "                                                                                "  // 24
+
 	};
 	constexpr const char* FINAL_SCREEN_TEMPLATE[Screens::MAX_Y] = {
 		 "################################################################################",
@@ -443,7 +446,7 @@ void Screens::initSecondScreenSwitches()
 	}
 	{
 		SwitchData s;
-		s.position = Point(51, 2);
+		s.position = Point(52, 2);
 		s.isPermanent = true;
 		s.oneTime = false;
 		s.bitIndex = -1;

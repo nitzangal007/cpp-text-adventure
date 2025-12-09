@@ -56,6 +56,28 @@ class Game
 public:
     Game();
 
+        exits[0] = ExitInfo{
+            Screens::ScreenId::First,   
+            Screens::ScreenId::Second,  
+            Point(43, 20, 0, 0, ' '),    
+            Point(43, 21, 0, 0, ' '),  
+            Point(54, 9, 0, 0, '$'),
+            Point(26, 9, 0, 0, '&')
+                
+        };
+
+        exits[1] = ExitInfo{
+            Screens::ScreenId::Second,
+            Screens::ScreenId::Final,
+            Point(38, 13),
+            Point(38, 13),
+            Point(),
+            Point()
+        };
+
+    }
+
+    // Top–level entry point: show menu, start game, etc.
     // ==========================================
     // Public Interface
     // ==========================================
