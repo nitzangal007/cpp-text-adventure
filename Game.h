@@ -11,35 +11,37 @@ enum class GameResult { BackToMenu, QuitProgram };
 
 class Game
 {
-    // ==========================================
-    // Internal Structures
-    // ==========================================
+    // ---- Internal helper types ----
     struct Bomb {
-        bool  active = false;
-        Point pos;
-        int   ticksLeft = 0;
+        bool  active = false;  // is there a bomb currently placed
+        Point pos;                // bomb position on the board
+        int   ticksLeft = 0;      // time left until explosion
     };
 
     struct AutoBomb {
-        Point center;
-        int   ticksLeft = 0;
+        Point center;          // ????? ????? ????????? (B)
+        int   ticksLeft = 0;   // ??? ????? ????? ?? ???? "???????"
     };
 
+    // Describes how to move from one screen to the next
     struct ExitInfo {
-        Screens::ScreenId from;
-        Screens::ScreenId to;
-        Point doorPos;
-        Point waitPos;
-        Point nextStartP1;
-        Point nextStartP2;
+        Screens::ScreenId from;      // which screen we exit from
+        Screens::ScreenId to;        // next screen to move to
+
+        Point doorPos;               // door tile position (the door itself)
+        Point waitPos;               // one step AFTER the door (where players wait)
+
+        Point nextStartP1;           // Player 1 start position on the next screen
+        Point nextStartP2;           // Player 2 start position on the next screen
     };
 
-    // ==========================================
-    // Member Variables
-    // ==========================================
+    // ---- Core game state ----
     Screens currentScreen;
+
     Player  player1;
     Player  player2;
+
+    // Initial start positions for the very first screen
     Point   player1Start;
     Point   player2Start;
 
@@ -47,14 +49,24 @@ class Game
     Bomb bomb;
     std::vector<AutoBomb> autoBombs;
 
-    // Navigation
+    // Exit/multi–screen navigation data
     ExitInfo exits[Screens::NUM_SCREENS];
+
+    // Per–player flags for “already reached waitPos and ready to move to next screen”
     bool player1ReadyForNextScreen;
     bool player2ReadyForNextScreen;
-    bool gameOver = false;
 
 public:
-    Game();
+    // ---- Ctor / initialization ----
+    Game()
+        : player1(Player::Id::First, Point(5, 2, 0, 0, '$'), "wdxas", '$'),
+        player2(Player::Id::Second, Point(9, 2, 0, 0, '&'), "ilmjk", '&'),
+        player1Start(5, 2, 0, 0, '$'),
+        player2Start(9, 2, 0, 0, '&'),
+        player1ReadyForNextScreen(false),
+        player2ReadyForNextScreen(false)
+    {
+    
 
         exits[0] = ExitInfo{
             Screens::ScreenId::First,   
@@ -78,65 +90,65 @@ public:
     }
 
     // Top–level entry point: show menu, start game, etc.
-    // ==========================================
-    // Public Interface
-    // ==========================================
-
-    // Main entry point: shows menu, handles loops
     void run();
 
 private:
-    // ==========================================
-    // Core Game Control
-    // ==========================================
-
-    // Initialize/Reset game state
+   // Initialize all game data (players, screens, exits, etc.)
     void initGame();
-    
-    // Main loop for a single game session
+
+    // Main game loop (single run of the game)
     void runGame();
-    
-    // Reinits current level (e.g. after death)
-    void resetCurrentGame();
 
-    // ==========================================
-    // Update & Render
-    // ==========================================
+    // ---- Per–frame update & rendering ----
 
-    // Frame logic: movement, switches, bombs
+    // Update all game logic for one tick (players, items, bomb, doors...)
     void updateLogic();
 
-    // Draw map, players, UI
+    // Draw current screen, players, status bar, etc.
     void render();
+
+    // Handle movement and collisions for a single player
+    void updatePlayerMovement(Player& player);
+
+
+    // If player stands on a collectible item – pick it up
+    void collectItemIfPossible(Player& player);
+
+    // Draw items / inventory state at the bottom of the screen
     void drawStatusBar();
 
-    // ==========================================
-    // Player Logic
-    // ==========================================
+    // ---- Bomb handling ----
 
-    void updatePlayerMovement(Player& player);
-    void collectItemIfPossible(Player& player);
-    Player& getOtherPlayer(const Player& p);
-
-    // ==========================================
-    // Bomb Logic
-    // ==========================================
-
+    // Place a bomb at the player's position (if allowed)
     void tryPlaceBomb(Player& player);
+
+    // Handle bomb explosion: clear area, hurt players, etc.
     void explodeBomb();
-    
-    // Handle auto-bombs (returns true if player died)
-    bool handleAutoBombs();
 
-    bool isPlayerInExplosion(const Player& player, const Point& center, int radiusSquared);
+    // Check if a given player is in the explosion radius (helper)
+    bool isPlayerInExplosion(const Player& player,
+        const Point& center,
+        int radiusSquared);
 
-    // ==========================================
-    // Screen Transition Logic
-    // ==========================================
+	void resetCurrentGame();
 
-    // Checks readiness and moves to next screen if OK
+    // ---- Small helper functions for multi–screen logic ----
+
+    // Is this player already standing on waitPos and ready for next screen?
+    bool playerIsReadyForNextScreen(const Player& player) const;
+
+    // Check if a point is exactly the “waitPos” (one step after the door)
+    bool isExitWaitPosition(const Point& p) const;
+
+    // If both players are ready, move to the next screen
     void tryAdvanceToNextScreen();
 
-    bool playerIsReadyForNextScreen(const Player& player) const;
-    bool isExitWaitPosition(const Point& p) const;
+    Player& getOtherPlayer(const Player& p);
+
+    bool handleAutoBombs();
+    
+	// ---- Game over handling ----
+    bool gameOver = false;         
+   
+
 };
