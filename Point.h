@@ -1,6 +1,5 @@
-#pragma once
-
-#include <iostream>
+#pragma once												// Point.h
+#include <iostream>											// We took the code from class
 #include "utils.h"
 #include "Direction.h"
 

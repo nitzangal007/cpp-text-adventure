@@ -1,5 +1,5 @@
-#include "Point.h"
-#include "Screens.h"
+#include "Point.h"											//Point.cpp 
+#include "Screens.h"										// We took the code from class
 
 
 void Point::move() {
@@ -31,3 +31,4 @@ void Point::setDirection(Direction dir) {
 		break;
 	}
 }
+																		

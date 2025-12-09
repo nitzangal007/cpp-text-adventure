@@ -1,5 +1,5 @@
-#include <iostream>
-#include <windows.h> // Required for Windows API console functions
+#include <iostream>                                        // utils.cpp
+#include <windows.h>                                       // We took the code from class
 #include <cstdlib>
 
 #include "utils.h"
@@ -25,7 +25,7 @@ void cls() {
     system("cls");
 }
 
-void printCentered(const std::string& text, int y)
+void printCentered(const std::string& text, int y)     // we used chatGPT to generate this function
 {
     const int screenWidth = 80;  
     int x = (screenWidth - static_cast<int>(text.size())) / 2;

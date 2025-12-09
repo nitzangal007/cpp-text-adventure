@@ -208,20 +208,20 @@ void Game::render()
 		player2.draw();
 		drawStatusBar();
 
-		// Blink effect: hide bomb character on odd ticks
-		if (bomb.active && bomb.ticksLeft <= 5) {
+																
+		if (bomb.active && bomb.ticksLeft <= 5) {					 // we used Gemini for this block
 			if (bomb.ticksLeft % 2 != 0) {
 				gotoxy(bomb.pos.getX(), bomb.pos.getY());
 				std::cout << ' ';
 			}
 		}
 
-		for (const auto& ab : autoBombs) {
+		for (const auto& ab : autoBombs) {						    // we used Gemini for this block
 			if (ab.ticksLeft <= 18) {
 				if (ab.ticksLeft % 2 != 0) {
 					gotoxy(ab.center.getX(), ab.center.getY());
 					std::cout << ' ';
-				}
+				}				
 			}
 		}
 
@@ -274,7 +274,7 @@ void Game::updatePlayerMovement(Player& player)
 		return;
 	}
 
-	if (currentScreen.isObstacle(nextPos))
+	if (currentScreen.isObstacle(nextPos))								// we used chatGPT for this block
 	{
 		bool Pushable = currentScreen.tryPushObstacle(nextPos, player, getOtherPlayer(player));
 		if (Pushable)
@@ -405,7 +405,7 @@ void Game::explodeBomb()
 	bomb.ticksLeft = 0;
 }
 
-bool Game::handleAutoBombs()
+bool Game::handleAutoBombs()							//We used chatGPT for this function
 {
 	std::vector<Point> centers;
 	currentScreen.collectPendingAutoBombs(centers);
@@ -449,7 +449,6 @@ bool Game::handleAutoBombs()
 		
 		currentScreen.setCharAt(ab.center, Screens::EMPTY_SPACE);
 
-		// Erase exploded bomb; don't increment i to not skip next element
 		autoBombs.erase(autoBombs.begin() + i);
 	}
 	return someoneDied;

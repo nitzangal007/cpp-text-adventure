@@ -221,12 +221,7 @@ void Screens::makePassage(const Point& p) {
 	setCharAt(p, EMPTY_SPACE);
 }
 
-// =========================================================
-// Complex Logic Implementation
-// Tool: Gemini 3 Pro
-// Prompt: "Implement switch logic that handles permanent and temporary states..."
-// =========================================================
-void Screens::updateSwitchStates(const Player& p1, const Player& p2)
+void Screens::updateSwitchStates(const Player& p1, const Player& p2)		//We used chatGPT for this function
 {
 	std::vector<SwitchData>* switches = nullptr;
 
@@ -266,7 +261,7 @@ void Screens::updateSwitchStates(const Player& p1, const Player& p2)
 		{
 			if (s.oneTime)
 			{
-				// Only toggle on the frame the player steps ON
+				
 				if (on && !s.wasOnLastFrame && !s.active)
 				{
 					s.active = true;
@@ -279,7 +274,7 @@ void Screens::updateSwitchStates(const Player& p1, const Player& p2)
 			}
 			else
 			{
-				// Only toggle on the frame the player steps ON
+				
 				if (on && !s.wasOnLastFrame)
 				{
 					s.active = !s.active;
@@ -487,12 +482,7 @@ void Screens::clearHint() const
 // Obstacle Mechanics
 // ==========================================
 
-// =========================================================
-// Complex Logic Implementation
-// Tool: Gemini 3 Pro
-// Prompt: "Help me implement a function that moves a group of connected obstacles..."
-// =========================================================
-bool Screens::tryPushObstacle(const Point& nextPos, const Player& player, const Player& otherPlayer)
+bool Screens::tryPushObstacle(const Point& nextPos, const Player& player, const Player& otherPlayer)	// we used chatGPT for this function
 {
 	Point currPos = player.getPosition();
 	int dx = nextPos.getX() - currPos.getX();
@@ -622,7 +612,7 @@ void Screens::clearExplosionArea(const Point& center, int radius)
 	int cy = center.getY();
 	int r2 = radius * radius;
 
-	for (int dy = -radius; dy <= radius; ++dy)
+	for (int dy = -radius; dy <= radius; ++dy)       // we used chatGPT for this loop
 	{
 		for (int dx = -radius; dx <= radius; ++dx)
 		{
@@ -645,7 +635,7 @@ void Screens::clearExplosionArea(const Point& center, int radius)
 	}
 }
 
-void Screens::collectPendingAutoBombs(std::vector<Point>& out)
+void Screens::collectPendingAutoBombs(std::vector<Point>& out)						// we used chatGPT for this function
 {
 	out.insert(out.end(), pendingAutoBombs.begin(), pendingAutoBombs.end());
 	pendingAutoBombs.clear();
@@ -726,8 +716,7 @@ void Screens::applySwitchEffect(const SwitchData& s, bool active)
 	}
 }
 
-
-void Screens::triggerAutoBombs(const SwitchData& s)
+void Screens::triggerAutoBombs(const SwitchData& s)						// we used chatGPT for this function
 {
 	const int RADIUS = 2; 
 
@@ -747,7 +736,7 @@ void Screens::triggerAutoBombs(const SwitchData& s)
 	}
 }
 
-void Screens::updateDoor7ByBinaryPuzzle()
+void Screens::updateDoor7ByBinaryPuzzle()							// we used chatGPT for this function
 {
 	if (!isSecondScreen())
 		return;
@@ -757,10 +746,10 @@ void Screens::updateDoor7ByBinaryPuzzle()
 
 	int value = 0;
 
-	for (const auto& s : SecondScreenSwitches)
+	for (const auto& s : SecondScreenSwitches)				
 	{
 		// Build integer value from active switches (bits 0-3)
-		if (s.bitIndex >= 0 && s.active)
+		if (s.bitIndex >= 0 && s.active)								
 		{
 			value |= (1 << s.bitIndex);
 		}
@@ -818,7 +807,7 @@ void Screens::rightGateClosed()
 	boards[screenIndex][18][17] = WALL;
 }
 
-void Screens::collectObstacleGroup(const Point& start, std::vector<Point>& group) const
+void Screens::collectObstacleGroup(const Point& start, std::vector<Point>& group) const		// we used chatGPT for this function
 {
 	const Direction dirs[4] = {
 	Direction::UP,
@@ -832,8 +821,8 @@ void Screens::collectObstacleGroup(const Point& start, std::vector<Point>& group
 	if (!isObstacle(start))
 		return;
 
-	// Find all contiguous obstacles using BFS-like expansion
-	group.push_back(start);
+	
+	group.push_back(start);						
 	for (int i = 0; i < group.size(); i++)
 	{
 		Point current = group[i];
@@ -887,7 +876,7 @@ void Screens::collectObstacleGroup(const Point& start, std::vector<Point>& group
 	}
 }
 
-void Screens::moveObstacleGroup(const std::vector<Point>& group, int dx, int dy)
+void Screens::moveObstacleGroup(const std::vector<Point>& group, int dx, int dy)			// we used chatGPT for this function
 {
 	for (size_t i = 0; i < group.size(); ++i)
 		setCharAt(group[i], Screens::EMPTY_SPACE);
