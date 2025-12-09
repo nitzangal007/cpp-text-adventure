@@ -7,27 +7,12 @@
 class Screens
 {
 public:
+    // ==========================================
+    // Constants & Enums
+    // ==========================================
     enum { MAX_X = 80, MAX_Y = 25 };
     enum { NUM_SCREENS = 3 };
     enum class ScreenId { First = 0, Second = 1, Final = 2 };
-
-    struct SwitchData
-    {
-        Point position;
-        std::vector<Point> affectedWalls;
-        std::vector<Point> addWhenActive;
-        std::vector<Point> autobombs;
-        bool isPermanent;
-        bool active = false;
-        bool wasOnLastFrame = false;
-        bool oneTime = false;
-        int bitIndex = -1;
-
-        SwitchData() {}
-    };
-
-    
-
 
     // Tile characters
     static constexpr char EMPTY_SPACE = ' ';
@@ -41,180 +26,150 @@ public:
     static constexpr char RIDDLE = '?';
     static const char BOMB_PLANTED = '@';
     static const char AUTO_BOMB = 'B';
-	static const char HINT = 'H';
+    static const char HINT = 'H';
 
+    struct SwitchData
+    {
+        Point position;
+        std::vector<Point> affectedWalls;
+        std::vector<Point> addWhenActive;
+        std::vector<Point> autobombs;
+        bool isPermanent;
+        bool active = false;
+        bool wasOnLastFrame = false;
+        bool oneTime = false;
+        int bitIndex = -1;
+        
+        SwitchData() {}
+    };
 
-    // Doors: '1'..'9' (no constant needed, we check by range)
 private:
-    // Raw boards for all screens
     char boards[NUM_SCREENS][MAX_Y][MAX_X];
-
-    // Which one we are showing/using now
     ScreenId current = ScreenId::First;
-    Point door7Pos;
-    //data for first screen
+    std::vector<Point> pendingAutoBombs;
+
+    // Level 1 Data
     std::vector<SwitchData> firstScreenSwitches;
     bool leftEntranceClosed = false;
     bool rightEntranceClosed = false;
-    
 
-
-    //data for Second screen
+    // Level 2 Data
     std::vector<SwitchData> SecondScreenSwitches;
+    Point door7Pos;
 
-    // Internal builders for each screen
-    void buildFirstScreen();
-    void buildSecondScreen();
-    void buildFinalScreen();
-    // Internal checkers
-
-    std::vector<Point> pendingAutoBombs;
 public:
     Screens();
 
-    // Build all screens (hard-coded for Exercise 1)
+    // ==========================================
+    // General Screen Management
+    // ==========================================
+    
+    // Initialize all screens (loads templates, resets switches)
     void init();
 
-    // Current screen management
-    void setCurrentScreen(ScreenId id) {
-        current = id;
-    }
-    ScreenId getCurrentScreen() const {
-        return current;
-    }
+    // Rebuilds the current screen from template
+    void resetCurrent();
 
-    // Draw the currently active screen
+    // Switch to a specific screen
+    void setCurrentScreen(ScreenId id);
+    ScreenId getCurrentScreen() const;
+
+    // Draw the entire board to console
     void drawCurrent() const;
 
-    // ---- Board access (current screen) ----
+    // ==========================================
+    // Board Access & Modification
+    // ==========================================
 
-    void setCharAt(const Point& p, char ch) {
-        boards[int(current)][p.getY()][p.getX()] = ch;
-    }
+    void setCharAt(const Point& p, char ch);
 
-    bool isInside(const Point& p) const {
-        return (p.getX() >= 0 && p.getX() < MAX_X && p.getY() >= 0 && p.getY() < MAX_Y);
-    }
-    char getCharAt(const Point& p) const {
-        return boards[int(current)][p.getY()][p.getX()];
-    }
+    // ==========================================
+    // Classification Helpers (Is Wall? etc.)
+    // ==========================================
+    
+    bool isWall(const Point& p) const;
+    bool isDoor(const Point& p) const;
+    bool isKey(const Point& p) const;
+    bool isBomb(const Point& p) const;
+    bool isTorch(const Point& p) const;
+    bool isObstacle(const Point& p) const;
+    bool isSwitch(const Point& p) const; 
+    bool isSwitchOn(const Point& p) const;
+    bool isSwitchOff(const Point& p) const;
+    bool isRiddle(const Point& p) const;
+    bool isHint(const Point& p) const;
 
-    // ---- Classification helpers ----
-
-    bool isWall(const Point& p) const {
-        return (getCharAt(p) == WALL);
-    }
-    bool isDoor(const Point& p) const {
-        const char ch = getCharAt(p);
-        return (ch >= '1' && ch <= '9');
-    }
-    bool isKey(const Point& p) const {
-        return (getCharAt(p) == KEY);
-    }
-    bool isBomb(const Point& p) const {
-        return (getCharAt(p) == BOMB);
-    }
-    bool isTorch(const Point& p) const {
-        return (getCharAt(p) == TORCH);
-    }
-    bool isObstacle(const Point& p) const {
-        return (getCharAt(p) == OBSTACLE);
-    }
-    bool isSwitch(const Point& p) const {
-        const char ch = getCharAt(p);
-        return (ch == SWITCH_ON || ch == SWITCH_OFF);
-    }
-    bool isSwitchOn(const Point& p) const {
-        return (getCharAt(p) == SWITCH_ON);
-    }
-    bool isSwitchOff(const Point& p) const {
-        return (getCharAt(p) == SWITCH_OFF);
-    }
-    bool isRiddle(const Point& p) const {
-        return (getCharAt(p) == RIDDLE);
-    }
-	bool isHint(const Point& p) const {
-		return (getCharAt(p) == HINT);
-	}
-
-    void clearHint() const;
-
-    // Screen identity helpers
-    bool isFirstScreen() const {
-        return (current == ScreenId::First);
-    }
-    bool isSecondScreen() const {
-        return (current == ScreenId::Second);
-    }
-    bool isFinalScreen() const {
-        return (current == ScreenId::Final);
-    }
-
-    // Used by Game before moving a player to this point
+    // Checks if a cell is walkable (not wall/obstacle/door)
     bool isFreeCellForPlayer(const Point& p) const;
 
-    // ---- helpers ----
-    // Remove a door (digit '1'..'9') from this position (used when player opens it)
-    void makePassage(const Point& p) {
-        setCharAt(p, EMPTY_SPACE);
-    }
-    // Explicitly set the switch at p to ON or OFF (Game decides when to call).
-    void setSwitchOn(const Point& p) {
-        setCharAt(p, SWITCH_ON);
-    }
-    void setSwitchOff(const Point& p) {
-        setCharAt(p, SWITCH_OFF);
-    }
-    // --- Switch logic API for Game ---
-    void initFirstScreenSwitches();
-    void initSecondScreenSwitches();
+    // Screen identity checks
+    bool isFirstScreen() const { return (current == ScreenId::First); }
+    bool isSecondScreen() const { return (current == ScreenId::Second); }
+    bool isFinalScreen() const { return (current == ScreenId::Final); }
+
+    // ==========================================
+    // Switch & Gate Logic
+    // ==========================================
+
+    void setSwitchOn(const Point& p);
+    void setSwitchOff(const Point& p);
+    void makePassage(const Point& p); 
+
+    // Update state of all switches based on player positions
     void updateSwitchStates(const Player& p1, const Player& p2);
-    void applySwitchEffect(const SwitchData& s, bool active);
 
-
-	// Update gate states on first screen based on players' positions
+    // --- Level 1 Specifics ---
+    void initFirstScreenSwitches();
     void updateFirstScreenGates(const Player& p1, const Player& p2);
 
-    void triggerAutoBombs(const SwitchData& s);
+    // --- Level 2 Specifics ---
+    void initSecondScreenSwitches();
+    void printHint() const;
+    void clearHint() const;
 
+    // ==========================================
+    // Obstacle Mechanics
+    // ==========================================
+    
+    // Attempt to push an obstacle (single or group)
+    bool tryPushObstacle(const Point& nextPos, const Player& player, const Player& otherPlayer);
 
+    // ==========================================
+    // Bomb & Explosion Logic
+    // ==========================================
 
     void placeBombAt(int x, int y);
 
-    // (radius: Game decides value, e.g. from exercise spec)
+    // Clears area around center (destroys walls/obstacles/bombs)
     void clearExplosionArea(const Point& center, int radius);
 
+    // Collects auto-bombs triggered this frame
     void collectPendingAutoBombs(std::vector<Point>& out);
 
-    
-    bool tryPushObstacle(const Point& nextPos, const Player& player, const Player& otherPlayer);
-
-    void printHint() const;
-
-    void resetCurrent();
-
-
-
-
-    void updateDoor7ByBinaryPuzzle();
-
 private:
-    void collectObstacleGroup(const Point& start, std::vector<Point>& group) const;
-    void moveObstacleGroup(const std::vector<Point>& group, int dx, int dy);
+    // ==========================================
+    // Internal Helpers
+    // ==========================================
+
+    void buildFirstScreen();
+    void buildSecondScreen();
+    void buildFinalScreen();
+
+    // Helpers
+    bool isInside(const Point& p) const;
+    char getCharAt(const Point& p) const;
+
+    // Switch logic
+    void applySwitchEffect(const SwitchData& s, bool active);
+    void triggerAutoBombs(const SwitchData& s);
+    void updateDoor7ByBinaryPuzzle(); 
+
+    // Gates (Level 1)
     void handleGateForPlayer(const Player& p);
     void leftGateClosed();
     void rightGateClosed();
 
-
-
-
-
-
-
-
-
-   
-
-    
-
+    // Obstacles
+    void collectObstacleGroup(const Point& start, std::vector<Point>& group) const;
+    void moveObstacleGroup(const std::vector<Point>& group, int dx, int dy);
 };

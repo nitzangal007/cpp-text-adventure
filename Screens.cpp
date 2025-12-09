@@ -3,34 +3,32 @@
 
 namespace
 {
-	// 80ª25 template for the first screen (ScreenId::First)
 	constexpr const char* FIRST_SCREEN_TEMPLATE[Screens::MAX_Y] = {
-		//01234567890123456789012345678901234567890123456789012345678901234567890123456789
-		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 0
-		 "W                 WWWWWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 1
-		 "W                 WWWW                                       W                 W", // 2
-		 "W                 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW         W                 W", // 3
-		 "W         @       WWWW   WWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 4
-		 "W                 WWWW   @WWWWWWWWWWWWWWWW         W         W                 W", // 5
-		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W", // 6
-		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W", // 7
-		 "WWWWWWW**WWWWWWWWWWWWW   WWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 8
-		 "W         W  *          WWWWWWWWWWWWWWWWWW         W         W                 W", // 9
-		 "W  WWWW   W  WWWWWWWWWWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 10
-		 "W**    *  W  WWW  *  WWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 11
-		 "W  *  * **W  WWW  W WWWWWWWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 12
-		 "W  W  W **W  WWW  W WWWWWWWWWWWWWWWWWWWWWW         W         W                 W", // 13
-		 "W  W  W   W  WWW  W                                W         W        K        W", // 14
-		 "W   ** *  W  WWW  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW   WWWWWWWWWWWWWWWWWWWWWW", // 15
-		 "WWW   W   W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW            W   W                    W", // 16
-		 "W     W   W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW   W        W   W                    W", // 17
-		 "W  * *W   W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW   W        W   W                    W", // 18
-		 "W   *             WWWWWWWWWWWWWWWWWWWWWWWW   W                                 W", // 19
-		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW1WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW", // 20 door '1'
-		 "                                                                                ", // 21
-		 "                                                                                ", // 22
-		 "                                                                                ", // 23
-		 "                                                                                "  // 24 
+		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+		 "W                 WWWWWWWWWWWWWWWWWWWWWWWW         W         W                 W",
+		 "W                 WWWW                                       W                 W",
+		 "W                 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW         W                 W",
+		 "W         @       WWWW   WWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+		 "W                 WWWW   @WWWWWWWWWWWWWWWW         W         W                 W",
+		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W",
+		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W",
+		 "WWWWWWW**WWWWWWWWWWWWW   WWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+		 "W         W  *          WWWWWWWWWWWWWWWWWW         W         W                 W",
+		 "W  WWWW   W  WWWWWWWWWWWWWWWWWWWWWWWWWWWWW         W         W                 W",
+		 "W**    *  W  WWW  *  WWWWWWWWWWWWWWWWWWWWW         W         W                 W",
+		 "W  *  * **W  WWW  W WWWWWWWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+		 "W  W  W **W  WWW  W WWWWWWWWWWWWWWWWWWWWWW         W         W                 W",
+		 "W  W  W   W  WWW  W                                W         W        K        W",
+		 "W   ** *  W  WWW  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW   WWWWWWWWWWWWWWWWWWWWWW",
+		 "WWW   W   W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW            W   W                    W",
+		 "W     W   W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW   W        W   W                    W",
+		 "W  * *W   W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW   W        W   W                    W",
+		 "W   *             WWWWWWWWWWWWWWWWWWWWWWWW   W                                 W",
+		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW1WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+		 "                                                                                ",
+		 "                                                                                ",
+		 "                                                                                ",
+		 "                                                                                "
 	};
 	constexpr const char* SECOND_SCREEN_TEMPLATE[Screens::MAX_Y] = {
 		//01234567890123456789012345678901234567890123456789012345678901234567890123456789
@@ -63,49 +61,135 @@ namespace
 
 	};
 	constexpr const char* FINAL_SCREEN_TEMPLATE[Screens::MAX_Y] = {
-		//01234567890123456789012345678901234567890123456789012345678901234567890123456789
-		 "################################################################################", // 0
-		 "#  ##########################################################################  #", // 1
-		 "#      ##################################################################      #", // 2
-		 "#        ##############################################################        #", // 3
-		 "#        ##                                                          ##        #", // 4
-		 "#        ##                                                          ##        #", // 5
-		 "#        ##                                                          ##        #", // 6
-		 "#        ##                                                          ##        #", // 7
-		 "#        ##                                                          ##        #", // 8
-		 "#        ##     ***   ***  *   * *****    ***  *   * ***** ****      ##        #", // 9
-		 "#        ##    *   * *   * ** ** *       *   * *   * *     *   *     ##        #", // 10
-		 "#        ##    *     *   * * * * *       *   * *   * *     *   *     ##        #", // 11
-		 "#        ##    * *** ***** *   * ****    *   * *   * ****  ****      ##        #", // 12
-		 "#        ##    *   * *   * *   * *       *   *  * *  *     * *       ##        #", // 13
-		 "#        ##    *   * *   * *   * *       *   *  * *  *     *  *      ##        #", // 14
-		 "#        ##     ***  *   * *   * *****    ***    *   ***** *   *     ##        #", // 15
-		 "#        ##                                                          ##        #", // 16
-		 "#        ##                                                          ##        #", // 17
-		 "#        ##                                                          ##        #", // 18
-		 "#        ##                                                          ##        #", // 19
-		 "#        ##                                                          ##        #", // 20
-		 "#        ##############################################################        #", // 21
-		 "#      ##################################################################      #", // 22
-		 "#  ##########################################################################  #", // 23
-		 "################################################################################", // 24
+		 "################################################################################",
+		 "#  ##########################################################################  #",
+		 "#      ##################################################################      #",
+		 "#        ##############################################################        #",
+		 "#        ##                                                          ##        #",
+		 "#        ##                                                          ##        #",
+		 "#        ##                                                          ##        #",
+		 "#        ##                                                          ##        #",
+		 "#        ##                                                          ##        #",
+		 "#        ##     ***   ***  *   * *****    ***  *   * ***** ****      ##        #",
+		 "#        ##    *   * *   * ** ** *       *   * *   * *     *   *     ##        #",
+		 "#        ##    *     *   * * * * *       *   * *   * *     *   *     ##        #",
+		 "#        ##    * *** ***** *   * ****    *   * *   * ****  ****      ##        #",
+		 "#        ##    *   * *   * *   * *       *   *  * *  *     * *       ##        #",
+		 "#        ##    *   * *   * *   * *       *   *  * *  *     *  *      ##        #",
+		 "#        ##     ***  *   * *   * *****    ***    *   ***** *   *     ##        #",
+		 "#        ##                                                          ##        #",
+		 "#        ##                                                          ##        #",
+		 "#        ##                                                          ##        #",
+		 "#        ##                                                          ##        #",
+		 "#        ##                                                          ##        #",
+		 "#        ##############################################################        #",
+		 "#      ##################################################################      #",
+		 "#  ##########################################################################  #",
+		 "################################################################################",
 	};
-
 }
 
+Screens::Screens() = default;
 
+// ==========================================
+// General Screen Management
+// ==========================================
 
-
-
-void Screens::clearHint() const
+void Screens::init()
 {
-	if (!isSecondScreen())
-		return;
-
-	gotoxy(40, 22);
-	std::cout << "                                                          ";
+	buildFirstScreen();
+	buildSecondScreen();
+	buildFinalScreen();
+	current = ScreenId::First;
+	pendingAutoBombs.clear();
 }
 
+void Screens::resetCurrent()
+{
+	if (current == ScreenId::First)
+	{
+		buildFirstScreen();
+		leftEntranceClosed = false;
+		rightEntranceClosed = false;
+	}
+	else if (current == ScreenId::Second)
+	{
+		buildSecondScreen();
+		initSecondScreenSwitches();
+	}
+}
+
+void Screens::setCurrentScreen(ScreenId id) 
+{
+	current = id;
+}
+
+Screens::ScreenId Screens::getCurrentScreen() const 
+{
+	return current;
+}
+
+void Screens::drawCurrent() const
+{
+	const int screenIndex = static_cast<int>(current);
+	for (int y = 0; y < MAX_Y; ++y)
+	{
+		gotoxy(0, y);
+		for (int x = 0; x < MAX_X; ++x)
+		{
+			std::cout << boards[screenIndex][y][x];
+		}
+	}
+}
+
+// ==========================================
+// Board Access & Modification
+// ==========================================
+
+void Screens::setCharAt(const Point& p, char ch)
+{
+	boards[int(current)][p.getY()][p.getX()] = ch;
+}
+
+// ==========================================
+// Classification Helpers
+// ==========================================
+
+bool Screens::isWall(const Point& p) const {
+	return (getCharAt(p) == WALL);
+}
+bool Screens::isDoor(const Point& p) const {
+	const char ch = getCharAt(p);
+	return (ch >= '1' && ch <= '9');
+}
+bool Screens::isKey(const Point& p) const {
+	return (getCharAt(p) == KEY);
+}
+bool Screens::isBomb(const Point& p) const {
+	return (getCharAt(p) == BOMB);
+}
+bool Screens::isTorch(const Point& p) const {
+	return (getCharAt(p) == TORCH);
+}
+bool Screens::isObstacle(const Point& p) const {
+	return (getCharAt(p) == OBSTACLE);
+}
+bool Screens::isSwitch(const Point& p) const {
+	const char ch = getCharAt(p);
+	return (ch == SWITCH_ON || ch == SWITCH_OFF);
+}
+bool Screens::isSwitchOn(const Point& p) const {
+	return (getCharAt(p) == SWITCH_ON);
+}
+bool Screens::isSwitchOff(const Point& p) const {
+	return (getCharAt(p) == SWITCH_OFF);
+}
+bool Screens::isRiddle(const Point& p) const {
+	return (getCharAt(p) == RIDDLE);
+}
+bool Screens::isHint(const Point& p) const {
+	return (getCharAt(p) == HINT);
+}
 
 bool Screens::isFreeCellForPlayer(const Point& p) const
 {
@@ -115,6 +199,105 @@ bool Screens::isFreeCellForPlayer(const Point& p) const
 	return true;
 }
 
+// ==========================================
+// Switch & Gate Logic
+// ==========================================
+
+void Screens::setSwitchOn(const Point& p) {
+	setCharAt(p, SWITCH_ON);
+}
+
+void Screens::setSwitchOff(const Point& p) {
+	setCharAt(p, SWITCH_OFF);
+}
+
+void Screens::makePassage(const Point& p) {
+	setCharAt(p, EMPTY_SPACE);
+}
+
+void Screens::updateSwitchStates(const Player& p1, const Player& p2)
+{
+	std::vector<SwitchData>* switches = nullptr;
+
+	if (isFirstScreen()) {
+		switches = &firstScreenSwitches;
+	}
+	else if (isSecondScreen()) {
+		switches = &SecondScreenSwitches;
+	}
+	else {
+		return;
+	}
+
+	for (auto& s : *switches)
+	{
+		bool on = (p1.getPosition() == s.position || p2.getPosition() == s.position);
+
+		if (!s.isPermanent)
+		{
+			if (on && !s.active)
+			{
+				s.active = true;
+				applySwitchEffect(s, true);
+				setSwitchOn(s.position);
+
+				for (const Point& b : s.autobombs)
+					pendingAutoBombs.push_back(b);
+			}
+			else if (!on && s.active)
+			{
+				s.active = false;
+				applySwitchEffect(s, false);
+				setSwitchOff(s.position);
+			}
+		}
+		else
+		{
+			if (s.oneTime)
+			{
+				// Only toggle on the frame the player steps ON
+				if (on && !s.wasOnLastFrame && !s.active)
+				{
+					s.active = true;
+					applySwitchEffect(s, true);
+					setSwitchOn(s.position);
+
+					for (const Point& b : s.autobombs)
+						pendingAutoBombs.push_back(b);
+				}
+			}
+			else
+			{
+				// Only toggle on the frame the player steps ON
+				if (on && !s.wasOnLastFrame)
+				{
+					s.active = !s.active;
+					applySwitchEffect(s, s.active);
+
+					if (s.active)
+					{
+						setSwitchOn(s.position);
+						for (const Point& b : s.autobombs)
+							pendingAutoBombs.push_back(b);
+					}
+					else
+					{
+						setSwitchOff(s.position);
+					}
+				}
+			}
+
+			s.wasOnLastFrame = on;
+		}
+	}
+
+	if (isSecondScreen())
+	{
+		updateDoor7ByBinaryPuzzle();
+	}
+}
+
+// --- Level 1 Specifics ---
 
 void Screens::initFirstScreenSwitches()
 {
@@ -126,17 +309,11 @@ void Screens::initFirstScreenSwitches()
 		s.isPermanent = false;
 		s.oneTime = false;
 		s.bitIndex  = -1;
-
 		int y = 4;
-
-		// 52..60
 		for (int x = 52; x <= 60; ++x)
 			s.affectedWalls.emplace_back(x, y);
-
-		// 62..68
 		for (int x = 62; x <= 78; ++x)
 			s.affectedWalls.emplace_back(x, y);
-		
 		firstScreenSwitches.push_back(s);
 	}
 
@@ -146,17 +323,11 @@ void Screens::initFirstScreenSwitches()
 		s.isPermanent = false;
 		s.oneTime = false;
 		s.bitIndex = -1;
-
 		int x = 61;
-
-		// rows 1..3
 		for (int y = 1; y <= 3; ++y)
 			s.affectedWalls.emplace_back(x, y);
-
-		// rows 5..9
 		for (int y = 5; y <= 9; ++y)
 			s.affectedWalls.emplace_back(x, y);
-
 		firstScreenSwitches.push_back(s);
 	}
 
@@ -166,17 +337,11 @@ void Screens::initFirstScreenSwitches()
 		s.isPermanent = false;
 		s.oneTime = false;
 		s.bitIndex = -1;
-
 		int y = 12;
-
-		// 52..60
 		for (int x = 52; x <= 60; ++x)
 			s.affectedWalls.emplace_back(x, y);
-
-		// 62..68
 		for (int x = 62; x <= 78; ++x)
 			s.affectedWalls.emplace_back(x, y);
-
 		firstScreenSwitches.push_back(s);
 	}
 
@@ -186,15 +351,21 @@ void Screens::initFirstScreenSwitches()
 		s.isPermanent = true;
 		s.oneTime = false;
 		s.bitIndex = -1;
-
 		s.affectedWalls.emplace_back(51, 13);
 		s.affectedWalls.emplace_back(51, 14);
 		s.affectedWalls.emplace_back(61, 13);
 		s.affectedWalls.emplace_back(61, 14);
 		firstScreenSwitches.push_back(s);
 	}
-
 }
+
+void Screens::updateFirstScreenGates(const Player& p1, const Player& p2)
+{
+	handleGateForPlayer(p1);
+	handleGateForPlayer(p2);
+}
+
+// --- Level 2 Specifics ---
 
 void Screens::initSecondScreenSwitches()
 {
@@ -205,28 +376,21 @@ void Screens::initSecondScreenSwitches()
 		s.isPermanent = true;
 		s.oneTime = true;
 		s.bitIndex = -1;
-
 		int row = 10;
 		for (int x = 25; x <= 28; ++x)
 			s.affectedWalls.emplace_back(x, row);
-
 		row = 14;
-
 		for (int x = 24; x <= 29; ++x)
 			s.addWhenActive.emplace_back(x, row);
-
 		s.autobombs.emplace_back(29, 11);
 		s.autobombs.emplace_back(29, 13);
 		s.autobombs.emplace_back(24, 11);
 		s.autobombs.emplace_back(24, 13);
 		s.autobombs.emplace_back(24, 9);
 		s.autobombs.emplace_back(29, 9);
-
 		SecondScreenSwitches.push_back(s);
-
 	}
 	{
-
 		SwitchData s;
 		s.position = Point(77, 4);
 		s.isPermanent = true;
@@ -235,20 +399,16 @@ void Screens::initSecondScreenSwitches()
 		int row = 14;
 		for (int x = 25; x <= 28; ++x)
 			s.affectedWalls.emplace_back(x, row);
-
 		SecondScreenSwitches.push_back(s);
-		s.bitIndex  = -1;
 	}
 
 	const int y = 16;
-
-	
 	{
 		SwitchData s;
 		s.position = Point(59, y);  
 		s.isPermanent = true;
 		s.oneTime = false;
-		s.bitIndex = 3;            // MSB
+		s.bitIndex = 3;
 		SecondScreenSwitches.push_back(s);
 	}
 	{
@@ -272,10 +432,9 @@ void Screens::initSecondScreenSwitches()
 		s.position = Point(73, y); 
 		s.isPermanent = true;
 		s.oneTime = false;
-		s.bitIndex = 0;            // LSB
+		s.bitIndex = 0;
 		SecondScreenSwitches.push_back(s);
 	}
-
 	{
 		SwitchData s;
 		s.position = Point(29, 19); 
@@ -283,11 +442,8 @@ void Screens::initSecondScreenSwitches()
 		s.oneTime = false;
 		s.bitIndex = -1;         
 		s.affectedWalls.emplace_back(72, 4);
-
 		SecondScreenSwitches.push_back(s);
-
 	}
-
 	{
 		SwitchData s;
 		s.position = Point(52, 2);
@@ -296,203 +452,8 @@ void Screens::initSecondScreenSwitches()
 		s.bitIndex = -1;
 		s.affectedWalls.emplace_back(22, 1);
 		s.affectedWalls.emplace_back(22, 2);
-
 		SecondScreenSwitches.push_back(s);
 	}
-
-}
-
-void Screens::updateSwitchStates(const Player& p1, const Player& p2)
-{
-	std::vector<SwitchData>* switches = nullptr;
-
-	if (isFirstScreen()) {
-		switches = &firstScreenSwitches;
-	}
-	else if (isSecondScreen()) {
-		switches = &SecondScreenSwitches;
-	}
-	else {
-		return;
-	}
-
-	for (auto& s : *switches)
-	{
-		bool on = (p1.getPosition() == s.position || p2.getPosition() == s.position);
-
-		// --- סוויץ' לא-קבוע: עובד רק כל עוד עומדים עליו ---
-		if (!s.isPermanent)
-		{
-			if (on && !s.active)
-			{
-				s.active = true;
-				applySwitchEffect(s, true);
-				setSwitchOn(s.position);
-
-				for (const Point& b : s.autobombs)
-					pendingAutoBombs.push_back(b);
-			}
-			else if (!on && s.active)
-			{
-				s.active = false;
-				applySwitchEffect(s, false);
-				setSwitchOff(s.position);
-			}
-		}
-		// --- סוויץ' קבוע (isPermanent == true) ---
-		else
-		{
-			// סוויץ' חד-פעמי
-			if (s.oneTime)
-			{
-				if (on && !s.wasOnLastFrame && !s.active)
-				{
-					s.active = true;
-					applySwitchEffect(s, true);
-					setSwitchOn(s.position);
-
-					for (const Point& b : s.autobombs)
-						pendingAutoBombs.push_back(b);
-				}
-			}
-			// סוויץ' קבוע רגיל – ON/OFF בכל דריכה
-			else
-			{
-				if (on && !s.wasOnLastFrame)
-				{
-					s.active = !s.active;
-					applySwitchEffect(s, s.active);
-
-					if (s.active)
-					{
-						setSwitchOn(s.position);
-						for (const Point& b : s.autobombs)
-							pendingAutoBombs.push_back(b);
-					}
-					else
-					{
-						setSwitchOff(s.position);
-					}
-				}
-			}
-
-			s.wasOnLastFrame = on;
-		}
-	}
-
-	// עדכון דלת 7 לפי החידה – פעם אחת אחרי כל הסוויצ'ים
-	if (isSecondScreen())
-	{
-		updateDoor7ByBinaryPuzzle();
-	}
-}
-
-
-
-
-
-void Screens::applySwitchEffect(const SwitchData& s, bool active)
-{
-	int screenIndex = static_cast<int>(current);
-
-	for (const auto& wall : s.affectedWalls)
-	{
-		int x = wall.getX();
-		int y = wall.getY();
-		if (!isInside(Point(x, y)))
-			continue;
-		char& tile = boards[screenIndex][y][x];
-		tile = active ? EMPTY_SPACE : WALL;
-	}
-	for (const auto& p : s.addWhenActive)
-	{
-		int x = p.getX();
-		int y = p.getY();
-		if (!isInside(Point(x, y)))
-			continue;
-		char& tile = boards[screenIndex][y][x];
-		
-		tile = active ? WALL : EMPTY_SPACE;
-	}
-
-
-}
-
-void Screens::updateFirstScreenGates(const Player& p1, const Player& p2)
-{
-	handleGateForPlayer(p1);
-	handleGateForPlayer(p2);
-}
-
-
-void Screens::placeBombAt(int x, int y)									
-{
-
-	int s = static_cast<int>(current);
-
-	boards[s][y][x] = BOMB;   // '@'
-	gotoxy(x, y);
-	std::cout << BOMB;
-
-}
-
-void Screens::clearExplosionArea(const Point& center, int radius)
-{
-	int screen = static_cast<int>(current);
-	int cx = center.getX();
-	int cy = center.getY();
-	int r2 = radius * radius;
-
-	for (int dy = -radius; dy <= radius; ++dy)
-	{
-		for (int dx = -radius; dx <= radius; ++dx)
-		{
-			if (dx * dx + dy * dy > r2)
-				continue;
-
-			int x = cx + dx;
-			int y = cy + dy;
-
-			if (x <= 0 || x >= MAX_X - 1 || y <= 0 || y >= MAX_Y - 1)
-				continue;
-
-			char& tile = boards[screen][y][x];
-
-			if (tile == WALL || tile == OBSTACLE || tile == BOMB)
-			{
-				tile = EMPTY_SPACE;
-			}
-		}
-	}
-}
-
-void Screens::triggerAutoBombs(const SwitchData& s)
-{
-	const int RADIUS = 2; 
-
-	for (const Point& center : s.autobombs)
-	{
-		clearExplosionArea(center, RADIUS);
-		
-		int screenIndex = static_cast<int>(current);
-		int x = center.getX();
-		int y = center.getY();
-		if (isInside(center))
-		{
-			char& tile = boards[screenIndex][y][x];
-			if (tile == AUTO_BOMB)
-				tile = EMPTY_SPACE;
-		}
-	}
-}
-
-void Screens::collectPendingAutoBombs(std::vector<Point>& out)
-{
-
-	out.insert(out.end(), pendingAutoBombs.begin(), pendingAutoBombs.end());
-
-	
-	pendingAutoBombs.clear();
 }
 
 void Screens::printHint() const
@@ -503,171 +464,17 @@ void Screens::printHint() const
 	std::cout << "Hint: The door password is shown but in decimal";
 }
 
-
-void Screens::resetCurrent()
-{
-	const int screenIndex = static_cast<int>(current);
-	// Rebuild the current screen from the template
-	if (current == ScreenId::First)
-	{
-		buildFirstScreen();
-		leftEntranceClosed = false;
-		rightEntranceClosed = false;
-
-	}
-	else if (current == ScreenId::Second)
-	{
-		buildSecondScreen();
-		initSecondScreenSwitches();
-	}
-
-}
-
-void Screens::updateDoor7ByBinaryPuzzle()
+void Screens::clearHint() const
 {
 	if (!isSecondScreen())
 		return;
-
-	// אם לא מצאנו מיקום לדלת 7 – לא עושים כלום
-	if (door7Pos.getX() < 0 || door7Pos.getY() < 0)
-		return;
-
-	int value = 0;
-
-	// לוקחים רק סוויצ'ים שיש להם bitIndex תקף
-	for (const auto& s : SecondScreenSwitches)
-	{
-		if (s.bitIndex >= 0 && s.active)
-		{
-			value |= (1 << s.bitIndex);
-		}
-	}
-
-	char& tile = boards[(int)current][door7Pos.getY()][door7Pos.getX()];
-
-	if (value == 7)
-	{
-		// 0111 – פותחים את הדלת
-		tile = EMPTY_SPACE;
-	}
-	else
-	{
-		// כל קומבינציה אחרת – דלת סגורה עם '7'
-		tile = '7';
-	}
+	gotoxy(40, 22);
+	std::cout << "                                                          ";
 }
 
-
-
-
-
-Screens::Screens() = default;
-
-void Screens::init()
-{
-    // For now only first screen is meaningful; we still build all three
-    buildFirstScreen();
-    buildSecondScreen();
-    buildFinalScreen();
-	current = ScreenId::First;
-	pendingAutoBombs.clear();
-
-}
-
-
-void Screens::drawCurrent() const
-{
-	const int screenIndex = static_cast<int>(current);
-	for (int y = 0; y < MAX_Y; ++y)
-	{
-		gotoxy(0, y);
-		for (int x = 0; x < MAX_X; ++x)
-		{
-			std::cout << boards[screenIndex][y][x];
-		}
-	}
-}
-
-
-
-void Screens::handleGateForPlayer(const Player& p)
-{
-	const Point& pos = p.getPosition();
-	int x = pos.getX();
-	int y = pos.getY();
-	if (!leftEntranceClosed &&
-		(y == 18) &&
-		(x == 11 || x == 12))
-	{
-		leftGateClosed();
-	}
-
-	if (!rightEntranceClosed &&
-		(y == 18) &&
-		(x == 16 || x == 17))
-	{
-		rightGateClosed();
-	}
-}
-
-void Screens::rightGateClosed()
-{
-	if (rightEntranceClosed || !isFirstScreen())
-		return;
-	rightEntranceClosed = true;
-	int screenIndex = static_cast<int>(current);
-	boards[screenIndex][18][16] = WALL;
-	boards[screenIndex][18][17] = WALL;
-}
-void Screens::leftGateClosed()
-{
-	if (leftEntranceClosed || !isFirstScreen())
-		return;
-	leftEntranceClosed = true;
-	int screenIndex = static_cast<int>(current);
-	boards[screenIndex][18][11] = WALL;
-	boards[screenIndex][18][12] = WALL;
-}
-
-void Screens::buildFirstScreen()
-{
-    const int screenIndex = static_cast<int>(ScreenId::First);
-
-    // Copy template into boards[screenIndex]
-    for (int y = 0; y < MAX_Y; ++y)
-    {
-        for (int x = 0; x < MAX_X; ++x)
-        {
-            boards[screenIndex][y][x] = FIRST_SCREEN_TEMPLATE[y][x];
-        }
-    }
-}
-void Screens::buildSecondScreen()
-{
-	const int screenIndex = static_cast<int>(ScreenId::Second);
-	// Copy template into boards[screenIndex]
-	for (int y = 0; y < MAX_Y; ++y)
-	{
-		for (int x = 0; x < MAX_X; ++x)
-		{
-			boards[screenIndex][y][x] = SECOND_SCREEN_TEMPLATE[y][x];
-		}
-	}
-
-	door7Pos.setPosition(71, 11);
-}
-void Screens::buildFinalScreen()
-{
-	const int screenIndex = static_cast<int>(ScreenId::Final);
-	// Copy template into boards[screenIndex]
-	for (int y = 0; y < MAX_Y; ++y)
-	{
-		for (int x = 0; x < MAX_X; ++x)
-		{
-			boards[screenIndex][y][x] = FINAL_SCREEN_TEMPLATE[y][x];
-		}
-	}
-}
+// ==========================================
+// Obstacle Mechanics
+// ==========================================
 
 bool Screens::tryPushObstacle(const Point& nextPos, const Player& player, const Player& otherPlayer)
 {
@@ -698,6 +505,7 @@ bool Screens::tryPushObstacle(const Point& nextPos, const Player& player, const 
 
 	if (sameDir)
 	{
+		// Check if the other player is behind to add pushing force
 		bool otherBehind =
 			(otherPos.getX() == currPos.getX() - dx) &&
 			(otherPos.getY() == currPos.getY() - dy);
@@ -774,8 +582,221 @@ bool Screens::tryPushObstacle(const Point& nextPos, const Player& player, const 
 		}
 	}
 
+	// Move all connected obstacles simultaneously
 	moveObstacleGroup(group, dx, dy);
 	return true;
+}
+
+// ==========================================
+// Bomb & Explosion Logic
+// ==========================================
+
+void Screens::placeBombAt(int x, int y)									
+{
+	int s = static_cast<int>(current);
+	boards[s][y][x] = BOMB;
+	gotoxy(x, y);
+	std::cout << BOMB;
+}
+
+void Screens::clearExplosionArea(const Point& center, int radius)
+{
+	int screen = static_cast<int>(current);
+	int cx = center.getX();
+	int cy = center.getY();
+	int r2 = radius * radius;
+
+	for (int dy = -radius; dy <= radius; ++dy)
+	{
+		for (int dx = -radius; dx <= radius; ++dx)
+		{
+			if (dx * dx + dy * dy > r2)
+				continue;
+
+			int x = cx + dx;
+			int y = cy + dy;
+
+			if (x <= 0 || x >= MAX_X - 1 || y <= 0 || y >= MAX_Y - 1)
+				continue;
+
+			char& tile = boards[screen][y][x];
+
+			if (tile == WALL || tile == OBSTACLE || tile == BOMB)
+			{
+				tile = EMPTY_SPACE;
+			}
+		}
+	}
+}
+
+void Screens::collectPendingAutoBombs(std::vector<Point>& out)
+{
+	out.insert(out.end(), pendingAutoBombs.begin(), pendingAutoBombs.end());
+	pendingAutoBombs.clear();
+}
+
+// ==========================================
+// Internal Helpers
+// ==========================================
+
+void Screens::buildFirstScreen()
+{
+	const int screenIndex = static_cast<int>(ScreenId::First);
+	for (int y = 0; y < MAX_Y; ++y)
+	{
+		for (int x = 0; x < MAX_X; ++x)
+		{
+			boards[screenIndex][y][x] = FIRST_SCREEN_TEMPLATE[y][x];
+		}
+	}
+}
+
+void Screens::buildSecondScreen()
+{
+	const int screenIndex = static_cast<int>(ScreenId::Second);
+	for (int y = 0; y < MAX_Y; ++y)
+	{
+		for (int x = 0; x < MAX_X; ++x)
+		{
+			boards[screenIndex][y][x] = SECOND_SCREEN_TEMPLATE[y][x];
+		}
+	}
+	door7Pos.setPosition(71, 11);
+}
+
+void Screens::buildFinalScreen()
+{
+	const int screenIndex = static_cast<int>(ScreenId::Final);
+	for (int y = 0; y < MAX_Y; ++y)
+	{
+		for (int x = 0; x < MAX_X; ++x)
+		{
+			boards[screenIndex][y][x] = FINAL_SCREEN_TEMPLATE[y][x];
+		}
+	}
+}
+
+bool Screens::isInside(const Point& p) const {
+	return (p.getX() >= 0 && p.getX() < MAX_X && p.getY() >= 0 && p.getY() < MAX_Y);
+}
+
+char Screens::getCharAt(const Point& p) const {
+	return boards[int(current)][p.getY()][p.getX()];
+}
+
+void Screens::applySwitchEffect(const SwitchData& s, bool active)
+{
+	int screenIndex = static_cast<int>(current);
+
+	for (const auto& wall : s.affectedWalls)
+	{
+		int x = wall.getX();
+		int y = wall.getY();
+		if (!isInside(Point(x, y)))
+			continue;
+		char& tile = boards[screenIndex][y][x];
+		tile = active ? EMPTY_SPACE : WALL;
+	}
+	for (const auto& p : s.addWhenActive)
+	{
+		int x = p.getX();
+		int y = p.getY();
+		if (!isInside(Point(x, y)))
+			continue;
+		char& tile = boards[screenIndex][y][x];
+		tile = active ? WALL : EMPTY_SPACE;
+	}
+}
+
+void Screens::triggerAutoBombs(const SwitchData& s)
+{
+	const int RADIUS = 2; 
+
+	for (const Point& center : s.autobombs)
+	{
+		clearExplosionArea(center, RADIUS);
+		
+		int screenIndex = static_cast<int>(current);
+		int x = center.getX();
+		int y = center.getY();
+		if (isInside(center))
+		{
+			char& tile = boards[screenIndex][y][x];
+			if (tile == AUTO_BOMB)
+				tile = EMPTY_SPACE;
+		}
+	}
+}
+
+void Screens::updateDoor7ByBinaryPuzzle()
+{
+	if (!isSecondScreen())
+		return;
+
+	if (door7Pos.getX() < 0 || door7Pos.getY() < 0)
+		return;
+
+	int value = 0;
+
+	for (const auto& s : SecondScreenSwitches)
+	{
+		// Build integer value from active switches (bits 0-3)
+		if (s.bitIndex >= 0 && s.active)
+		{
+			value |= (1 << s.bitIndex);
+		}
+	}
+
+	char& tile = boards[(int)current][door7Pos.getY()][door7Pos.getX()];
+
+	if (value == 7)
+	{
+		tile = EMPTY_SPACE;
+	}
+	else
+	{
+		tile = '7';
+	}
+}
+
+void Screens::handleGateForPlayer(const Player& p)
+{
+	const Point& pos = p.getPosition();
+	int x = pos.getX();
+	int y = pos.getY();
+	if (!leftEntranceClosed &&
+		(y == 18) &&
+		(x == 11 || x == 12))
+	{
+		leftGateClosed();
+	}
+
+	if (!rightEntranceClosed &&
+		(y == 18) &&
+		(x == 16 || x == 17))
+	{
+		rightGateClosed();
+	}
+}
+
+void Screens::leftGateClosed()
+{
+	if (leftEntranceClosed || !isFirstScreen())
+		return;
+	leftEntranceClosed = true;
+	int screenIndex = static_cast<int>(current);
+	boards[screenIndex][18][11] = WALL;
+	boards[screenIndex][18][12] = WALL;
+}
+
+void Screens::rightGateClosed()
+{
+	if (rightEntranceClosed || !isFirstScreen())
+		return;
+	rightEntranceClosed = true;
+	int screenIndex = static_cast<int>(current);
+	boards[screenIndex][18][16] = WALL;
+	boards[screenIndex][18][17] = WALL;
 }
 
 void Screens::collectObstacleGroup(const Point& start, std::vector<Point>& group) const
@@ -792,6 +813,7 @@ void Screens::collectObstacleGroup(const Point& start, std::vector<Point>& group
 	if (!isObstacle(start))
 		return;
 
+	// Find all contiguous obstacles using BFS-like expansion
 	group.push_back(start);
 	for (int i = 0; i < group.size(); i++)
 	{
