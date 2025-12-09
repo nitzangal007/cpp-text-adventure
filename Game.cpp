@@ -21,8 +21,8 @@ Game::Game()
 	exits[1] = ExitInfo{
 		Screens::ScreenId::Second,
 		Screens::ScreenId::Final,
-		Point(38, 11),
-		Point(38, 11),
+		Point(38, 13),
+		Point(38, 13),
 		Point(),
 		Point()
 	};
@@ -63,11 +63,11 @@ void Game::run()
 void Game::initGame() {
 	cls();
 	currentScreen.init();
-	currentScreen.setCurrentScreen(Screens::ScreenId::Second);
+	currentScreen.setCurrentScreen(Screens::ScreenId::First);
 	currentScreen.initFirstScreenSwitches();
 	currentScreen.initSecondScreenSwitches();
-	player1.reset(exits[0].nextStartP1);
-	player2.reset(exits[0].nextStartP2);
+	player1.reset(player1Start);
+	player2.reset(player2Start);
 	bomb.active = false;
 	player1.draw();
 	player2.draw();
