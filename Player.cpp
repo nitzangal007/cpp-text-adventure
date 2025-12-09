@@ -1,15 +1,15 @@
 #include "Player.h"
 #include <iostream>
 
-// Move the player according to its current direction
-void Player::move()
+
+void Player::move()                                                         //we took this function from class
 {
-	pos.draw(' '); // erase previous position
+	pos.draw(' '); 
 	pos.move();
 }
 
-// Handle a key press: if it matches one of this player's control keys, set direction
-void Player::handleKeyPress(char key_pressed) {
+
+void Player::handleKeyPress(char key_pressed) {                              //we took this function from class
     size_t index = 0;
     for (char k : keys) {
         if (std::tolower(k) == std::tolower(key_pressed)) {
