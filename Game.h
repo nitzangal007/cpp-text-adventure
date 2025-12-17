@@ -53,6 +53,11 @@ class Game
     bool player2ReadyForNextScreen;
     bool gameOver = false;
 
+    // Lives & Score System
+    int lives = 6;              // Starting lives
+    int score = 0;              // Cumulative score
+    int levelStartTime = 0;     // Timestamp when level started (in seconds)
+
 public:
     Game();
 
@@ -108,6 +113,9 @@ private:
 
     bool isPlayerInExplosion(const Player& player, const Point& center, int radiusSquared);
 
+    // Drop torch back onto the board
+    void dropTorch(Player& player);
+
     // ==========================================
     // Screen Transition Logic
     // ==========================================
@@ -117,4 +125,20 @@ private:
 
     bool playerIsReadyForNextScreen(const Player& player) const;
     bool isExitWaitPosition(const Point& p) const;
+
+    // ==========================================
+    // Lives & Score System
+    // ==========================================
+
+    // Decrements life and triggers game over if lives reach 0
+    void decrementLife();
+
+    // Calculates and adds score when completing a level
+    void addLevelCompletionScore();
+
+    // Displays game over screen with final score
+    void showGameOverScreen();
+
+    // Gets current time in seconds since epoch
+    int getCurrentTimeSeconds();
 };

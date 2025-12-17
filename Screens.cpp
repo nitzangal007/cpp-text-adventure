@@ -16,14 +16,14 @@ namespace
 		 "W         W  *          WWWWWWWWWWWWWWWWWW         W         W                 W",
 		 "W  WWWW   W  WWWWWWWWWWWWWWWWWWWWWWWWWWWWW         W         W                 W",
 		 "W**    *  W  WWW  *  WWWWWWWWWWWWWWWWWWWWW         W         W                 W",
-		 "W  *  * **W  WWW  W WWWWWWWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
-		 "W  W  W **W  WWW  W WWWWWWWWWWWWWWWWWWWWWW         W         W                 W",
+		 "W  *  * W*W  WWW  W WWWWWWWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+		 "W  W  W W*W  WWW  W WWWWWWWWWWWWWWWWWWWWWW         W         W                 W",
 		 "W  W  W   W  WWW  W                                W         W        K        W",
-		 "W   ** *  W  WWW  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW   WWWWWWWWWWWWWWWWWWWWWW",
+		 "W   ** ** W  WWW  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW   WWWWWWWWWWWWWWWWWWWWWW",
 		 "WWW   W   W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW            W   W                    W",
 		 "W     W   W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW   W        W   W                    W",
 		 "W  * *W   W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW   W        W   W                    W",
-		 "W   *             WWWWWWWWWWWWWWWWWWWWWWWW   W                                 W",
+		 "W   *     *       WWWWWWWWWWWWWWWWWWWWWWWW   W                                 W",
 		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW1WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
 		 "                                                                                ",
 		 "                                                                                ",
@@ -42,7 +42,7 @@ namespace
 		 "XWWWWWW           WWWWWWWWWWWWWWWW  @ @      *        WWW***WW***WW***WWW *   WX", // 6
 		 "XWWWWWW           WWWWWWWWWWWWWWWW WWWWW WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW *WX", // 7
 		 "XWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW WX", // 8
-		 "XWWWWWWWWWWWWWWWWWWWWWWWB    BWWWWWWWWWWWWWWWWWWWWWWWW               W       \\WX", // 9
+		 "XWWWWWWWWWWWWWWWWWWWWWWWB!   BWWWWWWWWWWWWWWWWWWWWWWWW          !    W       \\WX", // 9
 		 "XW *        *  W WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW               W        WX", // 10
 		 "XW***WWW@W W   *  *WWWWWB    BWWWWWW     WWWWWWWWWWWWWWWWWWWWW  WWWWWWW7WWWWWWWX", // 11
 		 "XW * W **W W*WWW WWWWWWW      WWWWWW     WWWWWWWWWWWWW                        XX", // 12
@@ -138,11 +138,64 @@ void Screens::drawCurrent() const
 	for (int y = 0; y < MAX_Y; ++y)
 	{
 		gotoxy(0, y);
+		std::string line;
+		line.reserve(MAX_X);
 		for (int x = 0; x < MAX_X; ++x)
 		{
-			std::cout << boards[screenIndex][y][x];
+			line += boards[screenIndex][y][x];
 		}
+		std::cout << line;
 	}
+}
+
+void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
+{
+	const int screenIndex = static_cast<int>(current);
+	bool dark = screenIsDark[screenIndex];
+	
+	for (int y = 0; y < MAX_Y; ++y)
+	{
+		gotoxy(0, y);
+		std::string line;
+		line.reserve(MAX_X);
+		for (int x = 0; x < MAX_X; ++x)
+		{
+			char cell = boards[screenIndex][y][x];
+			if (dark && !isIlluminated(x, y, p1, p2) && cell != TORCH)
+				line += DARKNESS_CHAR;
+			else
+				line += cell;
+		}
+		std::cout << line;
+	}
+}
+
+bool Screens::isDarkScreen() const
+{
+	return screenIsDark[static_cast<int>(current)];
+}
+
+bool Screens::isIlluminated(int x, int y, const Player& p1, const Player& p2) const
+{
+	const int R2 = TORCH_RADIUS * TORCH_RADIUS;
+	
+	// Check if player 1 has torch and tile is within radius
+	if (p1.hasTorch()) {
+		int dx = x - p1.getPosition().getX();
+		int dy = y - p1.getPosition().getY();
+		if (dx * dx + dy * dy <= R2)
+			return true;
+	}
+	
+	// Check if player 2 has torch and tile is within radius
+	if (p2.hasTorch()) {
+		int dx = x - p2.getPosition().getX();
+		int dy = y - p2.getPosition().getY();
+		if (dx * dx + dy * dy <= R2)
+			return true;
+	}
+	
+	return false;
 }
 
 // ==========================================
@@ -193,10 +246,9 @@ bool Screens::isRiddle(const Point& p) const {
 bool Screens::isHint(const Point& p) const {
 	return (getCharAt(p) == HINT);
 }
-
 bool Screens::isunbreakable_wall(const Point& p) const
 {
-	return (getCharAt(p) == unbreakable_wall);
+	return (getCharAt(p) == UNBREAKABLE_WALL);
 }
 
 bool Screens::isFreeCellForPlayer(const Point& p) const

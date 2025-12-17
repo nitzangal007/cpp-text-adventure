@@ -1,5 +1,6 @@
 ﻿#include "Game.h"
 #include <Windows.h>
+#include <chrono>
 
 Game::Game()
 	: player1(Player::Id::First, Point(5, 2, 0, 0, '$'), "wdxas", '$'),
@@ -69,6 +70,12 @@ void Game::initGame() {
 	player1.reset(player1Start);
 	player2.reset(player2Start);
 	bomb.active = false;
+	
+	// Reset lives & score for new game
+	lives = 6;
+	score = 0;
+	levelStartTime = getCurrentTimeSeconds();
+	
 	player1.draw();
 	player2.draw();
 	drawStatusBar();
@@ -99,10 +106,16 @@ void Game::runGame()
 					printCentered("Press ESC to continue or H for Menu", 9);
 				}
 				else if (ch == 'E' || ch == 'e') {
-					tryPlaceBomb(player1);
+					if (player1.hasTorch())
+						dropTorch(player1);
+					else
+						tryPlaceBomb(player1);
 				}
 				else if (ch == 'O' || ch == 'o') {
-					tryPlaceBomb(player2);
+					if (player2.hasTorch())
+						dropTorch(player2);
+					else
+						tryPlaceBomb(player2);
 				}
 				else if (ch == 'R' || ch == 'r') {
 					resetCurrentGame();
@@ -145,6 +158,11 @@ void Game::runGame()
 
 void Game::resetCurrentGame()
 {
+	// Decrement life (may trigger game over)
+	decrementLife();
+	if (gameOver)
+		return;
+	
 	currentScreen.resetCurrent();
 	if (currentScreen.isFirstScreen())
 	{
@@ -203,7 +221,8 @@ void Game::updateLogic()
 
 void Game::render()
 {
-	currentScreen.drawCurrent();
+	// Use torch-aware drawing for dark screen support
+	currentScreen.drawCurrentWithTorch(player1, player2);
 	if (currentScreen.getCurrentScreen() != Screens::ScreenId::Final)
 	{
 		player1.draw();
@@ -246,7 +265,8 @@ void Game::render()
 void Game::drawStatusBar()
 {
 	gotoxy(0, Screens::MAX_Y-4); 
-	std::cout << "Player 1 holding: [" << player1.getHeldItem() << "]";
+	std::cout << "Player 1 holding: [" << player1.getHeldItem() << "]  ";
+	std::cout << "Lives: " << lives << "  Score: " << score << "     ";
 
 	gotoxy(0, Screens::MAX_Y-1); 
 	std::cout << "Player 2 holding: [" << player2.getHeldItem() << "]";
@@ -399,7 +419,28 @@ void Game::explodeBomb()
 
 	if (p1Dead || p2Dead)
 	{
-		resetCurrentGame();
+		decrementLife();
+		if (!gameOver)
+		{
+			currentScreen.resetCurrent();
+			if (currentScreen.isFirstScreen())
+			{
+				player1Start = Point(5, 2, 0, 0, '$');
+				player2Start = Point(9, 2, 0, 0, '&');
+			}
+			else if (currentScreen.isSecondScreen())
+			{
+				player1Start = Point(54, 9, 0, 0, '$');
+				player2Start = Point(26, 9, 0, 0, '&');
+			}
+			player1.reset(player1Start);
+			player2.reset(player2Start);
+			bomb.active = false;
+			bomb.ticksLeft = 0;
+			player1ReadyForNextScreen = false;
+			player2ReadyForNextScreen = false;
+			autoBombs.clear();
+		}
 		return;
 	}
 	
@@ -465,6 +506,17 @@ bool Game::isPlayerInExplosion(const Player& player, const Point& center, int ra
 	return (dx * dx + dy * dy <= radiusSquared);
 }
 
+void Game::dropTorch(Player& player)
+{
+	if (!player.hasTorch())
+		return;
+	
+	// Place torch back on the board at player's current position
+	Point pos = player.getPosition();
+	currentScreen.setCharAt(pos, Screens::TORCH);
+	player.removeHeldItem();
+}
+
 // ==========================================
 // Screen Transition Logic
 // ==========================================
@@ -481,6 +533,12 @@ void Game::tryAdvanceToNextScreen()
 			return;
 		}
 
+		// Add score for completing level
+		addLevelCompletionScore();
+		
+		// Extra life for completing level
+		lives++;
+
 		currentScreen.setCurrentScreen(exit.to);
 
 		player1.reset(exit.nextStartP1);
@@ -494,14 +552,19 @@ void Game::tryAdvanceToNextScreen()
 
 		if (exit.to == Screens::ScreenId::Final)
 		{
+			// Victory screen - show final score on FINAL_SCREEN_TEMPLATE
 			currentScreen.drawCurrent();
-			gotoxy(18, 18);
-			std::cout << "Press any key to return to the main menu...";
+			gotoxy(30, 17);
+			std::cout << "Final Score: " << score;
+			gotoxy(18, 19);
+			std::cout << "Congratulations! Press any key to return to menu...";
 			_getch();      
 			gameOver = true;
 		}
 		else
 		{
+			// Reset timer for next level
+			levelStartTime = getCurrentTimeSeconds();
 			player1.draw();
 			player2.draw();
 			drawStatusBar();
@@ -539,4 +602,61 @@ bool Game::isExitWaitPosition(const Point& p) const
 		}
 	}
 	return false;
+}
+
+// ==========================================
+// Lives & Score System
+// ==========================================
+
+void Game::decrementLife()
+{
+	lives--;
+	if (lives <= 0)
+	{
+		showGameOverScreen();
+		gameOver = true;
+	}
+}
+
+void Game::addLevelCompletionScore()
+{
+	// Time-based score (faster = more points)
+	int elapsedSeconds = getCurrentTimeSeconds() - levelStartTime;
+	int timeScore;
+	if (elapsedSeconds <= 60)        // Under 1 minute
+		timeScore = 2000;
+	else if (elapsedSeconds <= 120)  // 1-2 minutes
+		timeScore = 1500;
+	else if (elapsedSeconds <= 180)  // 2-3 minutes
+		timeScore = 1000;
+	else if (elapsedSeconds <= 300)  // 3-5 minutes
+		timeScore = 500;
+	else                             // Over 5 minutes
+		timeScore = 100;
+
+	// Lives bonus (remaining lives x 200)
+	int livesBonus = lives * 200;
+
+	score += timeScore + livesBonus;
+}
+
+void Game::showGameOverScreen()
+{
+	cls();
+	// Use FINAL_SCREEN_TEMPLATE (which shows "GAME OVER")
+	currentScreen.setCurrentScreen(Screens::ScreenId::Final);
+	currentScreen.drawCurrent();
+	
+	gotoxy(30, 17);
+	std::cout << "Final Score: " << score;
+	gotoxy(22, 19);
+	std::cout << "Press any key to return to the main menu...";
+	_getch();
+}
+
+int Game::getCurrentTimeSeconds()
+{
+	auto now = std::chrono::system_clock::now();
+	auto duration = now.time_since_epoch();
+	return static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(duration).count());
 }

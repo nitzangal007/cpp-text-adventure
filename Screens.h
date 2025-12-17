@@ -27,7 +27,11 @@ public:
     static const char BOMB_PLANTED = '@';
     static const char AUTO_BOMB = 'B';
     static const char HINT = 'H';
-    static const char  unbreakable_wall = 'X';
+    static const char UNBREAKABLE_WALL = 'X';
+    
+    // Darkness/Torch constants
+    static constexpr int TORCH_RADIUS = 5;
+    static constexpr char DARKNESS_CHAR = ' ';  // Space character
 
     struct SwitchData
     {
@@ -58,6 +62,9 @@ private:
     std::vector<SwitchData> SecondScreenSwitches;
     Point door7Pos;
 
+    // Darkness per screen (Screen 2 is dark)
+    bool screenIsDark[NUM_SCREENS] = { false, true, false };
+
 public:
     Screens();
 
@@ -77,6 +84,12 @@ public:
 
     // Draw the entire board to console
     void drawCurrent() const;
+    
+    // Draw with torch illumination (for dark screens)
+    void drawCurrentWithTorch(const Player& p1, const Player& p2) const;
+    
+    // Check if screen is dark
+    bool isDarkScreen() const;
 
     // ==========================================
     // Board Access & Modification
@@ -160,6 +173,7 @@ private:
     // Helpers
     bool isInside(const Point& p) const;
     char getCharAt(const Point& p) const;
+    bool isIlluminated(int x, int y, const Player& p1, const Player& p2) const;
 
     // Switch logic
     void applySwitchEffect(const SwitchData& s, bool active);

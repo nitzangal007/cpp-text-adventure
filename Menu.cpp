@@ -58,9 +58,9 @@ void Menu::showInstructions() {
     printCentered("--------------------------------------------------------------", 12);
     printCentered("Game Elements", 13);
 
-    printCentered("$ : Player 1    & : Player 2    W : Wall", 15);
+    printCentered("$ : Player 1    & : Player 2    W : Breakable Wall", 15);
     printCentered("# : Spring      K : Key         1-9 : Door", 16);
-    printCentered("B : Auto Bomb   H : Hint", 17);
+    printCentered("B : Auto Bomb   H : Hint        X : Indestructible Wall", 17);
 
     printCentered("--------------------------------------------------------------", 19);
     printCentered("Other Keys", 20);
