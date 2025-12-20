@@ -1,95 +1,112 @@
 ﻿#include "Screens.h"
 #include <cmath>
 
-namespace
-{
-	constexpr const char* FIRST_SCREEN_TEMPLATE[Screens::MAX_Y] = {
-		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
-		 "W                 WWWWWWWWWWWWWWWWWWWWWWWW         W         W                 W",
-		 "W                 WWWW                                       W                 W",
-		 "W                 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW         W                 W",
-		 "W                 WWWW   WWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
-		 "W                 WWWW   @WWWWWWWWWWWWWWWW         W         W                 W",
-		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W",
-		 "W                 WWWW   WWWWWWWWWWWWWWWWW         W         W                 W",
-		 "WWWWWWW**WWWWWWWWWWWWW   WWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
-		 "W         W  *          WWWWWWWWWWWWWWWWWW         W         W                 W",
-		 "W  WWWW   W  WWWWWWWWWWWWWWWWWWWWWWWWWWWWW         W         W                 W",
-		 "W**    *  W  WWW  *  WWWWWWWWWWWWWWWWWWWWW         W         W                 W",
-		 "W  *  * W*W  WWW  W WWWWWWWWWWWWWWWWWWWWWW        \\WWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
-		 "W  W  W W*W  WWW  W WWWWWWWWWWWWWWWWWWWWWW         W         W                 W",
-		 "W  W  W   W  WWW  W                                W         W        K        W",
-		 "W   ** ** W  WWW  WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW   WWWWWWWWWWWWWWWWWWWWWW",
-		 "WWW   W   W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW            W   W                    W",
-		 "W     W   W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW   W        W   W                    W",
-		 "W  * *W   W  WWW  WWWWWWWWWWWWWWWWWWWWWWWW   W        W   W                    W",
-		 "W   *     *       WWWWWWWWWWWWWWWWWWWWWWWW   W                                 W",
-		 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW1WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
-		 "                                                                                ",
-		 "                                                                                ",
-		 "                                                                                ",
-		 "                                                                                "
-	};
-	constexpr const char* SECOND_SCREEN_TEMPLATE[Screens::MAX_Y] = {
-		//0123456789012345678901234567890123456789012345678901234567890123456789012345678
-		  
-		 "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", // 0
-		 "XWWWWWWWWWWWW         W                          * WWW     WWWWWWWWWWWWWWWWWWWWX", // 1
-		 "XWWWWWWWWWW           W         WWWW**WWWWWWWWWW*   \\  WWWWWWWWWWWWWWWWWWWWWWWWX", // 2
-		 "XWWWWWWWWWW  WWWWWWWWWWWWWWWWWWWWW       WWWWWWWWWWWWWWWW         @     W     WX", // 3
-		 "XWWWWWWWWWW  WWWWWWWWWWWWWWWWWWWW         WWWWWWWWWWWWWWW               W    \\WX", // 4
-		 "XWWWWWWWWWW  WWWWWWWWWWWWWWWWWWWWW*W***W*WWWWWWWWWWWWWWWW***WW***WW***WWWW WW*WX", // 5
-		 "XWWWWWW           WWWWWWWWWWWWWWWW  @ @      *        WWW***WW***WW***WWW *   WX", // 6
-		 "XWWWWWW           WWWWWWWWWWWWWWWW WWWWW WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW *WX", // 7
-		 "XWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW WX", // 8
-		 "XWWWWWWWWWWWWWWWWWWWWWWWB!   BWWWWWWWWWWWWWWWWWWWWWWWW          !    W       \\WX", // 9
-		 "XW *        *  W WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW               W        WX", // 10
-		 "XW***WWW@W W   *  *WWWWWB    BWWWWWW     WWWWWWWWWWWWWWWWWWWWW  WWWWWWW7WWWWWWWX", // 11
-		 "XW * W **W W*WWW WWWWWWW      WWWWWW     WWWWWWWWWWWWW                        XX", // 12
-		 "XW*W W   W W   *  *WWWWW      WWWWWW  2  WWWWWWWWWWWWW H                      XX", // 13   // NUMBER 4
-		 "XW  ** W*W*W* *WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        XX", // 14
-		 "XW*W   W W  *  WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        XX", // 15
-		 "XW   *  W  *   WWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW     \\   \\    \\    \\    XX", // 16
-		 "XWW WWWWWWWWW WWWWWWWWWW      WWWWWWWWWWWWWWWWWWWWWWWW                        XX", // 17
-		 "X                             WWWWWWWWWWWWWWWWWWWWWWWW                        XX", // 18
-		 "X                            \\WWWWWWWWWWWWWWWWWWWWWWWW                        XX", // 19
-		 "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", // 20 door '1'
-		 "                                                                                ", // 21
-		 "                                                                                ", // 22
-		 "                                                                                ", // 23
-		 "                                                                                "  // 24
+Screens::Screens() = default;
 
-	};
-	constexpr const char* FINAL_SCREEN_TEMPLATE[Screens::MAX_Y] = {
-		 "################################################################################",
-		 "#  ##########################################################################  #",
-		 "#      ##################################################################      #",
-		 "#        ##############################################################        #",
-		 "#        ##                                                          ##        #",
-		 "#        ##                                                          ##        #",
-		 "#        ##                                                          ##        #",
-		 "#        ##                                                          ##        #",
-		 "#        ##                                                          ##        #",
-		 "#        ##     ***   ***  *   * *****    ***  *   * ***** ****      ##        #",
-		 "#        ##    *   * *   * ** ** *       *   * *   * *     *   *     ##        #",
-		 "#        ##    *     *   * * * * *       *   * *   * *     *   *     ##        #",
-		 "#        ##    * *** ***** *   * ****    *   * *   * ****  ****      ##        #",
-		 "#        ##    *   * *   * *   * *       *   *  * *  *     * *       ##        #",
-		 "#        ##    *   * *   * *   * *       *   *  * *  *     *  *      ##        #",
-		 "#        ##     ***  *   * *   * *****    ***    *   ***** *   *     ##        #",
-		 "#        ##                                                          ##        #",
-		 "#        ##                                                          ##        #",
-		 "#        ##                                                          ##        #",
-		 "#        ##                                                          ##        #",
-		 "#        ##                                                          ##        #",
-		 "#        ##############################################################        #",
-		 "#      ##################################################################      #",
-		 "#  ##########################################################################  #",
-		 "################################################################################",
-	};
+// ==========================================
+// Screen File Loading
+// ==========================================
+
+// Discovers adv-world*.screen files in the current working directory.
+// Files are sorted lexicographically as required by spec.
+// Uses Windows API for compatibility with older C++ standards.
+bool Screens::discoverScreenFiles()
+{
+	screenFilePaths.clear();
+	
+	// Use Windows API to find files matching pattern
+	WIN32_FIND_DATAA findData;
+	HANDLE hFind = FindFirstFileA("adv-world*.screen", &findData);
+	
+	if (hFind == INVALID_HANDLE_VALUE)
+	{
+		// No files found - this is not an error, just empty result
+		return false;
+	}
+	
+	do
+	{
+		// Skip directories
+		if (!(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+		{
+			screenFilePaths.push_back(findData.cFileName);
+		}
+	} while (FindNextFileA(hFind, &findData));
+	
+	FindClose(hFind);
+	
+	// Sort lexicographically so _01 < _02 < _03
+	std::sort(screenFilePaths.begin(), screenFilePaths.end());
+	
+	return !screenFilePaths.empty();
 }
 
-Screens::Screens() = default;
+// Loads a single screen from a .screen file into boards[screenIndex].
+// Detects the 'L' legend anchor and stores its Y position.
+bool Screens::loadScreenFromFile(int screenIndex, const std::string& path)
+{
+	std::ifstream file(path);
+	
+	if (!file.is_open())
+	{
+		loadingError = "Cannot open file: " + path;
+		loadingFailed = true;
+		return false;
+	}
+	
+	// Initialize board with spaces
+	for (int y = 0; y < MAX_Y; ++y)
+	{
+		for (int x = 0; x < MAX_X; ++x)
+		{
+			boards[screenIndex][y][x] = EMPTY_SPACE;
+		}
+	}
+	
+	legendY[screenIndex] = -1;  // Default: no legend anchor found
+	
+	std::string line;
+	int y = 0;
+	
+	while (std::getline(file, line) && y < MAX_Y)
+	{
+		for (int x = 0; x < MAX_X && x < static_cast<int>(line.size()); ++x)
+		{
+			char ch = line[x];
+			
+			// Check for legend anchor 'L'
+			if (ch == LEGEND_ANCHOR)
+			{
+				legendY[screenIndex] = y;
+				boards[screenIndex][y][x] = EMPTY_SPACE;
+			}
+			else
+			{
+				boards[screenIndex][y][x] = ch;
+			}
+		}
+		++y;
+	}
+	
+	file.close();
+	
+	// If no legend anchor found, use default position
+	if (legendY[screenIndex] < 0)
+	{
+		legendY[screenIndex] = MAX_Y - 4;
+	}
+	
+	return true;
+}
+
+// Returns the Y coordinate where the legend/status bar should start
+int Screens::getLegendY() const
+{
+	int idx = static_cast<int>(current);
+	if (legendY[idx] >= 0)
+		return legendY[idx];
+	return MAX_Y - 4;
+}
 
 // ==========================================
 // General Screen Management
@@ -97,27 +114,67 @@ Screens::Screens() = default;
 
 void Screens::init()
 {
-	buildFirstScreen();
-	initFirstScreenSwitches();
-	buildSecondScreen();
-	initSecondScreenSwitches();
-	buildFinalScreen();
-	current = ScreenId::First;
+	loadingFailed = false;
+	loadingError.clear();
 	pendingAutoBombs.clear();
+	
+	// Step 1: Discover screen files
+	if (!discoverScreenFiles())
+	{
+		if (!loadingFailed)  // No files found (not a filesystem error)
+		{
+			loadingError = "No screen files found! Place adv-world*.screen files in the game directory.";
+			loadingFailed = true;
+		}
+		return;
+	}
+	
+	// Step 2: Check we have enough screen files
+	if (screenFilePaths.size() < NUM_SCREENS)
+	{
+		loadingError = "Not enough screen files! Found " + 
+					   std::to_string(screenFilePaths.size()) + 
+					   ", need " + std::to_string(NUM_SCREENS) + ".";
+		loadingFailed = true;
+		return;
+	}
+	
+	// Step 3: Load each screen from its file
+	for (int i = 0; i < NUM_SCREENS; ++i)
+	{
+		if (!loadScreenFromFile(i, screenFilePaths[i]))
+		{
+			return;  // loadingError already set
+		}
+	}
+	
+	// Step 4: Initialize screen-specific data (switches, door positions, etc.)
+	door7Pos.setPosition(71, 11);  // Set door7 position for screen 2
+	initFirstScreenSwitches();
+	initSecondScreenSwitches();
+	
+	current = ScreenId::First;
 }
 
 void Screens::resetCurrent()
 {
+	int idx = static_cast<int>(current);
+	
+	// Reload current screen from file if files were loaded
+	if (idx < static_cast<int>(screenFilePaths.size()))
+	{
+		loadScreenFromFile(idx, screenFilePaths[idx]);
+	}
+	
 	if (current == ScreenId::First)
 	{
-		buildFirstScreen();
 		initFirstScreenSwitches();
 		leftEntranceClosed = false;
 		rightEntranceClosed = false;
 	}
 	else if (current == ScreenId::Second)
 	{
-		buildSecondScreen();
+		door7Pos.setPosition(71, 11);
 		initSecondScreenSwitches();
 	}
 }
@@ -699,40 +756,29 @@ void Screens::collectPendingAutoBombs(std::vector<Point>& out)						// we used c
 // Internal Helpers
 // ==========================================
 
+// Legacy build functions - now use file loading
 void Screens::buildFirstScreen()
 {
-	const int screenIndex = static_cast<int>(ScreenId::First);
-	for (int y = 0; y < MAX_Y; ++y)
+	if (!screenFilePaths.empty())
 	{
-		for (int x = 0; x < MAX_X; ++x)
-		{
-			boards[screenIndex][y][x] = FIRST_SCREEN_TEMPLATE[y][x];
-		}
+		loadScreenFromFile(static_cast<int>(ScreenId::First), screenFilePaths[0]);
 	}
 }
 
 void Screens::buildSecondScreen()
 {
-	const int screenIndex = static_cast<int>(ScreenId::Second);
-	for (int y = 0; y < MAX_Y; ++y)
+	if (screenFilePaths.size() > 1)
 	{
-		for (int x = 0; x < MAX_X; ++x)
-		{
-			boards[screenIndex][y][x] = SECOND_SCREEN_TEMPLATE[y][x];
-		}
+		loadScreenFromFile(static_cast<int>(ScreenId::Second), screenFilePaths[1]);
+		door7Pos.setPosition(71, 11);
 	}
-	door7Pos.setPosition(71, 11);
 }
 
 void Screens::buildFinalScreen()
 {
-	const int screenIndex = static_cast<int>(ScreenId::Final);
-	for (int y = 0; y < MAX_Y; ++y)
+	if (screenFilePaths.size() > 2)
 	{
-		for (int x = 0; x < MAX_X; ++x)
-		{
-			boards[screenIndex][y][x] = FINAL_SCREEN_TEMPLATE[y][x];
-		}
+		loadScreenFromFile(static_cast<int>(ScreenId::Final), screenFilePaths[2]);
 	}
 }
 
