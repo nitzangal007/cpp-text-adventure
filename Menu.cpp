@@ -1,5 +1,6 @@
 #include "Menu.h"
 #include "utils.h"
+#include "ColorUtils.h"
 #include <conio.h>
 #include <iostream>
 #include <windows.h> 
@@ -12,12 +13,22 @@ void Menu::displayMenu() {
     printCentered("1. Start Game", 7);
     printCentered("8. Instructions", 8);
     printCentered("9. Exit", 9);
+    
+    // Color toggle display
+    std::string colorStatus = g_colorsEnabled ? "Colors: ON  (press C to toggle)" : "Colors: OFF (press C to toggle)";
+    printCentered(colorStatus, 11);
     std::cout << std::endl;
 }
 
 Options Menu::getUserChoice() {
-    printCentered("Please enter your choice: ", 11);
+    printCentered("Please enter your choice: ", 13);
     char ch = _getch();
+    
+    // Handle color toggle separately
+    if (ch == 'C' || ch == 'c') {
+        g_colorsEnabled = !g_colorsEnabled;
+        return INVALID;  // Redisplay menu with updated status
+    }
     int num = ch - '0';
     switch (num)
     {

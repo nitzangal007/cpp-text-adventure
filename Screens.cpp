@@ -1,4 +1,5 @@
 ﻿#include "Screens.h"
+#include "ColorUtils.h"
 #include <cmath>
 
 Screens::Screens() = default;
@@ -7,95 +8,83 @@ Screens::Screens() = default;
 // Screen File Loading
 // ==========================================
 
-// Discovers adv-world*.screen files in the current working directory.
-// Files are sorted lexicographically as required by spec.
-// Uses Windows API for compatibility with older C++ standards.
 bool Screens::discoverScreenFiles()
 {
+	namespace fs = std::filesystem;
 	screenFilePaths.clear();
-	
-	// Use Windows API to find files matching pattern
-	WIN32_FIND_DATAA findData;
-	HANDLE hFind = FindFirstFileA("adv-world*.screen", &findData);
-	
-	if (hFind == INVALID_HANDLE_VALUE)
+
+	for (const auto& entry : fs::directory_iterator(fs::current_path()))
 	{
-		// No files found - this is not an error, just empty result
-		return false;
-	}
-	
-	do
-	{
-		// Skip directories
-		if (!(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+		auto filename = entry.path().filename();
+		auto filenameStr = filename.string();
+
+		if (filenameStr.size() >= 9 &&
+			filenameStr.substr(0, 9) == "adv-world" && 
+			filename.extension() == ".screen")
 		{
-			screenFilePaths.push_back(findData.cFileName);
+			screenFilePaths.push_back(filenameStr);
 		}
-	} while (FindNextFileA(hFind, &findData));
-	
-	FindClose(hFind);
-	
-	// Sort lexicographically so _01 < _02 < _03
+	}
+
 	std::sort(screenFilePaths.begin(), screenFilePaths.end());
-	
+
 	return !screenFilePaths.empty();
 }
 
-// Loads a single screen from a .screen file into boards[screenIndex].
-// Detects the 'L' legend anchor and stores its Y position.
-bool Screens::loadScreenFromFile(int screenIndex, const std::string& path)
+bool Screens::loadScreenFromFile(int screenIndex, const std::string& filename)
 {
-	std::ifstream file(path);
-	
-	if (!file.is_open())
+	std::ifstream screen_file(filename);
+
+	if (!screen_file.is_open())
 	{
-		loadingError = "Cannot open file: " + path;
+		loadingError = "Cannot open file: " + filename;
 		loadingFailed = true;
 		return false;
 	}
-	
-	// Initialize board with spaces
-	for (int y = 0; y < MAX_Y; ++y)
+
+	legendY[screenIndex] = -1;
+
+	int curr_row = 0;
+	int curr_col = 0;
+	char c;
+
+	while (!screen_file.get(c).eof() && curr_row < MAX_Y)
 	{
-		for (int x = 0; x < MAX_X; ++x)
+		if (c == '\n')
 		{
-			boards[screenIndex][y][x] = EMPTY_SPACE;
-		}
-	}
-	
-	legendY[screenIndex] = -1;  // Default: no legend anchor found
-	
-	std::string line;
-	int y = 0;
-	
-	while (std::getline(file, line) && y < MAX_Y)
-	{
-		for (int x = 0; x < MAX_X && x < static_cast<int>(line.size()); ++x)
-		{
-			char ch = line[x];
-			
-			// Check for legend anchor 'L'
-			if (ch == LEGEND_ANCHOR)
+			while (curr_col < MAX_X)
 			{
-				legendY[screenIndex] = y;
-				boards[screenIndex][y][x] = EMPTY_SPACE;
+				boards[screenIndex][curr_row][curr_col++] = ' ';
+			}
+			++curr_row;
+			curr_col = 0;
+			continue;
+		}
+
+		if (curr_col < MAX_X)
+		{
+			if (c == LEGEND_ANCHOR)
+			{
+				legendY[screenIndex] = curr_row;
+				boards[screenIndex][curr_row][curr_col++] = EMPTY_SPACE;
 			}
 			else
 			{
-				boards[screenIndex][y][x] = ch;
+				boards[screenIndex][curr_row][curr_col++] = c;
 			}
 		}
-		++y;
 	}
-	
-	file.close();
-	
-	// If no legend anchor found, use default position
+
+	while (curr_col < MAX_X && curr_row < MAX_Y)
+	{
+		boards[screenIndex][curr_row][curr_col++] = ' ';
+	}
+
 	if (legendY[screenIndex] < 0)
 	{
 		legendY[screenIndex] = MAX_Y - 4;
 	}
-	
+
 	return true;
 }
 
@@ -210,21 +199,78 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 	const int screenIndex = static_cast<int>(current);
 	bool dark = screenIsDark[screenIndex];
 	
+	// When colors disabled, use fast buffered output (original behavior)
+	if (!g_colorsEnabled)
+	{
+		for (int y = 0; y < MAX_Y; ++y)
+		{
+			gotoxy(0, y);
+			std::string line;
+			line.reserve(MAX_X);
+			for (int x = 0; x < MAX_X; ++x)
+			{
+				char cell = boards[screenIndex][y][x];
+				if (dark && !isIlluminated(x, y, p1, p2) && cell != TORCH)
+					line += DARKNESS_CHAR;
+				else
+					line += cell;
+			}
+			std::cout << line;
+		}
+		return;
+	}
+	
+	// Colors enabled: batch consecutive same-color characters
 	for (int y = 0; y < MAX_Y; ++y)
 	{
 		gotoxy(0, y);
-		std::string line;
-		line.reserve(MAX_X);
+		std::string buffer;
+		buffer.reserve(MAX_X);
+		ConsoleColor currentColor = ConsoleColor::Default;
+		bool colorSet = false;
+		
 		for (int x = 0; x < MAX_X; ++x)
 		{
 			char cell = boards[screenIndex][y][x];
+			char displayChar;
+			ConsoleColor charColor;
+			
 			if (dark && !isIlluminated(x, y, p1, p2) && cell != TORCH)
-				line += DARKNESS_CHAR;
+			{
+				displayChar = DARKNESS_CHAR;
+				charColor = ConsoleColor::Default;
+			}
 			else
-				line += cell;
+			{
+				displayChar = cell;
+				charColor = getColorForChar(cell);
+			}
+			
+			// If color changed, flush buffer and switch color
+			if (charColor != currentColor || !colorSet)
+			{
+				if (!buffer.empty())
+				{
+					std::cout << buffer;
+					buffer.clear();
+				}
+				setConsoleColor(charColor);
+				currentColor = charColor;
+				colorSet = true;
+			}
+			
+			buffer += displayChar;
 		}
-		std::cout << line;
+		
+		// Flush remaining buffer for this line
+		if (!buffer.empty())
+		{
+			std::cout << buffer;
+		}
 	}
+	
+	// Reset to default at end
+	resetColor();
 }
 
 bool Screens::isDarkScreen() const

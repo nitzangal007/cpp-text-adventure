@@ -1,4 +1,5 @@
 ﻿#include "Game.h"
+#include "ColorUtils.h"
 #include <Windows.h>
 #include <chrono>
 
@@ -284,10 +285,25 @@ void Game::drawStatusBar()
 	// Get legend Y position from current screen (where 'L' was found in file)
 	int legendStart = currentScreen.getLegendY();
 	
-	// Line 1: Player items, lives, score
-	gotoxy(0, legendStart); 
-	std::cout << "P1:[" << player1.getHeldItem() << "]  P2:[" << player2.getHeldItem() << "]  ";
-	std::cout << "Lives:" << lives << "  Score:" << score << "          ";
+	// Line 1: Player items, lives, score, color status
+	gotoxy(0, legendStart);
+	std::cout << "P1:[";
+	char item1 = player1.getHeldItem();
+	if (g_colorsEnabled && item1 != ' ')
+		setConsoleColor(getColorForChar(item1));
+	std::cout << item1;
+	if (g_colorsEnabled)
+		resetColor();
+	std::cout << "]  P2:[";
+	char item2 = player2.getHeldItem();
+	if (g_colorsEnabled && item2 != ' ')
+		setConsoleColor(getColorForChar(item2));
+	std::cout << item2;
+	if (g_colorsEnabled)
+		resetColor();
+	std::cout << "]  ";
+	std::cout << "Lives:" << lives << "  Score:" << score;
+	std::cout << "  [" << (g_colorsEnabled ? "COLOR" : "MONO") << "]          ";
 
 	// Line 2: Controls hint
 	gotoxy(0, legendStart + 1); 

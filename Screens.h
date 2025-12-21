@@ -3,10 +3,10 @@
 #include "utils.h"
 #include <iostream>
 #include <vector>
-#include <fstream>     
-#include <algorithm>   
+#include <fstream>
+#include <algorithm>
 #include <string>
-#include <Windows.h>   
+#include <filesystem>
 
 class Screens
 {
@@ -70,7 +70,7 @@ private:
     Point door7Pos;
 
     // Darkness per screen (Screen 2 is dark)
-    bool screenIsDark[NUM_SCREENS] = { false, true, false };
+    bool screenIsDark[NUM_SCREENS] = { false, false, false };
     
     // File loading data
     std::vector<std::string> screenFilePaths;    // Discovered .screen file paths
