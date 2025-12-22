@@ -1,4 +1,5 @@
 ﻿#include "Game.h"
+#include "ColorUtils.h"
 #include <Windows.h>
 #include <chrono>
 
@@ -66,6 +67,23 @@ void Game::initGame() {
 	player1Start = Point(5, 2, 0, 0, '$');
 	player2Start = Point(9, 2, 0, 0, '&');
 	currentScreen.init();
+	
+	// Check if screen loading failed
+	if (currentScreen.hasLoadingError())
+	{
+		// Display error message and return to menu
+		cls();
+		gotoxy(5, 10);
+		std::cout << "ERROR: " << currentScreen.getLoadingError();
+		gotoxy(5, 12);
+		std::cout << "Make sure adv-world*.screen files are in the game directory.";
+		gotoxy(5, 14);
+		std::cout << "Press any key to return to menu...";
+		_getch();
+		gameOver = true;  // Signal to return to menu
+		return;
+	}
+	
 	currentScreen.setCurrentScreen(Screens::ScreenId::First);
 	player1.reset(player1Start);
 	player2.reset(player2Start);
@@ -264,12 +282,32 @@ void Game::render()
 
 void Game::drawStatusBar()
 {
-	gotoxy(0, Screens::MAX_Y-4); 
-	std::cout << "Player 1 holding: [" << player1.getHeldItem() << "]  ";
-	std::cout << "Lives: " << lives << "  Score: " << score << "     ";
+	// Get legend Y position from current screen (where 'L' was found in file)
+	int legendStart = currentScreen.getLegendY();
+	
+	// Line 1: Player items, lives, score, color status
+	gotoxy(0, legendStart);
+	std::cout << "P1:[";
+	char item1 = player1.getHeldItem();
+	if (g_colorsEnabled && item1 != ' ')
+		setConsoleColor(getColorForChar(item1));
+	std::cout << item1;
+	if (g_colorsEnabled)
+		resetColor();
+	std::cout << "]  P2:[";
+	char item2 = player2.getHeldItem();
+	if (g_colorsEnabled && item2 != ' ')
+		setConsoleColor(getColorForChar(item2));
+	std::cout << item2;
+	if (g_colorsEnabled)
+		resetColor();
+	std::cout << "]  ";
+	std::cout << "Lives:" << lives << "  Score:" << score;
+	std::cout << "  [" << (g_colorsEnabled ? "COLOR" : "MONO") << "]          ";
 
-	gotoxy(0, Screens::MAX_Y-1); 
-	std::cout << "Player 2 holding: [" << player2.getHeldItem() << "]";
+	// Line 2: Controls hint
+	gotoxy(0, legendStart + 1); 
+	std::cout << "ESC:Pause  R:Restart  E/O:Drop                    ";
 }
 
 // ==========================================

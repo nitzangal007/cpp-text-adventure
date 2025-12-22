@@ -417,10 +417,6 @@ FodyWeavers.xsd
 *.msm
 *.msp
 Screen.h
-cpp-texy-adventure.vcxproj
-cpp-texy-adventure.sln
+*.sln
+*.vcxproj
 cpp-texy-adventure.vcxproj.filters
-cpp-text-adventure.sln
-cpp-text-adventure.vcxproj
-cpp-text-adventure.vcxproj.filters
-C++ 2026A - MTA- Exercises (1).md

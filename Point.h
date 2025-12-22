@@ -2,7 +2,7 @@
 #include <iostream>											// We took the code from class
 #include "utils.h"
 #include "Direction.h"
-
+#include "ColorUtils.h"
 
 
 class Point {
@@ -23,7 +23,11 @@ public:
 	}
 	void draw(char c) {
 		gotoxy(x, y);
+		if (g_colorsEnabled)
+			setConsoleColor(getColorForChar(c));
 		std::cout << c;
+		if (g_colorsEnabled)
+			resetColor();
 	}
 	void move();
 	void setDirection(Direction dir);

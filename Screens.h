@@ -3,6 +3,10 @@
 #include "utils.h"
 #include <iostream>
 #include <vector>
+#include <fstream>
+#include <algorithm>
+#include <string>
+#include <filesystem>
 
 class Screens
 {
@@ -32,6 +36,9 @@ public:
     // Darkness/Torch constants
     static constexpr int TORCH_RADIUS = 5;
     static constexpr char DARKNESS_CHAR = ' ';  // Space character
+    
+    // Legend anchor character (marks start of status bar area in screen files)
+    static constexpr char LEGEND_ANCHOR = 'L';
 
     struct SwitchData
     {
@@ -63,7 +70,13 @@ private:
     Point door7Pos;
 
     // Darkness per screen (Screen 2 is dark)
-    bool screenIsDark[NUM_SCREENS] = { false, true, false };
+    bool screenIsDark[NUM_SCREENS] = { false, false, false };
+    
+    // File loading data
+    std::vector<std::string> screenFilePaths;    // Discovered .screen file paths
+    int legendY[NUM_SCREENS] = { -1, -1, -1 };   // Y position of 'L' anchor per screen
+    bool loadingFailed = false;                   // True if screen loading failed
+    std::string loadingError;                     // Error message if loading failed
 
 public:
     Screens();
@@ -90,6 +103,13 @@ public:
     
     // Check if screen is dark
     bool isDarkScreen() const;
+    
+    // Get legend Y position for current screen (where status bar starts)
+    int getLegendY() const;
+    
+    // Check if loading failed and get error message
+    bool hasLoadingError() const { return loadingFailed; }
+    const std::string& getLoadingError() const { return loadingError; }
 
     // ==========================================
     // Board Access & Modification
@@ -166,6 +186,11 @@ private:
     // Internal Helpers
     // ==========================================
 
+    // Screen file loading
+    bool discoverScreenFiles();                              // Find adv-world*.screen files
+    bool loadScreenFromFile(int screenIndex, const std::string& path);  // Load single screen
+    
+    // Legacy build functions (now call loadScreenFromFile internally)
     void buildFirstScreen();
     void buildSecondScreen();
     void buildFinalScreen();
