@@ -19,15 +19,15 @@ public:
     enum class ScreenId { First = 0, Second = 1, Final = 2 };
 
     // Tile characters
-    static constexpr char EMPTY_SPACE = ' ';
-    static constexpr char WALL = 'W';
-    static constexpr char KEY = 'K';
-    static constexpr char BOMB = '@';
-    static constexpr char TORCH = '!';
-    static constexpr char OBSTACLE = '*';
-    static constexpr char SWITCH_ON = '/';
-    static constexpr char SWITCH_OFF = '\\';
-    static constexpr char RIDDLE = '?';
+    static const char EMPTY_SPACE = ' ';
+    static const char WALL = 'W';
+    static const char KEY = 'K';
+    static const char BOMB = '@';
+    static const char TORCH = '!';
+    static const char OBSTACLE = '*';
+    static const char SWITCH_ON = '/';
+    static const char SWITCH_OFF = '\\';
+    static const char RIDDLE = '?';
     static const char BOMB_PLANTED = '@';
     static const char AUTO_BOMB = 'B';
     static const char HINT = 'H';
