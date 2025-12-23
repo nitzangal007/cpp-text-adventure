@@ -1,4 +1,5 @@
 #include "ColorUtils.h"
+#include "GameConstants.h"
 
 // Global color toggle - OFF by default for backward compatibility
 bool g_colorsEnabled = false;
@@ -69,24 +70,24 @@ ConsoleColor getColorForChar(char ch)
 {
     switch (ch) {
     // Geometry
-    case 'W':  return ConsoleColor::Cyan;           // Wall
-    case 'X':  return ConsoleColor::BrightWhite;    // Unbreakable wall
-    case '#':  return ConsoleColor::BrightGreen;    // Spring
+    case Tiles::WALL:  return ConsoleColor::Cyan;           // Wall
+    case Tiles::UNBREAKABLE_WALL:  return ConsoleColor::BrightWhite;    // Unbreakable wall
+    case Tiles::SPRING:  return ConsoleColor::BrightGreen;    // Spring
 
     // Players
-    case '$':  return ConsoleColor::BrightYellow;   // Player 1
-    case '&':  return ConsoleColor::BrightMagenta;  // Player 2
+    case Players::PLAYER1_SYMBOL:  return ConsoleColor::BrightYellow;   // Player 1
+    case Players::PLAYER2_SYMBOL:  return ConsoleColor::BrightMagenta;  // Player 2
 
     // Items
-    case 'K':  return ConsoleColor::Yellow;         // Key
-    case '!':  return ConsoleColor::BrightYellow;   // Torch
-    case '@':  return ConsoleColor::BrightRed;      // Bomb
+    case Tiles::KEY:  return ConsoleColor::Yellow;         // Key
+    case Tiles::TORCH:  return ConsoleColor::BrightYellow;   // Torch
+    case Tiles::BOMB:  return ConsoleColor::BrightRed;      // Bomb
 
     // Logic/Puzzles
-    case '/':  return ConsoleColor::BrightGreen;    // Switch ON
-    case '\\': return ConsoleColor::DarkRed;        // Switch OFF
-    case '?':  return ConsoleColor::BrightBlue;     // Riddle
-    case 'H':  return ConsoleColor::BrightCyan;     // Hint
+    case Tiles::SWITCH_ON:  return ConsoleColor::BrightGreen;    // Switch ON
+    case Tiles::SWITCH_OFF: return ConsoleColor::DarkRed;        // Switch OFF
+    case Tiles::RIDDLE:  return ConsoleColor::BrightBlue;     // Riddle
+    case Tiles::HINT:  return ConsoleColor::BrightCyan;     // Hint
 
     // Doors (1-9)
     case '1': case '2': case '3':
@@ -95,8 +96,8 @@ ConsoleColor getColorForChar(char ch)
         return ConsoleColor::BrightBlue;
 
     // Other
-    case '*':  return ConsoleColor::Gray;           // Obstacle
-    case 'B':  return ConsoleColor::BrightRed;      // Auto-bomb
+    case Tiles::OBSTACLE:  return ConsoleColor::Gray;           // Obstacle
+    case Tiles::AUTO_BOMB:  return ConsoleColor::BrightRed;      // Auto-bomb
 
     default:
         return ConsoleColor::Default;
