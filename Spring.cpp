@@ -18,14 +18,12 @@ bool Spring::contains(const Point& p) const {
 }
 
 bool Spring::canCompress(Direction moveDir) const {
-    // Player must move in the direction of the wall (pushDir)
     return moveDir == pushDir;
 }
 
-int Spring::calculateCompressedCount(const Point& playerPos) const {
-    // Logic to determine how deep the player is:
-    // Iterate cells and find distance/index relative to the start/end
-    // (Skeleton only - needs implementation)
-    return 0;
+SpringLaunchParams Spring::calculateLaunchParams(int compressedCount) const {
+    SpringLaunchParams params;
+    params.speed = compressedCount;
+    params.durationTicks = compressedCount * compressedCount;
+    return params;
 }
-

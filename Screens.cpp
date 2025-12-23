@@ -1,4 +1,4 @@
-﻿#include "Screens.h"
+#include "Screens.h"
 #include "ColorUtils.h"
 #include <cmath>
 
@@ -329,6 +329,10 @@ bool Screens::isBomb(const Point& p) const {
 }
 bool Screens::isTorch(const Point& p) const {
 	return (getCharAt(p) == TORCH);
+}
+bool Screens::isSpring(const Point& p) const
+{
+	return (getCharAt(p) == SPRING);
 }
 bool Screens::isObstacle(const Point& p) const {
 	return (getCharAt(p) == OBSTACLE);
@@ -754,6 +758,168 @@ void Screens::collectPendingAutoBombs(std::vector<Point>& out)						// we used c
 	pendingAutoBombs.clear();
 }
 
+void Screens::initSprings()
+{
+	for (int i = 0; i < NUM_SCREENS; ++i)
+	{
+		scanSpringsForScreen(i);
+	}
+}
+
+Spring* Screens::getSpringAt(const Point& p)
+{
+	if (!isSpring(p))
+		return nullptr;
+	int screenIndex = static_cast<int>(current);
+	for (auto& spring : screenSprings[screenIndex])
+	{
+		if (spring.getPosition() == p)
+			return &spring;
+	}
+	
+}
+
+bool Screens::shouldDrawSpringChar(const Point& p, const Player& p1, const Player& p2) const
+{
+	// TODO: Implement if needed for spring compression visual feedback
+	return true;
+}
+
+// ==========================================
+// Spring Scanning Implementation
+// ==========================================
+
+Direction Screens::getOppositeDirection(Direction dir) const
+{
+	switch (dir)
+	{
+		case Direction::UP:    return Direction::DOWN;
+		case Direction::DOWN:  return Direction::UP;
+		case Direction::LEFT:  return Direction::RIGHT;
+		case Direction::RIGHT: return Direction::LEFT;
+		default:               return Direction::STAY;
+	}
+}
+
+void Screens::collectSpringChain(
+	int screenIndex,
+	const Point& start,
+	bool visited[MAX_Y][MAX_X],
+	std::vector<Point>& chain)
+{
+	// BFS to collect all connected '#' cells in any direction
+	chain.clear();
+	chain.push_back(start);
+	visited[start.getY()][start.getX()] = true;
+
+	// Movement deltas for 4 directions
+	const int dx[] = { 0, 1, 0, -1 };  // UP, RIGHT, DOWN, LEFT
+	const int dy[] = { -1, 0, 1, 0 };
+
+	for (size_t i = 0; i < chain.size(); ++i)
+	{
+		Point current = chain[i];
+
+		// Check all 4 neighbors
+		for (int d = 0; d < 4; ++d)
+		{
+			Point neighbor(current.getX() + dx[d], current.getY() + dy[d]);
+
+			if (!isInside(neighbor))
+				continue;
+
+			if (boards[screenIndex][neighbor.getY()][neighbor.getX()] != SPRING)
+				continue;
+
+			if (visited[neighbor.getY()][neighbor.getX()])
+				continue;
+
+			visited[neighbor.getY()][neighbor.getX()] = true;
+			chain.push_back(neighbor);
+		}
+	}
+}
+
+bool Screens::findSpringAnchor(
+	int screenIndex,
+	const std::vector<Point>& chain,
+	Point& outAnchorWall,
+	Direction& outPushDir,
+	Direction& outReleaseDir)
+{
+	const Direction directions[] = {
+		Direction::UP, Direction::RIGHT, Direction::DOWN, Direction::LEFT
+	};
+	const int dx[] = { 0, 1, 0, -1 };
+	const int dy[] = { -1, 0, 1, 0 };
+
+	// Check each cell in the chain for an adjacent wall
+	for (const Point& cell : chain)
+	{
+		for (int d = 0; d < 4; ++d)
+		{
+			Point neighbor(cell.getX() + dx[d], cell.getY() + dy[d]);
+
+			if (!isInside(neighbor))
+				continue;
+
+			char neighborChar = boards[screenIndex][neighbor.getY()][neighbor.getX()];
+
+			if (neighborChar == WALL)
+			{
+				// Found anchor wall!
+				outAnchorWall = neighbor;
+				outPushDir = directions[d];
+				outReleaseDir = getOppositeDirection(outPushDir);
+				return true;
+			}
+		}
+	}
+
+	return false;  // No anchor found
+}
+
+void Screens::scanSpringsForScreen(int screenIndex)
+{
+	// Step 1: Clear existing springs for this screen
+	screenSprings[screenIndex].clear();
+
+	// Visited matrix to track processed spring cells
+	bool visited[MAX_Y][MAX_X] = { false };
+	int springId = 0;
+
+	// Step 2: Scan every cell on the board
+	for (int y = 0; y < MAX_Y; ++y)
+	{
+		for (int x = 0; x < MAX_X; ++x)
+		{
+			// Skip if not a spring char or already processed
+			if (boards[screenIndex][y][x] != SPRING || visited[y][x])
+				continue;
+
+			// Step 3: Collect the ENTIRE chain first (all connected '#' cells)
+			std::vector<Point> chain;
+			collectSpringChain(screenIndex, Point(x, y), visited, chain);
+
+			// Step 4: Find which cell in the chain has an adjacent anchor wall
+			Point anchorWall;
+			Direction pushDir, releaseDir;
+
+			if (!findSpringAnchor(screenIndex, chain, anchorWall, pushDir, releaseDir))
+				continue;  // Invalid spring (no wall anchor)
+
+			// Step 5: Create Spring and add all segments
+			Spring newSpring(springId++, anchorWall, pushDir, releaseDir);
+
+			for (const Point& segment : chain)
+				newSpring.addSegment(segment);
+
+			// Step 6: Add to the screen's spring list
+			screenSprings[screenIndex].push_back(newSpring);
+		}
+	}
+}
+
 // ==========================================
 // Internal Helpers
 // ==========================================
@@ -938,12 +1104,12 @@ void Screens::collectObstacleGroup(const Point& start, std::vector<Point>& group
 void Screens::moveObstacleGroup(const std::vector<Point>& group, int dx, int dy)			// we used chatGPT for this function
 {
 	for (size_t i = 0; i < group.size(); ++i)
-		setCharAt(group[i], Screens::EMPTY_SPACE);
+		setCharAt(group[i], EMPTY_SPACE);
 
 	for (size_t i = 0; i < group.size(); ++i)
 	{
 		Point cell = group[i];
 		Point target(cell.getX() + dx, cell.getY() + dy, 0, 0, ' ');
-		setCharAt(target, Screens::OBSTACLE);
+		setCharAt(target, OBSTACLE);
 	}
 }

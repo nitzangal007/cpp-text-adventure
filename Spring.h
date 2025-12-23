@@ -2,7 +2,12 @@
 #include <vector>
 #include "Point.h"
 #include "Direction.h"
-//#include "GameConstants.h" // Uncomment if you have this file
+#include "GameConstants.h" 
+
+struct SpringLaunchParams {
+    int speed;
+    int durationTicks;
+};
 
 class Spring {
 private:
@@ -33,9 +38,10 @@ public:
     bool contains(const Point& p) const;
 
     // Checks if a player moving in 'moveDir' can enter/compress this spring
+    // Reason: Prevents players from entering the spring from the side or back.
     bool canCompress(Direction moveDir) const;
 
-    // Calculates how many segments are compressed based on player position
-    // (Returns 0 if not on spring)
-    int calculateCompressedCount(const Point& playerPos) const;
+    // Calculates the flight parameters based on how many segments were compressed
+    // Reason: Centralizes the formula logic (c -> speed c, duration c^2)
+    SpringLaunchParams calculateLaunchParams(int compressedCount) const;
 };

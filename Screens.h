@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "GameConstants.h"
 #include "Switch.h"
+#include "Spring.h"
 #include <iostream>
 #include <vector>
 #include <fstream>
@@ -14,41 +15,21 @@ class Screens
 {
 public:
     // ==========================================
-    // Constants & Enums (aliased from GameConstants.h)
+    // Constants & Enums
     // ==========================================
     enum { MAX_X = Screen::MAX_X, MAX_Y = Screen::MAX_Y };
     enum { NUM_SCREENS = Screen::NUM_SCREENS };
     enum class ScreenId { First = 0, Second = 1, Final = 2 };
 
-    // Tile characters (aliased for backward compatibility)
-    static constexpr char EMPTY_SPACE = Tiles::EMPTY_SPACE;
-    static constexpr char WALL = Tiles::WALL;
-    static constexpr char KEY = Tiles::KEY;
-    static constexpr char BOMB = Tiles::BOMB;
-    static constexpr char TORCH = Tiles::TORCH;
-    static constexpr char OBSTACLE = Tiles::OBSTACLE;
-    static constexpr char SWITCH_ON = Tiles::SWITCH_ON;
-    static constexpr char SWITCH_OFF = Tiles::SWITCH_OFF;
-    static constexpr char RIDDLE = Tiles::RIDDLE;
-    static constexpr char BOMB_PLANTED = Tiles::BOMB;
-    static constexpr char AUTO_BOMB = Tiles::AUTO_BOMB;
-    static constexpr char HINT = Tiles::HINT;
-    static constexpr char UNBREAKABLE_WALL = Tiles::UNBREAKABLE_WALL;
-    
-    // Darkness/Torch constants
-    static constexpr int TORCH_RADIUS = Radius::TORCH_LIGHT;
-    static constexpr char DARKNESS_CHAR = Tiles::EMPTY_SPACE;
-    
-    // Legend anchor character (marks start of status bar area in screen files)
-    static constexpr char LEGEND_ANCHOR = Tiles::LEGEND_ANCHOR;
-   
- 
+    // Note: Tile constants moved to GameConstants.h - use Tiles:: namespace directly
+    // Example: Tiles::WALL, Tiles::KEY, Radius::TORCH_LIGHT, etc.
 
 
 private:
     char boards[NUM_SCREENS][MAX_Y][MAX_X];
     ScreenId current = ScreenId::First;
     std::vector<Point> pendingAutoBombs;
+    std::vector<Spring> screenSprings[NUM_SCREENS];
 
     // Level 1 Data (now using Switch class)
     std::vector<Switch> firstScreenSwitches;
@@ -116,6 +97,7 @@ public:
     bool isKey(const Point& p) const;
     bool isBomb(const Point& p) const;
     bool isTorch(const Point& p) const;
+	bool isSpring(const Point& p) const;
     bool isObstacle(const Point& p) const;
     bool isSwitch(const Point& p) const; 
     bool isSwitchOn(const Point& p) const;
@@ -171,6 +153,23 @@ public:
     // Collects auto-bombs triggered this frame
     void collectPendingAutoBombs(std::vector<Point>& out);
 
+    // ==========================================
+    // Spring Mechanics
+    // ==========================================
+
+    // Initializes springs for all screens (calls scanSpringsForScreen internally)
+    void initSprings();
+
+    // Returns a pointer to the spring at point p (or nullptr if none)
+    Spring* getSpringAt(const Point& p);
+
+    // Helper for drawing: Should '#' be drawn?
+    bool shouldDrawSpringChar(const Point& p, const Player& p1, const Player& p2) const;
+
+    // Inside class Screens (Private Helper):
+    void scanSpringsForScreen(int screenIndex);
+
+
 private:
     // ==========================================
     // Internal Helpers
@@ -201,4 +200,11 @@ private:
     // Obstacles
     void collectObstacleGroup(const Point& start, std::vector<Point>& group) const;
     void moveObstacleGroup(const std::vector<Point>& group, int dx, int dy);
+
+    // Spring scanning helpers
+    Direction getOppositeDirection(Direction dir) const;
+    void collectSpringChain(int screenIndex, const Point& start,
+                            bool visited[MAX_Y][MAX_X], std::vector<Point>& chain);
+    bool findSpringAnchor(int screenIndex, const std::vector<Point>& chain,
+                          Point& outAnchorWall, Direction& outPushDir, Direction& outReleaseDir);
 };
