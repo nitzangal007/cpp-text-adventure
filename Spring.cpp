@@ -1,13 +1,12 @@
 #include "Spring.h"
 
 Spring::Spring(int id, const Point& anchor, Direction pushDir, Direction releaseDir)
-    : id(id), anchorWall(anchor), pushDir(pushDir), releaseDir(releaseDir), maxLength(0)
+    : id(id), anchorWall(anchor), pushDir(pushDir), releaseDir(releaseDir)
 {
 }
 
 void Spring::addSegment(const Point& p) {
     cells.push_back(p);
-    maxLength++;
 }
 
 bool Spring::contains(const Point& p) const {

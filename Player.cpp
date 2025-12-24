@@ -34,7 +34,15 @@ void Player::launch(const SpringLaunchParams& params, Direction dir)
 	springState.ticksLeft = params.durationTicks;
 	pos.setDirection(dir);
 	springState.launchDir = dir;
-	pos.setDirection(dir);
+	
+}
+void Player::resetSpringState() {
+    springState.mode = SpringMode::None;
+    springState.springId = -1;
+    springState.compressedCount = 0;
+    springState.launchSpeed = 0;
+    springState.ticksLeft = 0;
+    springState.launchDir = Direction::STAY;
 }
 
 bool Player::tickFlight()
@@ -46,8 +54,11 @@ bool Player::tickFlight()
 
     if (springState.ticksLeft <= 0)
     {
-        springState.mode = SpringMode::None;
-        pos.setDirection(Direction::STAY); 
+      
+        Direction finalDir = springState.launchDir;
+        resetSpringState();
+        pos.setDirection(finalDir);
+
         return true; 
     }
 
@@ -72,5 +83,5 @@ void Player::reset(const Point& startPos)
     pos = startPos;
     pos.setDirection(Direction::STAY);
 	removeHeldItem();
-    
+    resetSpringState();
 }

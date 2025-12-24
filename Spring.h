@@ -16,10 +16,10 @@ private:
     Point anchorWall;            // Position of the supporting wall
     Direction pushDir;           // Direction required to compress
     Direction releaseDir;        // Direction of launch
-    int maxLength;               // Total length
 
 public:
     // Constructor
+	Spring() = default;
     Spring(int id, const Point& anchor, Direction pushDir, Direction releaseDir);
 
     // -- Setters / Builders --

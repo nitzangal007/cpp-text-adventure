@@ -14,7 +14,7 @@ void Torch::onDrop(Player& player, Screens& screen)
     
     // Place torch back on the board at player's current position
     Point pos = player.getPosition();
-    screen.setCharAt(pos, Tiles::TORCH);
+    screen.setCharAt(pos, TORCH);
     player.removeHeldItem();
 }
 
@@ -22,7 +22,7 @@ bool Torch::isInRange(const Point& holderPos, const Point& targetPos)
 {
     int dx = targetPos.getX() - holderPos.getX();
     int dy = targetPos.getY() - holderPos.getY();
-    int R2 = LIGHT_RADIUS * LIGHT_RADIUS;
+    int R2 = TORCH_LIGHT * TORCH_LIGHT;
     
     return (dx * dx + dy * dy) <= R2;
 }

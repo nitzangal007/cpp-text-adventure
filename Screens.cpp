@@ -773,10 +773,10 @@ Spring* Screens::getSpringAt(const Point& p)
 	int screenIndex = static_cast<int>(current);
 	for (auto& spring : screenSprings[screenIndex])
 	{
-		if (spring.getPosition() == p)
+		if (spring.contains(p))
 			return &spring;
 	}
-	
+	return nullptr;
 }
 
 bool Screens::shouldDrawSpringChar(const Point& p, const Player& p1, const Player& p2) const

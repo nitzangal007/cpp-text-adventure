@@ -347,7 +347,7 @@ void Game::updatePlayerMovement(Player& player)
 		}
 	}
 		
-	if (currentScreen.isDoor(nextPos) && player.hasKey())
+	if (currentScreen.isDoor(nextPos) && Key::playerHasKey(player))
 	{
 		currentScreen.makePassage(nextPos);
 		player.removeHeldItem();
@@ -381,12 +381,13 @@ void Game::collectItemIfPossible(Player& player)
 {
 	const Point& pos = player.getPosition();
 
-	if (player.hasKey() || player.hasBomb() || player.hasTorch())
+	// Can only hold one item at a time
+	if (Key::playerHasKey(player) || player.hasBomb() || Torch::playerHasTorch(player))
 		return;
 
 	if (currentScreen.isKey(pos))
 	{
-		player.collectKey();
+		Key::onPickup(player);
 		currentScreen.makePassage(pos);
 	}
 	else if (currentScreen.isBomb(pos))
@@ -403,7 +404,7 @@ void Game::collectItemIfPossible(Player& player)
 	}
 	else if (currentScreen.isTorch(pos))
 	{
-		player.collectTorch();
+		Torch::onPickup(player);
 		currentScreen.makePassage(pos);
 	}
 }

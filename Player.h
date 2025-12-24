@@ -2,6 +2,9 @@
 
 #include "Point.h"
 #include "GameConstants.h"
+#include "Direction.h"
+#include "Spring.h"
+
 
 class Player {
 public:
@@ -9,15 +12,26 @@ public:
         First,
         Second
     };
+    enum class SpringMode { None, Compressing, Launching };
+
+    struct SpringState {
+        SpringMode mode = SpringMode::None;
+        int springId = -1;
+        int compressedCount = 0;
+        Direction launchDir = Direction::STAY;
+        int launchSpeed = 0;
+        int ticksLeft = 0;
+    };
 private:
     static constexpr int NUM_KEYS = 5;
     Id   id;          // which player (1 or 2)
     Point pos;        // current position on the board
     char symbol;      // how the player is drawn on screen
-	char keys[NUM_KEYS]; // control keys for this player
-	char heldItem = Tiles::EMPTY_SPACE; // currently held item symbol (if any)
+    char keys[NUM_KEYS]; // control keys for this player
+    char heldItem = Tiles::EMPTY_SPACE; // currently held item symbol (if any)
+    SpringState springState; // current spring state
 
-    
+
 
 public:
     // constructor
@@ -35,7 +49,7 @@ public:
 
     void setDirection(Direction dir) {
         pos.setDirection(dir);
-    }              
+    }
 
 
 
@@ -46,23 +60,41 @@ public:
 
     // getters
     Id getId() const {
-		return id;
+        return id;
     }
     const Point& getPosition() const {
-		return pos;
+        return pos;
     }
     char getSymbol() const {
-		return symbol;
+        return symbol;
     }
+    const SpringState& getSpringState() const { return springState; }
+    SpringState& getSpringState() { return springState; }
 
     // setters
     void setPosition(const Point& p)
-	{
-		pos = p;
-	}
+    {
+        pos = p;
+    }
 
     // keyboard input handling
     void handleKeyPress(char key_pressed);
+
+    //Spring logics
+    // Enters the spring: sets mode to Compressing and resets counters
+    void handleSpringEntry(int springId);
+    // Increments compression count as player moves deeper
+    void incrementCompression() {
+		springState.compressedCount++;
+    }
+    // Activates launch using parameters calculated by the Spring class
+    void launch(const SpringLaunchParams& params, Direction dir);
+    // Updates flight timer and returns true if flight finished
+    bool tickFlight();
+    // Resets state to None
+    void resetSpringState();
+    // Copies momentum from another player (Collision logic)
+    void absorbMomentum(const SpringState& otherState);
 
 
     //* inventory interface *
