@@ -106,8 +106,27 @@ private:
 
     bool isPlayerInExplosion(const Player& player, const Point& center, int radiusSquared) const;
 
+    // ==========================================
+    // Torch Logic
+    // ==========================================
+    
     // Drop torch back onto the board
     void dropTorch(Player& player);
+
+    // ==========================================
+    // Spring Logic
+    // ==========================================
+    
+    // Checks release conditions and triggers launch if met
+    void updateSpringLogic(Player& player);
+    // Handles forced movement during Launching mode
+    void processForcedMove(Player& player, Player& otherPlayer);
+    // Helper: Check if position is blocked for flight
+    bool isBlockedForFlight(const Point& pos) const;
+    // Helper: Check if two directions are perpendicular
+    bool isPerpendicular(Direction d1, Direction d2) const;
+    // Helper: Get direction from player's current movement delta
+    Direction getPlayerInputDirection(const Player& player) const;
 
     // ==========================================
     // Screen Transition Logic

@@ -21,6 +21,9 @@ public:
 	bool operator==(const Point& other) const {
 		return x == other.x && y == other.y;
 	}
+	bool operator!=(const Point& other) const {
+		return !(*this == other);
+	}
 	void draw(char c) {
 		gotoxy(x, y);
 		if (g_colorsEnabled)
@@ -43,5 +46,17 @@ public:
 	}
 	int getDiffX() const { return diff_x; }
 	int getDiffY() const { return diff_y; }
+	Direction getDirection() const {
+		if (diff_x == 0 && diff_y == -1)
+			return Direction::UP;
+		else if (diff_x == 1 && diff_y == 0)
+			return Direction::RIGHT;
+		else if (diff_x == 0 && diff_y == 1)
+			return Direction::DOWN;
+		else if (diff_x == -1 && diff_y == 0)
+			return Direction::LEFT;
+		else
+			return Direction::STAY;
+	}
 };
 

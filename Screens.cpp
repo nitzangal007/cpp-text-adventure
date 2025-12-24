@@ -142,6 +142,9 @@ void Screens::init()
 	initFirstScreenSwitches();
 	initSecondScreenSwitches();
 	
+	// Step 5: Scan and register all springs
+	initSprings();
+	
 	current = ScreenId::First;
 }
 

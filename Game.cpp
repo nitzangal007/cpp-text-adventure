@@ -209,8 +209,25 @@ void Game::resetCurrentGame()
 
 void Game::updateLogic()
 {
-	updatePlayerMovement(player1);
-	updatePlayerMovement(player2);
+	// ========================================
+	// Spring Logic (process before normal movement)
+	// ========================================
+	
+	// Handle compression state (check release conditions)
+	updateSpringLogic(player1);
+	updateSpringLogic(player2);
+	
+	// Handle launching state (forced movement with collisions)
+	processForcedMove(player1, player2);
+	processForcedMove(player2, player1);
+	
+	// ========================================
+	// Normal Movement (only for players NOT in spring mode)
+	// ========================================
+	if (player1.getSpringState().mode == SpringMode::None)
+		updatePlayerMovement(player1);
+	if (player2.getSpringState().mode == SpringMode::None)
+		updatePlayerMovement(player2);
 
 	if (!playerIsReadyForNextScreen(player1))
 		collectItemIfPossible(player1);
@@ -366,6 +383,28 @@ void Game::updatePlayerMovement(Player& player)
 			player2ReadyForNextScreen = true;
 		}
 		return;
+	}
+	// ========================================
+	// Spring Entry Detection
+	// ========================================
+	else if (currentScreen.isSpring(nextPos))
+	{
+		Spring* spring = currentScreen.getSpringAt(nextPos);
+		if (spring)
+		{
+			// Check if player is approaching from correct direction
+			Direction moveDir = getPlayerInputDirection(player);
+			if (spring->canCompress(moveDir))
+			{
+				// Enter compression mode
+				player.handleSpringEntry(spring->getId());
+				player.incrementCompression();  // First step counts as compression
+				player.move();
+				return;
+			}
+		}
+		// If can't compress, treat as normal walkable cell
+		player.move();
 	}
 	else if (currentScreen.isFreeCellForPlayer(nextPos))
 	{
@@ -524,6 +563,179 @@ void Game::dropTorch(Player& player)
 {
 	// Use Torch class to handle drop
 	Torch::onDrop(player, currentScreen);
+}
+
+// ==========================================
+// Spring Logic
+// ==========================================
+
+Direction Game::getPlayerInputDirection(const Player& player) const
+{
+	const Point& pos = player.getPosition();
+	int dx = pos.getDiffX();
+	int dy = pos.getDiffY();
+	
+	if (dy < 0) return Direction::UP;
+	if (dy > 0) return Direction::DOWN;
+	if (dx < 0) return Direction::LEFT;
+	if (dx > 0) return Direction::RIGHT;
+	return Direction::STAY;
+}
+
+bool Game::isBlockedForFlight(const Point& pos) const
+{
+	// Check if position is blocked for spring flight
+	if (pos.getX() < 0 || pos.getX() >= Screens::MAX_X ||
+		pos.getY() < 0 || pos.getY() >= Screens::MAX_Y)
+		return true;
+	
+	return currentScreen.isWall(pos) || 
+		   currentScreen.isObstacle(pos) || 
+		   currentScreen.isDoor(pos) ||
+		   currentScreen.isunbreakable_wall(pos);
+}
+
+bool Game::isPerpendicular(Direction d1, Direction d2) const
+{
+	// Check if two directions are perpendicular
+	bool d1Vertical = (d1 == Direction::UP || d1 == Direction::DOWN);
+	bool d2Vertical = (d2 == Direction::UP || d2 == Direction::DOWN);
+	
+	// One vertical and one horizontal = perpendicular
+	return d1Vertical != d2Vertical;
+}
+
+void Game::updateSpringLogic(Player& player)
+{
+	Player::SpringState& state = player.getSpringState();
+	if (state.mode != SpringMode::Compressing)
+		return;
+	
+	// Find the spring the player is on
+	Spring* spring = currentScreen.getSpringAt(player.getPosition());
+	if (!spring) {
+		player.resetSpringState();
+		return;
+	}
+	
+	// Get player's current input direction
+	Direction inputDir = getPlayerInputDirection(player);
+	
+	// Check release conditions
+	bool shouldRelease = false;
+	
+	// Condition 1: Player stopped (not pushing anymore)
+	if (inputDir == Direction::STAY)
+		shouldRelease = true;
+	
+	// Condition 2: Direction changed (no longer pushing toward spring)
+	if (inputDir != Direction::STAY && inputDir != spring->getPushDirection())
+		shouldRelease = true;
+	
+	// Condition 3: Next position is blocked or outside spring
+	Point nextPos = player.getPosition();
+	nextPos.move();
+	
+	if (!currentScreen.isSpring(nextPos) || isBlockedForFlight(nextPos))
+		shouldRelease = true;
+	
+	if (shouldRelease)
+	{
+		// Calculate launch parameters based on compression count
+		// Minimum 1 compression to launch
+		if (state.compressedCount > 0)
+		{
+			SpringLaunchParams params = spring->calculateLaunchParams(state.compressedCount);
+			player.launch(params, spring->getReleaseDirection());
+		}
+		else
+		{
+			// No compression - just exit spring mode
+			player.resetSpringState();
+		}
+	}
+	else
+	{
+		// Continue compressing: increment count and move deeper
+		player.incrementCompression();
+		player.move();
+	}
+}
+
+void Game::processForcedMove(Player& player, Player& otherPlayer)
+{
+	Player::SpringState& state = player.getSpringState();
+	if (state.mode != SpringMode::Launching)
+		return;
+	
+	// Calculate movement deltas for launch direction
+	int dx = 0, dy = 0;
+	switch (state.launchDir)
+	{
+		case Direction::UP:    dy = -1; break;
+		case Direction::DOWN:  dy =  1; break;
+		case Direction::LEFT:  dx = -1; break;
+		case Direction::RIGHT: dx =  1; break;
+		default: break;
+	}
+	
+	// Process 'speed' sub-steps of forced movement
+	for (int i = 0; i < state.launchSpeed; ++i)
+	{
+		Point currentPos = player.getPosition();
+		Point nextPos(currentPos.getX() + dx, currentPos.getY() + dy);
+		
+		// Check collision with wall/obstacle
+		if (isBlockedForFlight(nextPos))
+		{
+			player.resetSpringState();
+			return;
+		}
+		
+		// Check collision with other player
+		if (nextPos == otherPlayer.getPosition())
+		{
+			// Transfer momentum to other player
+			otherPlayer.absorbMomentum(state);
+			player.resetSpringState();
+			return;
+		}
+		
+		// Clear path - move player
+		player.setPosition(nextPos);
+	}
+	
+	// Lateral Movement: Allow ONE perpendicular move per frame
+	Direction inputDir = getPlayerInputDirection(player);
+	if (inputDir != Direction::STAY && isPerpendicular(inputDir, state.launchDir))
+	{
+		int latDx = 0, latDy = 0;
+		switch (inputDir)
+		{
+			case Direction::UP:    latDy = -1; break;
+			case Direction::DOWN:  latDy =  1; break;
+			case Direction::LEFT:  latDx = -1; break;
+			case Direction::RIGHT: latDx =  1; break;
+			default: break;
+		}
+		
+		Point lateralPos(player.getPosition().getX() + latDx,
+						 player.getPosition().getY() + latDy);
+		
+		// Only move laterally if cell is free
+		if (!isBlockedForFlight(lateralPos) && 
+			lateralPos != otherPlayer.getPosition())
+		{
+			player.setPosition(lateralPos);
+		}
+	}
+	
+	// Decrement flight timer
+	if (player.tickFlight())
+	{
+		// Flight finished (ticksLeft reached 0)
+		// tickFlight already resets state when done
+	}
 }
 
 // ==========================================

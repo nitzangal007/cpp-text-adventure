@@ -54,11 +54,9 @@ bool Player::tickFlight()
 
     if (springState.ticksLeft <= 0)
     {
-      
         Direction finalDir = springState.launchDir;
         resetSpringState();
         pos.setDirection(finalDir);
-
         return true; 
     }
 

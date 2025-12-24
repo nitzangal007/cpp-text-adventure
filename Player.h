@@ -5,14 +5,14 @@
 #include "Direction.h"
 #include "Spring.h"
 
-
+enum class SpringMode { None, Compressing, Launching };
 class Player {
 public:
     enum class Id {
         First,
         Second
     };
-    enum class SpringMode { None, Compressing, Launching };
+    
 
     struct SpringState {
         SpringMode mode = SpringMode::None;
@@ -74,7 +74,7 @@ public:
     // setters
     void setPosition(const Point& p)
     {
-        pos = p;
+        pos.setPosition(p.getX(), p.getY());  // Only change x,y, keep symbol
     }
 
     // keyboard input handling
