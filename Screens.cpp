@@ -602,80 +602,98 @@ void Screens::clearHint() const
 // Obstacle Mechanics
 // ==========================================
 
-bool Screens::tryPushObstacle(const Point& nextPos, const Player& player, const Player& otherPlayer)	// we used chatGPT for this function
+bool Screens::tryPushObstacle(const Point& nextPos, Direction pushDir,
+                               int primaryForce, const Player& otherPlayer)
 {
-	Point currPos = player.getPosition();
-	int dx = nextPos.getX() - currPos.getX();
-	int dy = nextPos.getY() - currPos.getY();
+	// Compute push deltas from direction
+	int dx = 0, dy = 0;
+	switch (pushDir)
+	{
+		case Direction::UP:    dy = -1; break;
+		case Direction::DOWN:  dy =  1; break;
+		case Direction::LEFT:  dx = -1; break;
+		case Direction::RIGHT: dx =  1; break;
+		default: return false;
+	}
 
+	// Validate single-cell movement
 	if (std::abs(dx) + std::abs(dy) != 1)
 		return false;
 
+	// Collect all connected obstacles (BFS flood-fill)
 	std::vector<Point> group;
 	collectObstacleGroup(nextPos, group);
 
 	if (group.empty())
 		return false;
 
-	int obstacleSize = (int)group.size();
-	int availableForce = 1;
+	int obstacleSize = static_cast<int>(group.size());
+	
+	// Start with primary player's force (may be spring-boosted)
+	int availableForce = primaryForce;
 
+	// Check if other player is cooperating (same direction push)
 	Point otherPos = otherPlayer.getPosition();
 	Point otherNext = otherPos;
 	otherNext.move();
 
 	int odx = otherNext.getX() - otherPos.getX();
 	int ody = otherNext.getY() - otherPos.getY();
-
 	bool sameDir = (odx == dx && ody == dy);
 
 	if (sameDir)
 	{
-		// Check if the other player is behind to add pushing force
-		bool otherBehind =
-			(otherPos.getX() == currPos.getX() - dx) &&
-			(otherPos.getY() == currPos.getY() - dy);
+		// Determine other player's movement direction
+		Direction otherMoveDir = Direction::STAY;
+		if (ody < 0) otherMoveDir = Direction::UP;
+		else if (ody > 0) otherMoveDir = Direction::DOWN;
+		else if (odx < 0) otherMoveDir = Direction::LEFT;
+		else if (odx > 0) otherMoveDir = Direction::RIGHT;
+		
+		// Get other player's force (may also be spring-boosted)
+		int otherForce = otherPlayer.computePushForce(otherMoveDir);
 
+		// Derive pushing player's position from obstacle position
+		Point pusherPos(nextPos.getX() - dx, nextPos.getY() - dy);
+		
+		// Case 1: Other player is directly BEHIND the pusher
+		// This happens after momentum transfer - sender pushes through receiver
+		bool otherBehind = (otherPos.getX() == pusherPos.getX() - dx) &&
+		                   (otherPos.getY() == pusherPos.getY() - dy);
+		
 		if (otherBehind)
 		{
-			++availableForce;
+			availableForce += otherForce;
 		}
-		else
+		// Case 2: Other player is pushing same obstacle group directly
+		else if (isObstacle(otherNext))
 		{
-			int dist = std::abs(otherPos.getX() - currPos.getX()) +
-				std::abs(otherPos.getY() - currPos.getY());
-			bool adjacent = (dist == 1);
-
-			if (adjacent)
+			bool inSameGroup = false;
+			for (const Point& cell : group)
 			{
-				if (isObstacle(otherNext))
+				if (cell.getX() == otherNext.getX() &&
+					cell.getY() == otherNext.getY())
 				{
-					bool inSameGroup = false;
-					for (size_t i = 0; i < group.size(); ++i)
-					{
-						if (group[i].getX() == otherNext.getX() &&
-							group[i].getY() == otherNext.getY())
-						{
-							inSameGroup = true;
-							break;
-						}
-					}
-
-					if (inSameGroup)
-					{
-						++availableForce;
-					}
+					inSameGroup = true;
+					break;
 				}
+			}
+
+			if (inSameGroup)
+			{
+				// Both players pushing same group - add forces
+				availableForce += otherForce;
 			}
 		}
 	}
 
+	// Force check: can we push this group?
 	if (availableForce < obstacleSize)
 		return false;
 
-	for (size_t i = 0; i < group.size(); ++i)
+	// Validate all destination cells
+	for (const Point& cell : group)
 	{
-		const Point& cell = group[i];
 		Point target(cell.getX() + dx, cell.getY() + dy, 0, 0, ' ');
 
 		if (!isInside(target))
@@ -693,16 +711,14 @@ bool Screens::tryPushObstacle(const Point& nextPos, const Player& player, const 
 		if (isObstacle(target))
 		{
 			bool inSameGroup = false;
-			for (size_t j = 0; j < group.size(); ++j)
+			for (const Point& g : group)
 			{
-				if (group[j].getX() == target.getX() &&
-					group[j].getY() == target.getY())
+				if (g.getX() == target.getX() && g.getY() == target.getY())
 				{
 					inSameGroup = true;
 					break;
 				}
 			}
-
 			if (!inSameGroup)
 				return false;
 		}

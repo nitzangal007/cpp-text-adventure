@@ -73,6 +73,18 @@ void Player::absorbMomentum(const SpringState& otherState)
 	}
 }
 
+int Player::computePushForce(Direction moveDir) const
+{
+	// Spring-boosted force: only when launching AND moving in launch direction
+	if (springState.mode == SpringMode::Launching &&
+		moveDir == springState.launchDir)
+	{
+		return springState.launchSpeed;
+	}
+	// Normal walking force for all other cases
+	return 1;
+}
+
 
 
 // reset player to starting position and state

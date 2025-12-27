@@ -349,9 +349,14 @@ void Game::updatePlayerMovement(Player& player)
 		return;
 	}
 
-	if (currentScreen.isObstacle(nextPos))								// we used chatGPT for this block
+	if (currentScreen.isObstacle(nextPos))
 	{
-		bool Pushable = currentScreen.tryPushObstacle(nextPos, player, getOtherPlayer(player));
+		// Compute player's push force based on spring state
+		Direction moveDir = getPlayerInputDirection(player);
+		int force = player.computePushForce(moveDir);
+		
+		// Try to push with computed force
+		bool Pushable = currentScreen.tryPushObstacle(nextPos, moveDir, force, getOtherPlayer(player));
 		if (Pushable)
 		{
 			currentScreen.makePassage(nextPos);
@@ -589,10 +594,10 @@ bool Game::isBlockedForFlight(const Point& pos) const
 		pos.getY() < 0 || pos.getY() >= Screens::MAX_Y)
 		return true;
 	
+	// Note: Obstacles handled separately in processForcedMove (may be pushable)
 	return currentScreen.isWall(pos) || 
-		   currentScreen.isObstacle(pos) || 
-		   currentScreen.isDoor(pos) ||
-		   currentScreen.isunbreakable_wall(pos);
+	       currentScreen.isDoor(pos) ||
+	       currentScreen.isunbreakable_wall(pos);
 }
 
 bool Game::isPerpendicular(Direction d1, Direction d2) const
@@ -685,7 +690,31 @@ void Game::processForcedMove(Player& player, Player& otherPlayer)
 		Point currentPos = player.getPosition();
 		Point nextPos(currentPos.getX() + dx, currentPos.getY() + dy);
 		
-		// Check collision with wall/obstacle
+		// Check for pushable obstacle (spring-boosted push)
+		if (currentScreen.isObstacle(nextPos))
+		{
+			// Compute spring-boosted force
+			int force = player.computePushForce(state.launchDir);
+			
+			// Attempt push with spring force
+			bool pushed = currentScreen.tryPushObstacle(nextPos, state.launchDir, force, otherPlayer);
+			
+			if (pushed)
+			{
+				// Obstacle moved - player continues
+				currentScreen.makePassage(nextPos);
+				player.setPosition(nextPos);
+				continue;
+			}
+			else
+			{
+				// Obstacle too heavy - cancel spring immediately
+				player.resetSpringState();
+				return;
+			}
+		}
+		
+		// Check collision with wall/door
 		if (isBlockedForFlight(nextPos))
 		{
 			player.resetSpringState();
@@ -697,7 +726,12 @@ void Game::processForcedMove(Player& player, Player& otherPlayer)
 		{
 			// Transfer momentum to other player
 			otherPlayer.absorbMomentum(state);
+			
+			// Sender continues walking (not launching) in same direction
+			// This enables cooperative pushing after momentum transfer
 			player.resetSpringState();
+			player.setDirection(state.launchDir);
+			player.move();
 			return;
 		}
 		
@@ -722,9 +756,22 @@ void Game::processForcedMove(Player& player, Player& otherPlayer)
 		Point lateralPos(player.getPosition().getX() + latDx,
 						 player.getPosition().getY() + latDy);
 		
-		// Only move laterally if cell is free
-		if (!isBlockedForFlight(lateralPos) && 
-			lateralPos != otherPlayer.getPosition())
+		// Check if lateral position has pushable obstacle
+		if (currentScreen.isObstacle(lateralPos))
+		{
+			// Lateral movement uses force=1 (not spring boosted)
+			int lateralForce = player.computePushForce(inputDir);
+			bool pushed = currentScreen.tryPushObstacle(lateralPos, inputDir, lateralForce, otherPlayer);
+			
+			if (pushed)
+			{
+				currentScreen.makePassage(lateralPos);
+				player.setPosition(lateralPos);
+			}
+			// If push fails, just skip lateral move (flight continues)
+		}
+		else if (!isBlockedForFlight(lateralPos) && 
+				 lateralPos != otherPlayer.getPosition())
 		{
 			player.setPosition(lateralPos);
 		}

@@ -134,12 +134,12 @@ public:
     void printHint() const;
     void clearHint() const;
 
-    // ==========================================
-    // Obstacle Mechanics
-    // ==========================================
-    
-    // Attempt to push an obstacle (single or group)
-    bool tryPushObstacle(const Point& nextPos, const Player& player, const Player& otherPlayer);
+    // Attempt to push an obstacle with specified force
+    // pushDir: direction of push (UP/DOWN/LEFT/RIGHT)
+    // primaryForce: force from pushing player (1=normal, launchSpeed=spring)
+    // otherPlayer: check for cooperative pushing
+    bool tryPushObstacle(const Point& nextPos, Direction pushDir,
+                         int primaryForce, const Player& otherPlayer);
 
     // ==========================================
     // Bomb & Explosion Logic

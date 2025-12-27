@@ -96,6 +96,11 @@ public:
     // Copies momentum from another player (Collision logic)
     void absorbMomentum(const SpringState& otherState);
 
+    // Returns push force based on spring state:
+    // - If launching in launchDir: returns launchSpeed (boosted force)
+    // - Otherwise: returns 1 (normal walking force)
+    int computePushForce(Direction moveDir) const;
+
 
     //* inventory interface *
 
