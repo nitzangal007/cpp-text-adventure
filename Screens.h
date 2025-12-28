@@ -1,6 +1,8 @@
 #pragma once
 #include "Player.h"
 #include "utils.h"
+#include "GameConstants.h"
+#include "Switch.h"
 #include <iostream>
 #include <vector>
 #include <fstream>
@@ -12,61 +14,49 @@ class Screens
 {
 public:
     // ==========================================
-    // Constants & Enums
+    // Constants & Enums (aliased from GameConstants.h)
     // ==========================================
-    enum { MAX_X = 80, MAX_Y = 25 };
-    enum { NUM_SCREENS = 3 };
+    enum { MAX_X = Screen::MAX_X, MAX_Y = Screen::MAX_Y };
+    enum { NUM_SCREENS = Screen::NUM_SCREENS };
     enum class ScreenId { First = 0, Second = 1, Final = 2 };
 
-    // Tile characters
-    static const char EMPTY_SPACE = ' ';
-    static const char WALL = 'W';
-    static const char KEY = 'K';
-    static const char BOMB = '@';
-    static const char TORCH = '!';
-    static const char OBSTACLE = '*';
-    static const char SWITCH_ON = '/';
-    static const char SWITCH_OFF = '\\';
-    static const char RIDDLE = '?';
-    static const char BOMB_PLANTED = '@';
-    static const char AUTO_BOMB = 'B';
-    static const char HINT = 'H';
-    static const char UNBREAKABLE_WALL = 'X';
+    // Tile characters (aliased for backward compatibility)
+    static constexpr char EMPTY_SPACE = Tiles::EMPTY_SPACE;
+    static constexpr char WALL = Tiles::WALL;
+    static constexpr char KEY = Tiles::KEY;
+    static constexpr char BOMB = Tiles::BOMB;
+    static constexpr char TORCH = Tiles::TORCH;
+    static constexpr char OBSTACLE = Tiles::OBSTACLE;
+    static constexpr char SWITCH_ON = Tiles::SWITCH_ON;
+    static constexpr char SWITCH_OFF = Tiles::SWITCH_OFF;
+    static constexpr char RIDDLE = Tiles::RIDDLE;
+    static constexpr char BOMB_PLANTED = Tiles::BOMB;
+    static constexpr char AUTO_BOMB = Tiles::AUTO_BOMB;
+    static constexpr char HINT = Tiles::HINT;
+    static constexpr char UNBREAKABLE_WALL = Tiles::UNBREAKABLE_WALL;
     
     // Darkness/Torch constants
-    static constexpr int TORCH_RADIUS = 5;
-    static constexpr char DARKNESS_CHAR = ' ';  // Space character
+    static constexpr int TORCH_RADIUS = Radius::TORCH_LIGHT;
+    static constexpr char DARKNESS_CHAR = Tiles::EMPTY_SPACE;
     
     // Legend anchor character (marks start of status bar area in screen files)
-    static constexpr char LEGEND_ANCHOR = 'L';
+    static constexpr char LEGEND_ANCHOR = Tiles::LEGEND_ANCHOR;
+   
+ 
 
-    struct SwitchData
-    {
-        Point position;
-        std::vector<Point> affectedWalls;
-        std::vector<Point> addWhenActive;
-        std::vector<Point> autobombs;
-        bool isPermanent;
-        bool active = false;
-        bool wasOnLastFrame = false;
-        bool oneTime = false;
-        int bitIndex = -1;
-        
-        SwitchData() {}
-    };
 
 private:
     char boards[NUM_SCREENS][MAX_Y][MAX_X];
     ScreenId current = ScreenId::First;
     std::vector<Point> pendingAutoBombs;
 
-    // Level 1 Data
-    std::vector<SwitchData> firstScreenSwitches;
+    // Level 1 Data (now using Switch class)
+    std::vector<Switch> firstScreenSwitches;
     bool leftEntranceClosed = false;
     bool rightEntranceClosed = false;
 
-    // Level 2 Data
-    std::vector<SwitchData> SecondScreenSwitches;
+    // Level 2 Data (now using Switch class)
+    std::vector<Switch> SecondScreenSwitches;
     Point door7Pos;
 
     // Darkness per screen (Screen 2 is dark)
@@ -200,10 +190,8 @@ private:
     char getCharAt(const Point& p) const;
     bool isIlluminated(int x, int y, const Player& p1, const Player& p2) const;
 
-    // Switch logic
-    void applySwitchEffect(const SwitchData& s, bool active);
-    void triggerAutoBombs(const SwitchData& s);
-    void updateDoor7ByBinaryPuzzle(); 
+    // Switch logic (handled by Switch class update method)
+    void updateDoor7ByBinaryPuzzle();
 
     // Gates (Level 1)
     void handleGateForPlayer(const Player& p);

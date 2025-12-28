@@ -1,23 +1,26 @@
 ﻿#include "Game.h"
 #include "ColorUtils.h"
+#include "GameConstants.h"
+#include "Torch.h"
+#include "Key.h"
 #include <Windows.h>
 #include <chrono>
 
 Game::Game()
-	: player1(Player::Id::First, Point(5, 2, 0, 0, '$'), "wdxas", '$'),
-	player2(Player::Id::Second, Point(9, 2, 0, 0, '&'), "ilmjk", '&'),
-	player1Start(5, 2, 0, 0, '$'),
-	player2Start(9, 2, 0, 0, '&'),
+	: player1(Player::Id::First, Point(5, 2, 0, 0, Players::PLAYER1_SYMBOL), "wdxas", Players::PLAYER1_SYMBOL),
+	player2(Player::Id::Second, Point(9, 2, 0, 0, Players::PLAYER2_SYMBOL), "ilmjk", Players::PLAYER2_SYMBOL),
+	player1Start(5, 2, 0, 0, Players::PLAYER1_SYMBOL),
+	player2Start(9, 2, 0, 0, Players::PLAYER2_SYMBOL),
 	player1ReadyForNextScreen(false),
 	player2ReadyForNextScreen(false)
 {
 	exits[0] = ExitInfo{
 		Screens::ScreenId::First,
 		Screens::ScreenId::Second,
-		Point(43, 20, 0, 0, ' '),
-		Point(43, 21, 0, 0, ' '),
-		Point(54, 9, 0, 0, '$'),
-		Point(25, 9, 0, 0, '&')
+		Point(43, 20, 0, 0, Tiles::EMPTY_SPACE),
+		Point(43, 21, 0, 0, Tiles::EMPTY_SPACE),
+		Point(54, 9, 0, 0, Players::PLAYER1_SYMBOL),
+		Point(25, 9, 0, 0, Players::PLAYER2_SYMBOL)
 	};
 
 	exits[1] = ExitInfo{
@@ -64,8 +67,8 @@ void Game::run()
 
 void Game::initGame() {
 	cls();
-	player1Start = Point(5, 2, 0, 0, '$');
-	player2Start = Point(9, 2, 0, 0, '&');
+	player1Start = Point(5, 2, 0, 0, Players::PLAYER1_SYMBOL);
+	player2Start = Point(9, 2, 0, 0, Players::PLAYER2_SYMBOL);
 	currentScreen.init();
 	
 	// Check if screen loading failed
@@ -87,10 +90,10 @@ void Game::initGame() {
 	currentScreen.setCurrentScreen(Screens::ScreenId::First);
 	player1.reset(player1Start);
 	player2.reset(player2Start);
-	bomb.active = false;
+	bomb = Bomb();
 	
 	// Reset lives & score for new game
-	lives = 6;
+	lives = Lives::STARTING_LIVES;
 	score = 0;
 	levelStartTime = getCurrentTimeSeconds();
 	
@@ -101,7 +104,7 @@ void Game::initGame() {
 
 void Game::runGame()
 {
-	const char ESC = 27;
+	const char ESC = Keys::ESC;
 	bool paused = false;
 	bool running = true;
 
@@ -170,7 +173,7 @@ void Game::runGame()
 			render();
 		}
 
-		Sleep(100);
+		Sleep(Timing::GAME_TICK_MS);
 	}
 }
 
@@ -184,18 +187,17 @@ void Game::resetCurrentGame()
 	currentScreen.resetCurrent();
 	if (currentScreen.isFirstScreen())
 	{
-		player1Start = Point(5, 2, 0, 0, '$');	
-		player2Start = Point(9, 2, 0, 0, '&');
+		player1Start = Point(5, 2, 0, 0, Players::PLAYER1_SYMBOL);	
+		player2Start = Point(9, 2, 0, 0, Players::PLAYER2_SYMBOL);
 	}
 	else if (currentScreen.isSecondScreen())
 	{
-		player1Start = Point(54, 9, 0, 0, '$');
-		player2Start = Point(26, 9, 0, 0, '&');
+		player1Start = Point(54, 9, 0, 0, Players::PLAYER1_SYMBOL);
+		player2Start = Point(26, 9, 0, 0, Players::PLAYER2_SYMBOL);
 	}
 	player1.reset(player1Start);
 	player2.reset(player2Start);
-	bomb.active = false;
-	bomb.ticksLeft = 0;
+	bomb = Bomb();
 	player1ReadyForNextScreen = false;
 	player2ReadyForNextScreen = false;
 	autoBombs.clear();
@@ -226,10 +228,9 @@ void Game::updateLogic()
 		return;
 	}
 	
-	if (bomb.active)
+	if (bomb.isActive())
 	{
-		bomb.ticksLeft--;
-		if (bomb.ticksLeft <= 0)
+		if (bomb.tick())
 		{
 			explodeBomb();
 		}
@@ -247,20 +248,17 @@ void Game::render()
 		player2.draw();
 		drawStatusBar();
 
-																
-		if (bomb.active && bomb.ticksLeft <= 5) {					 // we used Gemini for this block
-			if (bomb.ticksLeft % 2 != 0) {
-				gotoxy(bomb.pos.getX(), bomb.pos.getY());
-				std::cout << ' ';
-			}
+		// Bomb blinking animation (using Bomb class)
+		if (bomb.shouldBlinkOff()) {
+			gotoxy(bomb.getPosition().getX(), bomb.getPosition().getY());
+			std::cout << ' ';
 		}
 
-		for (const auto& ab : autoBombs) {						    // we used Gemini for this block
-			if (ab.ticksLeft <= 18) {
-				if (ab.ticksLeft % 2 != 0) {
-					gotoxy(ab.center.getX(), ab.center.getY());
-					std::cout << ' ';
-				}				
+		// AutoBomb blinking animation (using AutoBomb class)
+		for (const auto& ab : autoBombs) {
+			if (ab.shouldBlinkOff()) {
+				gotoxy(ab.getPosition().getX(), ab.getPosition().getY());
+				std::cout << ' ';
 			}
 		}
 
@@ -393,9 +391,9 @@ void Game::collectItemIfPossible(Player& player)
 	}
 	else if (currentScreen.isBomb(pos))
 	{
-		if (bomb.active &&
-			pos.getX() == bomb.pos.getX() &&
-			pos.getY() == bomb.pos.getY())
+		if (bomb.isActive() &&
+			pos.getX() == bomb.getPosition().getX() &&
+			pos.getY() == bomb.getPosition().getY())
 		{
 			return;
 		}
@@ -424,36 +422,24 @@ Player& Game::getOtherPlayer(const Player& p)
 
 void Game::tryPlaceBomb(Player& player)
 {
-	if(bomb.active)
-		return;
-	else if(!player.hasBomb())
-		return;
-	else
-	{
-		bomb.active = true;
-		bomb.pos = player.getPosition();
-		bomb.ticksLeft = 5; 
-		player.removeHeldItem();
-	}
-	
-	int x = bomb.pos.getX();
-	int y = bomb.pos.getY();
-	currentScreen.placeBombAt(x, y);
+	// Use Bomb class to handle placement
+	bomb.place(player, currentScreen);
 }
 
 void Game::explodeBomb()
 {
-	if (!bomb.active)
+	if (!bomb.isActive())
 		return;
 
-	const int RADIUS = 3;
-	const int R2 = RADIUS * RADIUS;
-	Point center = bomb.pos;
+	Point center = bomb.getPosition();
+	int R2 = bomb.getRadiusSquared();
 	
-	currentScreen.clearExplosionArea(center, RADIUS);
+	// Execute explosion using Bomb class
+	bomb.explode(currentScreen);
 
-	bool p1Dead = isPlayerInExplosion(player1, bomb.pos, R2);
-	bool p2Dead = isPlayerInExplosion(player2, bomb.pos, R2);
+	// Check player deaths
+	bool p1Dead = isPlayerInExplosion(player1, center, R2);
+	bool p2Dead = isPlayerInExplosion(player2, center, R2);
 
 	if (p1Dead || p2Dead)
 	{
@@ -463,49 +449,37 @@ void Game::explodeBomb()
 			currentScreen.resetCurrent();
 			if (currentScreen.isFirstScreen())
 			{
-				player1Start = Point(5, 2, 0, 0, '$');
-				player2Start = Point(9, 2, 0, 0, '&');
+				player1Start = Point(5, 2, 0, 0, Players::PLAYER1_SYMBOL);
+				player2Start = Point(9, 2, 0, 0, Players::PLAYER2_SYMBOL);
 			}
 			else if (currentScreen.isSecondScreen())
 			{
-				player1Start = Point(54, 9, 0, 0, '$');
-				player2Start = Point(26, 9, 0, 0, '&');
+				player1Start = Point(54, 9, 0, 0, Players::PLAYER1_SYMBOL);
+				player2Start = Point(26, 9, 0, 0, Players::PLAYER2_SYMBOL);
 			}
 			player1.reset(player1Start);
 			player2.reset(player2Start);
-			bomb.active = false;
-			bomb.ticksLeft = 0;
+			bomb = Bomb();
 			player1ReadyForNextScreen = false;
 			player2ReadyForNextScreen = false;
 			autoBombs.clear();
 		}
-		return;
 	}
-	
-	bomb.active = false;
-	bomb.ticksLeft = 0;
 }
 
-bool Game::handleAutoBombs()							//We used chatGPT for this function
+bool Game::handleAutoBombs()
 {
 	std::vector<Point> centers;
 	currentScreen.collectPendingAutoBombs(centers);
 
-	constexpr int AUTO_BOMB_DELAY = 21;
-
+	// Create AutoBomb objects for new triggers
 	for (const Point& c : centers)
 	{
-		AutoBomb ab;
-		ab.center = c;
-		ab.ticksLeft = AUTO_BOMB_DELAY;
-		autoBombs.push_back(ab);
+		autoBombs.push_back(AutoBomb(c));
 	}
 
 	if (autoBombs.empty())
 		return false;
-
-	const int RADIUS = 3;
-	const int R2 = RADIUS * RADIUS;
 
 	bool someoneDied = false;
 
@@ -513,29 +487,30 @@ bool Game::handleAutoBombs()							//We used chatGPT for this function
 	{
 		AutoBomb& ab = autoBombs[i];
 
-		if (ab.ticksLeft > 0)
+		// Use AutoBomb tick method
+		if (!ab.tick())
 		{
-			--ab.ticksLeft;
 			++i;
 			continue;
 		}
 
-		currentScreen.clearExplosionArea(ab.center, RADIUS);
+		// Explode using AutoBomb class
+		Point center = ab.getPosition();
+		int R2 = ab.getRadiusSquared();
+		ab.explode(currentScreen);
 
-		bool p1Dead = isPlayerInExplosion(player1, ab.center, R2);
-		bool p2Dead = isPlayerInExplosion(player2, ab.center, R2);
+		bool p1Dead = isPlayerInExplosion(player1, center, R2);
+		bool p2Dead = isPlayerInExplosion(player2, center, R2);
 
 		if (p1Dead || p2Dead)
 			someoneDied = true;
-		
-		currentScreen.setCharAt(ab.center, Screens::EMPTY_SPACE);
 
 		autoBombs.erase(autoBombs.begin() + i);
 	}
 	return someoneDied;
 }
 
-bool Game::isPlayerInExplosion(const Player& player, const Point& center, int radiusSquared)
+bool Game::isPlayerInExplosion(const Player& player, const Point& center, int radiusSquared) const
 {
 	Point p = player.getPosition();
 	int dx = p.getX() - center.getX();
@@ -546,13 +521,8 @@ bool Game::isPlayerInExplosion(const Player& player, const Point& center, int ra
 
 void Game::dropTorch(Player& player)
 {
-	if (!player.hasTorch())
-		return;
-	
-	// Place torch back on the board at player's current position
-	Point pos = player.getPosition();
-	currentScreen.setCharAt(pos, Screens::TORCH);
-	player.removeHeldItem();
+	// Use Torch class to handle drop
+	Torch::onDrop(player, currentScreen);
 }
 
 // ==========================================
@@ -661,19 +631,19 @@ void Game::addLevelCompletionScore()
 	// Time-based score (faster = more points)
 	int elapsedSeconds = getCurrentTimeSeconds() - levelStartTime;
 	int timeScore;
-	if (elapsedSeconds <= 60)        // Under 1 minute
-		timeScore = 2000;
-	else if (elapsedSeconds <= 120)  // 1-2 minutes
-		timeScore = 1500;
-	else if (elapsedSeconds <= 180)  // 2-3 minutes
-		timeScore = 1000;
-	else if (elapsedSeconds <= 300)  // 3-5 minutes
-		timeScore = 500;
+	if (elapsedSeconds <= Score::TIER1_SECONDS)        // Under 1 minute
+		timeScore = Score::TIER1_POINTS;
+	else if (elapsedSeconds <= Score::TIER2_SECONDS)  // 1-2 minutes
+		timeScore = Score::TIER2_POINTS;
+	else if (elapsedSeconds <= Score::TIER3_SECONDS)  // 2-3 minutes
+		timeScore = Score::TIER3_POINTS;
+	else if (elapsedSeconds <= Score::TIER4_SECONDS)  // 3-5 minutes
+		timeScore = Score::TIER4_POINTS;
 	else                             // Over 5 minutes
-		timeScore = 100;
+		timeScore = Score::TIER5_POINTS;
 
-	// Lives bonus (remaining lives x 200)
-	int livesBonus = lives * 200;
+	// Lives bonus (remaining lives x multiplier)
+	int livesBonus = lives * Score::LIVES_BONUS_MULTIPLIER;
 
 	score += timeScore + livesBonus;
 }
@@ -692,7 +662,7 @@ void Game::showGameOverScreen()
 	_getch();
 }
 
-int Game::getCurrentTimeSeconds()
+int Game::getCurrentTimeSeconds() const
 {
 	auto now = std::chrono::system_clock::now();
 	auto duration = now.time_since_epoch();

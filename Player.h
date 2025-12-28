@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Point.h"
+#include "GameConstants.h"
 
 class Player {
 public:
@@ -14,7 +15,7 @@ private:
     Point pos;        // current position on the board
     char symbol;      // how the player is drawn on screen
 	char keys[NUM_KEYS]; // control keys for this player
-	char heldItem = ' '; // currently held item symbol (if any)
+	char heldItem = Tiles::EMPTY_SPACE; // currently held item symbol (if any)
 
     
 
@@ -67,26 +68,26 @@ public:
     //* inventory interface *
 
     bool hasKey() const{
-        return heldItem == 'K';
+        return heldItem == Tiles::KEY;
 	}
     void collectKey() {
-		heldItem = 'K';
+		heldItem = Tiles::KEY;
     }
    
     
     bool hasTorch() const {
-        return heldItem == '!';
+        return heldItem == Tiles::TORCH;
     }
     void collectTorch() {
-        heldItem = '!';
+        heldItem = Tiles::TORCH;
     }
   
 
     bool hasBomb() const {
-        return heldItem == '@';
+        return heldItem == Tiles::BOMB;
     }
     void collectBomb() {
-        heldItem = '@';
+        heldItem = Tiles::BOMB;
     }
     
 
@@ -94,7 +95,7 @@ public:
 		return heldItem;
 	}
     void removeHeldItem() {
-        heldItem = ' ';
+        heldItem = Tiles::EMPTY_SPACE;
     }
 
     void reset(const Point& startPos);

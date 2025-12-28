@@ -133,7 +133,7 @@ void Screens::init()
 	{
 		if (!loadScreenFromFile(i, screenFilePaths[i]))
 		{
-			return;  // loadingError already set
+			return;  //loadingError already set
 		}
 	}
 	
@@ -378,9 +378,9 @@ void Screens::makePassage(const Point& p) {
 	setCharAt(p, EMPTY_SPACE);
 }
 
-void Screens::updateSwitchStates(const Player& p1, const Player& p2)		//We used chatGPT for this function
+void Screens::updateSwitchStates(const Player& p1, const Player& p2)
 {
-	std::vector<SwitchData>* switches = nullptr;
+	std::vector<Switch>* switches = nullptr;
 
 	if (isFirstScreen()) {
 		switches = &firstScreenSwitches;
@@ -392,66 +392,22 @@ void Screens::updateSwitchStates(const Player& p1, const Player& p2)		//We used 
 		return;
 	}
 
+	// Lambda to modify board characters
+	auto setCharAtLambda = [this](const Point& p, char ch) {
+		this->setCharAt(p, ch);
+	};
+
 	for (auto& s : *switches)
 	{
 		bool on = (p1.getPosition() == s.position || p2.getPosition() == s.position);
-
-		if (!s.isPermanent)
-		{
-			if (on && !s.active)
-			{
-				s.active = true;
-				applySwitchEffect(s, true);
-				setSwitchOn(s.position);
-
-				for (const Point& b : s.autobombs)
-					pendingAutoBombs.push_back(b);
-			}
-			else if (!on && s.active)
-			{
-				s.active = false;
-				applySwitchEffect(s, false);
-				setSwitchOff(s.position);
-			}
-		}
-		else
-		{
-			if (s.oneTime)
-			{
-				
-				if (on && !s.wasOnLastFrame && !s.active)
-				{
-					s.active = true;
-					applySwitchEffect(s, true);
-					setSwitchOn(s.position);
-
-					for (const Point& b : s.autobombs)
-						pendingAutoBombs.push_back(b);
-				}
-			}
-			else
-			{
-				
-				if (on && !s.wasOnLastFrame)
-				{
-					s.active = !s.active;
-					applySwitchEffect(s, s.active);
-
-					if (s.active)
-					{
-						setSwitchOn(s.position);
-						for (const Point& b : s.autobombs)
-							pendingAutoBombs.push_back(b);
-					}
-					else
-					{
-						setSwitchOff(s.position);
-					}
-				}
-			}
-
-			s.wasOnLastFrame = on;
-		}
+		
+		// Use Switch class update method
+		s.update(on, setCharAtLambda);
+		
+		// Collect pending auto-bomb triggers
+		std::vector<Point> triggers = s.getAndClearPendingTriggers();
+		for (const Point& b : triggers)
+			pendingAutoBombs.push_back(b);
 	}
 
 	if (isSecondScreen())
@@ -467,7 +423,7 @@ void Screens::initFirstScreenSwitches()
 	firstScreenSwitches.clear();
 
 	{
-		SwitchData s;
+		Switch s;
 		s.position = Point(50, 4);
 		s.isPermanent = false;
 		s.oneTime = false;
@@ -481,7 +437,7 @@ void Screens::initFirstScreenSwitches()
 	}
 
 	{
-		SwitchData s;
+		Switch s;
 		s.position = Point(50, 8);
 		s.isPermanent = false;
 		s.oneTime = false;
@@ -495,7 +451,7 @@ void Screens::initFirstScreenSwitches()
 	}
 
 	{
-		SwitchData s;
+		Switch s;
 		s.position = Point(50, 12);
 		s.isPermanent = false;
 		s.oneTime = false;
@@ -509,7 +465,7 @@ void Screens::initFirstScreenSwitches()
 	}
 
 	{
-		SwitchData s;
+		Switch s;
 		s.position = Point(67, 14);
 		s.isPermanent = true;
 		s.oneTime = false;
@@ -534,7 +490,7 @@ void Screens::initSecondScreenSwitches()
 {
 	SecondScreenSwitches.clear();
 	{
-		SwitchData s;
+		Switch s;
 		s.position = Point(77, 9);
 		s.isPermanent = true;
 		s.oneTime = true;
@@ -554,7 +510,7 @@ void Screens::initSecondScreenSwitches()
 		SecondScreenSwitches.push_back(s);
 	}
 	{
-		SwitchData s;
+		Switch s;
 		s.position = Point(77, 4);
 		s.isPermanent = true;
 		s.oneTime = false;
@@ -567,7 +523,7 @@ void Screens::initSecondScreenSwitches()
 
 	const int y = 16;
 	{
-		SwitchData s;
+		Switch s;
 		s.position = Point(59, y);  
 		s.isPermanent = true;
 		s.oneTime = false;
@@ -575,7 +531,7 @@ void Screens::initSecondScreenSwitches()
 		SecondScreenSwitches.push_back(s);
 	}
 	{
-		SwitchData s;
+		Switch s;
 		s.position = Point(63, y);
 		s.isPermanent = true;
 		s.oneTime = false;
@@ -583,7 +539,7 @@ void Screens::initSecondScreenSwitches()
 		SecondScreenSwitches.push_back(s);
 	}
 	{
-		SwitchData s;
+		Switch s;
 		s.position = Point(68, y);
 		s.isPermanent = true;
 		s.oneTime = false;
@@ -591,7 +547,7 @@ void Screens::initSecondScreenSwitches()
 		SecondScreenSwitches.push_back(s);
 	}
 	{
-		SwitchData s;
+		Switch s;
 		s.position = Point(73, y); 
 		s.isPermanent = true;
 		s.oneTime = false;
@@ -599,7 +555,7 @@ void Screens::initSecondScreenSwitches()
 		SecondScreenSwitches.push_back(s);
 	}
 	{
-		SwitchData s;
+		Switch s;
 		s.position = Point(29, 19); 
 		s.isPermanent = true;
 		s.oneTime = false;
@@ -608,7 +564,7 @@ void Screens::initSecondScreenSwitches()
 		SecondScreenSwitches.push_back(s);
 	}
 	{
-		SwitchData s;
+		Switch s;
 		s.position = Point(52, 2);
 		s.isPermanent = true;
 		s.oneTime = false;
@@ -836,49 +792,8 @@ char Screens::getCharAt(const Point& p) const {
 	return boards[int(current)][p.getY()][p.getX()];
 }
 
-void Screens::applySwitchEffect(const SwitchData& s, bool active)
-{
-	int screenIndex = static_cast<int>(current);
-
-	for (const auto& wall : s.affectedWalls)
-	{
-		int x = wall.getX();
-		int y = wall.getY();
-		if (!isInside(Point(x, y)))
-			continue;
-		char& tile = boards[screenIndex][y][x];
-		tile = active ? EMPTY_SPACE : WALL;
-	}
-	for (const auto& p : s.addWhenActive)
-	{
-		int x = p.getX();
-		int y = p.getY();
-		if (!isInside(Point(x, y)))
-			continue;
-		char& tile = boards[screenIndex][y][x];
-		tile = active ? WALL : EMPTY_SPACE;
-	}
-}
-
-void Screens::triggerAutoBombs(const SwitchData& s)						// we used chatGPT for this function
-{
-	const int RADIUS = 2; 
-
-	for (const Point& center : s.autobombs)
-	{
-		clearExplosionArea(center, RADIUS);
-		
-		int screenIndex = static_cast<int>(current);
-		int x = center.getX();
-		int y = center.getY();
-		if (isInside(center))
-		{
-			char& tile = boards[screenIndex][y][x];
-			if (tile == AUTO_BOMB)
-				tile = EMPTY_SPACE;
-		}
-	}
-}
+// applySwitchEffect and triggerAutoBombs functions have been removed
+// These are now handled by the Switch class's update() and applyEffect() methods
 
 void Screens::updateDoor7ByBinaryPuzzle()							// we used chatGPT for this function
 {
@@ -893,7 +808,7 @@ void Screens::updateDoor7ByBinaryPuzzle()							// we used chatGPT for this func
 	for (const auto& s : SecondScreenSwitches)				
 	{
 		// Build integer value from active switches (bits 0-3)
-		if (s.bitIndex >= 0 && s.active)								
+		if (s.bitIndex >= 0 && s.isActive())								
 		{
 			value |= (1 << s.bitIndex);
 		}

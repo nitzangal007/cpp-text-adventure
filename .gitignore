@@ -416,7 +416,4 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
-Screen.h
-*.sln
-*.vcxproj
-cpp-texy-adventure.vcxproj.filters
+

@@ -5,26 +5,19 @@
 #include "Player.h"
 #include "Screens.h"
 #include "Menu.h"
+#include "Bomb.h"
+#include "AutoBomb.h"
 
 // What should happen when the game loop exits
 enum class GameResult { BackToMenu, QuitProgram };
+
+
 
 class Game
 {
     // ==========================================
     // Internal Structures
     // ==========================================
-    struct Bomb {
-        bool  active = false;
-        Point pos;
-        int   ticksLeft = 0;
-    };
-
-    struct AutoBomb {
-        Point center;
-        int   ticksLeft = 0;
-    };
-
     struct ExitInfo {
         Screens::ScreenId from;
         Screens::ScreenId to;
@@ -43,7 +36,7 @@ class Game
     Point   player1Start;
     Point   player2Start;
 
-    // Bomb state
+    // Bomb state (now using item classes)
     Bomb bomb;
     std::vector<AutoBomb> autoBombs;
 
@@ -111,7 +104,7 @@ private:
     // Handle auto-bombs (returns true if player died)
     bool handleAutoBombs();
 
-    bool isPlayerInExplosion(const Player& player, const Point& center, int radiusSquared);
+    bool isPlayerInExplosion(const Player& player, const Point& center, int radiusSquared) const;
 
     // Drop torch back onto the board
     void dropTorch(Player& player);
@@ -140,5 +133,5 @@ private:
     void showGameOverScreen();
 
     // Gets current time in seconds since epoch
-    int getCurrentTimeSeconds();
+    int getCurrentTimeSeconds() const;
 };
