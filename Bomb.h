@@ -19,10 +19,7 @@ private:
     int ticksLeft_ = 0;
 
 public:
-    // Constants
-    static constexpr int FUSE_TICKS = Timing::BOMB_FUSE_TICKS;
-    static constexpr int RADIUS = Radius::BOMB_EXPLOSION;
-    static constexpr int BLINK_THRESHOLD = Timing::BOMB_BLINK_THRESHOLD;
+    // Note: Constants from GameConstants.h - use BOMB_FUSE_TICKS, BOMB_EXPLOSION, BOMB_BLINK_THRESHOLD directly
 
     // Constructors
     Bomb() = default;
@@ -66,5 +63,5 @@ public:
     // Getters
     bool isActive() const { return active_; }
     const Point& getPosition() const { return pos_; }
-    int getRadiusSquared() const { return RADIUS * RADIUS; }
+    int getRadiusSquared() const { return BOMB_EXPLOSION * BOMB_EXPLOSION; }
 };

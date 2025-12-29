@@ -1,4 +1,4 @@
-﻿#include "Screens.h"
+#include "Screens.h"
 #include "ColorUtils.h"
 #include <cmath>
 
@@ -141,6 +141,9 @@ void Screens::init()
 	door7Pos.setPosition(71, 11);  // Set door7 position for screen 2
 	initFirstScreenSwitches();
 	initSecondScreenSwitches();
+	
+	// Step 5: Scan and register all springs
+	initSprings();
 	
 	current = ScreenId::First;
 }
@@ -329,6 +332,10 @@ bool Screens::isBomb(const Point& p) const {
 }
 bool Screens::isTorch(const Point& p) const {
 	return (getCharAt(p) == TORCH);
+}
+bool Screens::isSpring(const Point& p) const
+{
+	return (getCharAt(p) == SPRING);
 }
 bool Screens::isObstacle(const Point& p) const {
 	return (getCharAt(p) == OBSTACLE);
@@ -595,80 +602,98 @@ void Screens::clearHint() const
 // Obstacle Mechanics
 // ==========================================
 
-bool Screens::tryPushObstacle(const Point& nextPos, const Player& player, const Player& otherPlayer)	// we used chatGPT for this function
+bool Screens::tryPushObstacle(const Point& nextPos, Direction pushDir,
+                               int primaryForce, const Player& otherPlayer)
 {
-	Point currPos = player.getPosition();
-	int dx = nextPos.getX() - currPos.getX();
-	int dy = nextPos.getY() - currPos.getY();
+	// Compute push deltas from direction
+	int dx = 0, dy = 0;
+	switch (pushDir)
+	{
+		case Direction::UP:    dy = -1; break;
+		case Direction::DOWN:  dy =  1; break;
+		case Direction::LEFT:  dx = -1; break;
+		case Direction::RIGHT: dx =  1; break;
+		default: return false;
+	}
 
+	// Validate single-cell movement
 	if (std::abs(dx) + std::abs(dy) != 1)
 		return false;
 
+	// Collect all connected obstacles (BFS flood-fill)
 	std::vector<Point> group;
 	collectObstacleGroup(nextPos, group);
 
 	if (group.empty())
 		return false;
 
-	int obstacleSize = (int)group.size();
-	int availableForce = 1;
+	int obstacleSize = static_cast<int>(group.size());
+	
+	// Start with primary player's force (may be spring-boosted)
+	int availableForce = primaryForce;
 
+	// Check if other player is cooperating (same direction push)
 	Point otherPos = otherPlayer.getPosition();
 	Point otherNext = otherPos;
 	otherNext.move();
 
 	int odx = otherNext.getX() - otherPos.getX();
 	int ody = otherNext.getY() - otherPos.getY();
-
 	bool sameDir = (odx == dx && ody == dy);
 
 	if (sameDir)
 	{
-		// Check if the other player is behind to add pushing force
-		bool otherBehind =
-			(otherPos.getX() == currPos.getX() - dx) &&
-			(otherPos.getY() == currPos.getY() - dy);
+		// Determine other player's movement direction
+		Direction otherMoveDir = Direction::STAY;
+		if (ody < 0) otherMoveDir = Direction::UP;
+		else if (ody > 0) otherMoveDir = Direction::DOWN;
+		else if (odx < 0) otherMoveDir = Direction::LEFT;
+		else if (odx > 0) otherMoveDir = Direction::RIGHT;
+		
+		// Get other player's force (may also be spring-boosted)
+		int otherForce = otherPlayer.computePushForce(otherMoveDir);
 
+		// Derive pushing player's position from obstacle position
+		Point pusherPos(nextPos.getX() - dx, nextPos.getY() - dy);
+		
+		// Case 1: Other player is directly BEHIND the pusher
+		// This happens after momentum transfer - sender pushes through receiver
+		bool otherBehind = (otherPos.getX() == pusherPos.getX() - dx) &&
+		                   (otherPos.getY() == pusherPos.getY() - dy);
+		
 		if (otherBehind)
 		{
-			++availableForce;
+			availableForce += otherForce;
 		}
-		else
+		// Case 2: Other player is pushing same obstacle group directly
+		else if (isObstacle(otherNext))
 		{
-			int dist = std::abs(otherPos.getX() - currPos.getX()) +
-				std::abs(otherPos.getY() - currPos.getY());
-			bool adjacent = (dist == 1);
-
-			if (adjacent)
+			bool inSameGroup = false;
+			for (const Point& cell : group)
 			{
-				if (isObstacle(otherNext))
+				if (cell.getX() == otherNext.getX() &&
+					cell.getY() == otherNext.getY())
 				{
-					bool inSameGroup = false;
-					for (size_t i = 0; i < group.size(); ++i)
-					{
-						if (group[i].getX() == otherNext.getX() &&
-							group[i].getY() == otherNext.getY())
-						{
-							inSameGroup = true;
-							break;
-						}
-					}
-
-					if (inSameGroup)
-					{
-						++availableForce;
-					}
+					inSameGroup = true;
+					break;
 				}
+			}
+
+			if (inSameGroup)
+			{
+				// Both players pushing same group - add forces
+				availableForce += otherForce;
 			}
 		}
 	}
 
+	// Force check: can we push this group?
 	if (availableForce < obstacleSize)
 		return false;
 
-	for (size_t i = 0; i < group.size(); ++i)
+	// Validate all destination cells
+	for (const Point& cell : group)
 	{
-		const Point& cell = group[i];
 		Point target(cell.getX() + dx, cell.getY() + dy, 0, 0, ' ');
 
 		if (!isInside(target))
@@ -686,16 +711,14 @@ bool Screens::tryPushObstacle(const Point& nextPos, const Player& player, const 
 		if (isObstacle(target))
 		{
 			bool inSameGroup = false;
-			for (size_t j = 0; j < group.size(); ++j)
+			for (const Point& g : group)
 			{
-				if (group[j].getX() == target.getX() &&
-					group[j].getY() == target.getY())
+				if (g.getX() == target.getX() && g.getY() == target.getY())
 				{
 					inSameGroup = true;
 					break;
 				}
 			}
-
 			if (!inSameGroup)
 				return false;
 		}
@@ -752,6 +775,168 @@ void Screens::collectPendingAutoBombs(std::vector<Point>& out)						// we used c
 {
 	out.insert(out.end(), pendingAutoBombs.begin(), pendingAutoBombs.end());
 	pendingAutoBombs.clear();
+}
+
+void Screens::initSprings()
+{
+	for (int i = 0; i < NUM_SCREENS; ++i)
+	{
+		scanSpringsForScreen(i);
+	}
+}
+
+Spring* Screens::getSpringAt(const Point& p)
+{
+	if (!isSpring(p))
+		return nullptr;
+	int screenIndex = static_cast<int>(current);
+	for (auto& spring : screenSprings[screenIndex])
+	{
+		if (spring.contains(p))
+			return &spring;
+	}
+	return nullptr;
+}
+
+bool Screens::shouldDrawSpringChar(const Point& p, const Player& p1, const Player& p2) const
+{
+	// TODO: Implement if needed for spring compression visual feedback
+	return true;
+}
+
+// ==========================================
+// Spring Scanning Implementation
+// ==========================================
+
+Direction Screens::getOppositeDirection(Direction dir) const
+{
+	switch (dir)
+	{
+		case Direction::UP:    return Direction::DOWN;
+		case Direction::DOWN:  return Direction::UP;
+		case Direction::LEFT:  return Direction::RIGHT;
+		case Direction::RIGHT: return Direction::LEFT;
+		default:               return Direction::STAY;
+	}
+}
+
+void Screens::collectSpringChain(
+	int screenIndex,
+	const Point& start,
+	bool visited[MAX_Y][MAX_X],
+	std::vector<Point>& chain)
+{
+	// BFS to collect all connected '#' cells in any direction
+	chain.clear();
+	chain.push_back(start);
+	visited[start.getY()][start.getX()] = true;
+
+	// Movement deltas for 4 directions
+	const int dx[] = { 0, 1, 0, -1 };  // UP, RIGHT, DOWN, LEFT
+	const int dy[] = { -1, 0, 1, 0 };
+
+	for (size_t i = 0; i < chain.size(); ++i)
+	{
+		Point current = chain[i];
+
+		// Check all 4 neighbors
+		for (int d = 0; d < 4; ++d)
+		{
+			Point neighbor(current.getX() + dx[d], current.getY() + dy[d]);
+
+			if (!isInside(neighbor))
+				continue;
+
+			if (boards[screenIndex][neighbor.getY()][neighbor.getX()] != SPRING)
+				continue;
+
+			if (visited[neighbor.getY()][neighbor.getX()])
+				continue;
+
+			visited[neighbor.getY()][neighbor.getX()] = true;
+			chain.push_back(neighbor);
+		}
+	}
+}
+
+bool Screens::findSpringAnchor(
+	int screenIndex,
+	const std::vector<Point>& chain,
+	Point& outAnchorWall,
+	Direction& outPushDir,
+	Direction& outReleaseDir)
+{
+	const Direction directions[] = {
+		Direction::UP, Direction::RIGHT, Direction::DOWN, Direction::LEFT
+	};
+	const int dx[] = { 0, 1, 0, -1 };
+	const int dy[] = { -1, 0, 1, 0 };
+
+	// Check each cell in the chain for an adjacent wall
+	for (const Point& cell : chain)
+	{
+		for (int d = 0; d < 4; ++d)
+		{
+			Point neighbor(cell.getX() + dx[d], cell.getY() + dy[d]);
+
+			if (!isInside(neighbor))
+				continue;
+
+			char neighborChar = boards[screenIndex][neighbor.getY()][neighbor.getX()];
+
+			if (neighborChar == WALL)
+			{
+				// Found anchor wall!
+				outAnchorWall = neighbor;
+				outPushDir = directions[d];
+				outReleaseDir = getOppositeDirection(outPushDir);
+				return true;
+			}
+		}
+	}
+
+	return false;  // No anchor found
+}
+
+void Screens::scanSpringsForScreen(int screenIndex)
+{
+	// Step 1: Clear existing springs for this screen
+	screenSprings[screenIndex].clear();
+
+	// Visited matrix to track processed spring cells
+	bool visited[MAX_Y][MAX_X] = { false };
+	int springId = 0;
+
+	// Step 2: Scan every cell on the board
+	for (int y = 0; y < MAX_Y; ++y)
+	{
+		for (int x = 0; x < MAX_X; ++x)
+		{
+			// Skip if not a spring char or already processed
+			if (boards[screenIndex][y][x] != SPRING || visited[y][x])
+				continue;
+
+			// Step 3: Collect the ENTIRE chain first (all connected '#' cells)
+			std::vector<Point> chain;
+			collectSpringChain(screenIndex, Point(x, y), visited, chain);
+
+			// Step 4: Find which cell in the chain has an adjacent anchor wall
+			Point anchorWall;
+			Direction pushDir, releaseDir;
+
+			if (!findSpringAnchor(screenIndex, chain, anchorWall, pushDir, releaseDir))
+				continue;  // Invalid spring (no wall anchor)
+
+			// Step 5: Create Spring and add all segments
+			Spring newSpring(springId++, anchorWall, pushDir, releaseDir);
+
+			for (const Point& segment : chain)
+				newSpring.addSegment(segment);
+
+			// Step 6: Add to the screen's spring list
+			screenSprings[screenIndex].push_back(newSpring);
+		}
+	}
 }
 
 // ==========================================
@@ -938,12 +1123,12 @@ void Screens::collectObstacleGroup(const Point& start, std::vector<Point>& group
 void Screens::moveObstacleGroup(const std::vector<Point>& group, int dx, int dy)			// we used chatGPT for this function
 {
 	for (size_t i = 0; i < group.size(); ++i)
-		setCharAt(group[i], Screens::EMPTY_SPACE);
+		setCharAt(group[i], EMPTY_SPACE);
 
 	for (size_t i = 0; i < group.size(); ++i)
 	{
 		Point cell = group[i];
 		Point target(cell.getX() + dx, cell.getY() + dy, 0, 0, ' ');
-		setCharAt(target, Screens::OBSTACLE);
+		setCharAt(target, OBSTACLE);
 	}
 }

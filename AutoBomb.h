@@ -15,14 +15,11 @@ public:
     Point center;
     int ticksLeft = 0;
 
-    // Constants
-    static constexpr int DELAY_TICKS = Timing::AUTO_BOMB_DELAY_TICKS;
-    static constexpr int RADIUS = Radius::BOMB_EXPLOSION;
-    static constexpr int BLINK_THRESHOLD = Timing::AUTO_BOMB_BLINK_THRESHOLD;
+    // Note: Constants from GameConstants.h - use AUTO_BOMB_DELAY_TICKS, BOMB_EXPLOSION, AUTO_BOMB_BLINK_THRESHOLD directly
 
     // Constructor
     AutoBomb() = default;
-    AutoBomb(const Point& pos) : center(pos), ticksLeft(DELAY_TICKS) {}
+    AutoBomb(const Point& pos) : center(pos), ticksLeft(AUTO_BOMB_DELAY_TICKS) {}
 
     /**
      * Tick the auto-bomb timer
@@ -50,6 +47,6 @@ public:
 
     // Getters
     const Point& getPosition() const { return center; }
-    int getRadiusSquared() const { return RADIUS * RADIUS; }
+    int getRadiusSquared() const { return BOMB_EXPLOSION * BOMB_EXPLOSION; }
     bool isExpired() const { return ticksLeft <= 0; }
 };

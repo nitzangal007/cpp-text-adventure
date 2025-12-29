@@ -13,7 +13,7 @@ bool Bomb::place(Player& player, Screens& screen)
     // Activate bomb at player position
     active_ = true;
     pos_ = player.getPosition();
-    ticksLeft_ = FUSE_TICKS;
+    ticksLeft_ = BOMB_FUSE_TICKS;
     player.removeHeldItem();
     
     // Update board
@@ -38,7 +38,7 @@ void Bomb::explode(Screens& screen)
     if (!active_)
         return;
     
-    screen.clearExplosionArea(pos_, RADIUS);
+    screen.clearExplosionArea(pos_, BOMB_EXPLOSION);
     // Reset by assigning default-constructed Bomb
     *this = Bomb();
 }
@@ -49,12 +49,12 @@ bool Bomb::shouldBlinkOff() const
         return false;
     
     // Blink when close to exploding, on odd ticks
-    return (ticksLeft_ <= BLINK_THRESHOLD) && (ticksLeft_ % 2 != 0);
+    return (ticksLeft_ <= BOMB_BLINK_THRESHOLD) && (ticksLeft_ % 2 != 0);
 }
 
 char Bomb::getDisplayChar() const
 {
     if (shouldBlinkOff())
-        return Tiles::EMPTY_SPACE;
-    return Tiles::BOMB;
+        return EMPTY_SPACE;
+    return BOMB;
 }

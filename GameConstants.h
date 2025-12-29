@@ -18,6 +18,7 @@ namespace Tiles {
     constexpr char UNBREAKABLE_WALL = 'X';
     constexpr char LEGEND_ANCHOR = 'L';
     constexpr char SPRING = '#';
+    constexpr char DARKNESS_CHAR = ' ';  // Same as EMPTY_SPACE, used for unlit areas
 }
 
 // ==========================================
@@ -56,6 +57,7 @@ namespace Timing {
 namespace Radius {
     constexpr int BOMB_EXPLOSION = 3;
     constexpr int TORCH_LIGHT = 5;
+    constexpr int TORCH_RADIUS = TORCH_LIGHT;  // Alias for backward compatibility
 }
 
 // ==========================================
@@ -94,3 +96,14 @@ namespace Screen {
     constexpr int MAX_Y = 25;
     constexpr int NUM_SCREENS = 3;
 }
+
+// ==========================================
+// Using declarations for cleaner code
+// ==========================================
+using namespace Tiles;
+using namespace Players;
+using namespace Timing;
+using namespace Radius;
+using namespace Score;
+using namespace Lives;
+using namespace Screen;

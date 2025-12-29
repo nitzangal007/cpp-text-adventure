@@ -13,13 +13,12 @@ class Screens;
  */
 class Torch {
 public:
-    // Constants
-    static constexpr int LIGHT_RADIUS = Radius::TORCH_LIGHT;
+    // Note: Use TORCH_LIGHT from GameConstants.h for radius
 
     /**
      * Get the torch symbol for display
      */
-    static char getSymbol() { return Tiles::TORCH; }
+    static char getSymbol() { return TORCH; }
 
     /**
      * Handle player picking up a torch

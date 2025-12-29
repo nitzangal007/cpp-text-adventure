@@ -14,7 +14,7 @@ public:
     /**
      * Get the key symbol for display
      */
-    static char getSymbol() { return Tiles::KEY; }
+    static char getSymbol() { return KEY; }
 
     /**
      * Handle player picking up a key
