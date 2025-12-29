@@ -7,6 +7,7 @@
 #include "Menu.h"
 #include "Bomb.h"
 #include "AutoBomb.h"
+#include "Riddle.h"
 
 // What should happen when the game loop exits
 enum class GameResult { BackToMenu, QuitProgram };
@@ -41,7 +42,7 @@ class Game
     std::vector<AutoBomb> autoBombs;
 
     // Navigation
-    ExitInfo exits[Screens::NUM_SCREENS];
+    ExitInfo exits[Screens::NUM_SCREENS-1];
     bool player1ReadyForNextScreen;
     bool player2ReadyForNextScreen;
     bool gameOver = false;
@@ -153,4 +154,7 @@ private:
 
     // Gets current time in seconds since epoch
     int getCurrentTimeSeconds() const;
+
+    bool handleRiddleEncounter(Player& player, const Point& nextPos);
+
 };

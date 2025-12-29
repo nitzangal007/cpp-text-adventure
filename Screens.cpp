@@ -144,7 +144,10 @@ void Screens::init()
 	
 	// Step 5: Scan and register all springs
 	initSprings();
-	
+
+	initRiddles();
+
+	 
 	current = ScreenId::First;
 }
 
@@ -200,9 +203,16 @@ void Screens::drawCurrent() const
 void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 {
 	const int screenIndex = static_cast<int>(current);
-	bool dark = screenIsDark[screenIndex];
+	const bool dark = screenIsDark[screenIndex];
+
 	
-	// When colors disabled, use fast buffered output (original behavior)
+	const bool partialOn = (partialDarkEnabled[screenIndex] && partialX1[screenIndex] != -1);
+	const int x1 = partialX1[screenIndex];
+	const int y1 = partialY1[screenIndex];
+	const int x2 = partialX2[screenIndex];
+	const int y2 = partialY2[screenIndex];
+
+	// When colors disabled, use fast buffered output
 	if (!g_colorsEnabled)
 	{
 		for (int y = 0; y < MAX_Y; ++y)
@@ -210,35 +220,42 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 			gotoxy(0, y);
 			std::string line;
 			line.reserve(MAX_X);
+
 			for (int x = 0; x < MAX_X; ++x)
 			{
-				char cell = boards[screenIndex][y][x];
-				if (dark && !isIlluminated(x, y, p1, p2) && cell != TORCH)
+				const char cell = boards[screenIndex][y][x];
+				const bool inPartial = (partialOn && x >= x1 && x <= x2 && y >= y1 && y <= y2);
+
+				if ((dark || inPartial) && !isIlluminated(x, y, p1, p2) && cell != TORCH)
 					line += DARKNESS_CHAR;
 				else
 					line += cell;
 			}
+
 			std::cout << line;
 		}
 		return;
 	}
-	
+
 	// Colors enabled: batch consecutive same-color characters
 	for (int y = 0; y < MAX_Y; ++y)
 	{
 		gotoxy(0, y);
 		std::string buffer;
 		buffer.reserve(MAX_X);
+
 		ConsoleColor currentColor = ConsoleColor::Default;
 		bool colorSet = false;
-		
+
 		for (int x = 0; x < MAX_X; ++x)
 		{
-			char cell = boards[screenIndex][y][x];
+			const char cell = boards[screenIndex][y][x];
+			const bool inPartial = (partialOn && x >= x1 && x <= x2 && y >= y1 && y <= y2);
+
 			char displayChar;
 			ConsoleColor charColor;
-			
-			if (dark && !isIlluminated(x, y, p1, p2) && cell != TORCH)
+
+			if ((dark || inPartial) && !isIlluminated(x, y, p1, p2) && cell != TORCH)
 			{
 				displayChar = DARKNESS_CHAR;
 				charColor = ConsoleColor::Default;
@@ -248,7 +265,7 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 				displayChar = cell;
 				charColor = getColorForChar(cell);
 			}
-			
+
 			// If color changed, flush buffer and switch color
 			if (charColor != currentColor || !colorSet)
 			{
@@ -257,24 +274,26 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 					std::cout << buffer;
 					buffer.clear();
 				}
+
 				setConsoleColor(charColor);
 				currentColor = charColor;
 				colorSet = true;
 			}
-			
+
 			buffer += displayChar;
 		}
-		
+
 		// Flush remaining buffer for this line
 		if (!buffer.empty())
 		{
 			std::cout << buffer;
 		}
 	}
-	
+
 	// Reset to default at end
 	resetColor();
 }
+
 
 bool Screens::isDarkScreen() const
 {
@@ -581,6 +600,30 @@ void Screens::initSecondScreenSwitches()
 		SecondScreenSwitches.push_back(s);
 	}
 }
+
+
+void Screens::initRiddles()
+{
+	// ????? – ???? ??????
+	addRiddle(ScreenId::Third,
+		Riddle(
+			Point(22, 2),
+			"What is 2+2?",
+			std::array<std::string, 4>{"3", "4", "5", "22"},
+			1
+		)
+	);
+
+	addRiddle(ScreenId::Third,
+		Riddle(
+			Point(56, 2),
+			"Which key drops a bomb for Player 1?",
+			std::array<std::string, 4>{"E", "O", "R", "H"},
+			0
+		)
+	);
+}
+
 
 void Screens::printHint() const
 {
@@ -1131,4 +1174,53 @@ void Screens::moveObstacleGroup(const std::vector<Point>& group, int dx, int dy)
 		Point target(cell.getX() + dx, cell.getY() + dy, 0, 0, ' ');
 		setCharAt(target, OBSTACLE);
 	}
+}
+
+void Screens::addRiddle(ScreenId screen, const Riddle& r)
+{
+	int idx = static_cast<int>(screen);
+	riddlesByScreen[idx].push_back(r);
+}
+
+Riddle* Screens::getRiddleAt(const Point& p)
+{
+	const int screenIndex = static_cast<int>(current);
+	auto& vec = riddlesByScreen[screenIndex];
+
+	for (auto& r : vec)
+	{
+		if (r.getPosition().getX() == p.getX() && r.getPosition().getY() == p.getY())
+			return &r;
+	}
+	return nullptr;
+}
+
+
+bool Screens::removeRiddleAt(const Point& p)
+{
+	const int screenIndex = static_cast<int>(current);
+	auto& vec = riddlesByScreen[screenIndex];
+
+	const auto oldSize = vec.size();
+
+	vec.erase(
+		std::remove_if(vec.begin(), vec.end(),
+			[&](const Riddle& r)
+			{
+				return r.getPosition().getX() == p.getX() &&
+					r.getPosition().getY() == p.getY();
+			}),
+		vec.end()
+	);
+
+	const bool removed = (vec.size() != oldSize);
+	if (removed)
+		makePassage(p); // ???? ?? ?-'?' ????? ???? ??????
+
+	return removed;
+}
+void Screens::clearRiddles(ScreenId screen)
+{
+	const int screenIndex = static_cast<int>(screen);
+	riddlesByScreen[screenIndex].clear();
 }

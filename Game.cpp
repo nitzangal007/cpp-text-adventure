@@ -25,6 +25,15 @@ Game::Game()
 
 	exits[1] = ExitInfo{
 		Screens::ScreenId::Second,
+		Screens::ScreenId::Third,
+		Point(38, 13),
+		Point(38, 13),
+		Point(36,2,0,0,Players::PLAYER1_SYMBOL),
+		Point(43,2,0,0,Players::PLAYER2_SYMBOL)
+	};
+
+	exits[2] = ExitInfo{
+		Screens::ScreenId::Third,
 		Screens::ScreenId::Final,
 		Point(38, 13),
 		Point(38, 13),
@@ -32,7 +41,6 @@ Game::Game()
 		Point()
 	};
 }
-
 // ==========================================
 // Public Interface
 // ==========================================
@@ -67,8 +75,10 @@ void Game::run()
 
 void Game::initGame() {
 	cls();
-	player1Start = Point(5, 2, 0, 0, Players::PLAYER1_SYMBOL);
-	player2Start = Point(9, 2, 0, 0, Players::PLAYER2_SYMBOL);
+	player1Start = Point(36, 2, 0, 0, Players::PLAYER1_SYMBOL);
+	player2Start = Point(43, 2, 0, 0, Players::PLAYER2_SYMBOL);
+	//player1Start = Point(5, 2, 0, 0, Players::PLAYER1_SYMBOL);
+	//player2Start = Point(9, 2, 0, 0, Players::PLAYER2_SYMBOL);
 	currentScreen.init();
 	
 	// Check if screen loading failed
@@ -87,7 +97,8 @@ void Game::initGame() {
 		return;
 	}
 	
-	currentScreen.setCurrentScreen(Screens::ScreenId::First);
+	currentScreen.setCurrentScreen(Screens::ScreenId::Third);
+	//currentScreen.setCurrentScreen(Screens::ScreenId::First);
 	player1.reset(player1Start);
 	player2.reset(player2Start);
 	bomb = Bomb();
@@ -411,6 +422,13 @@ void Game::updatePlayerMovement(Player& player)
 		// If can't compress, treat as normal walkable cell
 		player.move();
 	}
+	else if (currentScreen.isRiddle(nextPos))
+	{
+		if (handleRiddleEncounter(player, nextPos))
+			return;
+	}
+
+
 	else if (currentScreen.isFreeCellForPlayer(nextPos))
 	{
 		player.move();
@@ -569,6 +587,76 @@ void Game::dropTorch(Player& player)
 	// Use Torch class to handle drop
 	Torch::onDrop(player, currentScreen);
 }
+
+bool Game::handleRiddleEncounter(Player& player, const Point& nextPos)
+{
+	Riddle* r = currentScreen.getRiddleAt(nextPos);
+	if (!r)
+	{
+	
+		player.stop();
+		return true; 
+	}
+
+	const int y = currentScreen.getLegendY() + 2;
+	const auto& opts = r->getOptions();
+
+	
+	gotoxy(0, y);
+	std::cout << "RIDDLE: " << r->getQuestion() << "                                        ";
+
+	gotoxy(0, y + 1);
+	std::cout << "A) " << opts[0] << "   B) " << opts[1] << "                                  ";
+
+	gotoxy(0, y + 2);
+	std::cout << "C) " << opts[2] << "   D) " << opts[3] << "                                  ";
+
+	gotoxy(0, y + 3);
+	std::cout << "Choose (A-D / 1-4): ";
+ 
+
+	char ch = _getch();
+	std::string input(1, ch);
+	int choiceIndex = Riddle::parseChoice(input);
+
+	bool ok = false;
+	if (choiceIndex != -1)
+		ok = r->trySolve(choiceIndex);
+	else
+		ok = false; 
+
+	gotoxy(0, y + 4);
+
+	if (ok)
+		std::cout << "Correct! Press any key to continue...                                   ";
+	else
+		std::cout << "Wrong answer! -400 score. Press any key to continue...                    ";
+
+	_getch(); // wait so the player can read it
+
+	gotoxy(0, y + 4);
+	std::cout << "                                                                                ";
+	
+	gotoxy(0, y);     std::cout << "                                                                                ";
+	gotoxy(0, y + 1); std::cout << "                                                                                ";
+	gotoxy(0, y + 2); std::cout << "                                                                                ";
+	gotoxy(0, y + 3); std::cout << "                                                                                ";
+
+	if (ok)
+	{
+		currentScreen.removeRiddleAt(nextPos); 
+		player.move();                         
+	}
+	else
+	{
+		
+		score = (score >= 400 ? score - 400 : 0);
+		player.stop();   
+	}
+
+	return true; 
+}
+
 
 // ==========================================
 // Spring Logic
