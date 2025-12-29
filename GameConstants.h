@@ -44,7 +44,7 @@ namespace Keys {
 // Timing Constants (in game ticks or ms)
 // ==========================================
 namespace Timing {
-    constexpr int GAME_TICK_MS = 120;           // Main loop sleep time
+    constexpr int GAME_TICK_MS = 100;           // Main loop sleep time
     constexpr int BOMB_FUSE_TICKS = 5;          // Ticks until player bomb explodes
     constexpr int AUTO_BOMB_DELAY_TICKS = 21;   // Ticks for auto-bomb timer
     constexpr int BOMB_BLINK_THRESHOLD = 5;     // Start blinking at this many ticks

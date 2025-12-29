@@ -20,11 +20,12 @@ void Player::handleKeyPress(char key_pressed) {                              //w
     }
 }
 
-void Player::handleSpringEntry(int springId)
+void Player::handleSpringEntry(int springId, int inheritedForce)
 {
 	springState.mode = SpringMode::Compressing;
 	springState.springId = springId;
 	springState.compressedCount = 0;
+	springState.inheritedMomentum = inheritedForce;  // Store momentum from previous spring
 }
 
 void Player::launch(const SpringLaunchParams& params, Direction dir)
@@ -43,6 +44,7 @@ void Player::resetSpringState() {
     springState.launchSpeed = 0;
     springState.ticksLeft = 0;
     springState.launchDir = Direction::STAY;
+    springState.inheritedMomentum = 0;
 }
 
 bool Player::tickFlight()

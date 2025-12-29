@@ -21,6 +21,7 @@ public:
         Direction launchDir = Direction::STAY;
         int launchSpeed = 0;
         int ticksLeft = 0;
+        int inheritedMomentum = 0;  // Force carried from previous spring (chaining)
     };
 private:
     static constexpr int NUM_KEYS = 5;
@@ -81,8 +82,8 @@ public:
     void handleKeyPress(char key_pressed);
 
     //Spring logics
-    // Enters the spring: sets mode to Compressing and resets counters
-    void handleSpringEntry(int springId);
+    // Enters the spring: sets mode to Compressing and stores inherited momentum
+    void handleSpringEntry(int springId, int inheritedForce = 0);
     // Increments compression count as player moves deeper
     void incrementCompression() {
 		springState.compressedCount++;

@@ -20,8 +20,10 @@ private:
 public:
     // Constructor
 	Spring() = default;
-    Spring(int id, const Point& anchor, Direction pushDir, Direction releaseDir);
-
+    Spring(int id, const Point& anchor, Direction pushDir, Direction releaseDir)
+        : id(id), anchorWall(anchor), pushDir(pushDir), releaseDir(releaseDir)
+    {
+    }
     // -- Setters / Builders --
     void addSegment(const Point& p);
 

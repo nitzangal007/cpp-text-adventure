@@ -646,11 +646,12 @@ void Game::updateSpringLogic(Player& player)
 	
 	if (shouldRelease)
 	{
-		// Calculate launch parameters based on compression count
+		// Calculate launch parameters based on compression + inherited momentum
 		// Minimum 1 compression to launch
 		if (state.compressedCount > 0)
 		{
-			SpringLaunchParams params = spring->calculateLaunchParams(state.compressedCount);
+			int totalCompression = state.compressedCount + state.inheritedMomentum;
+			SpringLaunchParams params = spring->calculateLaunchParams(totalCompression);
 			player.launch(params, spring->getReleaseDirection());
 		}
 		else
@@ -712,6 +713,21 @@ void Game::processForcedMove(Player& player, Player& otherPlayer)
 				player.resetSpringState();
 				return;
 			}
+		}
+		
+		// Check for spring entry during flight (spring chaining)
+		if (currentScreen.isSpring(nextPos))
+		{
+			Spring* spring = currentScreen.getSpringAt(nextPos);
+			if (spring && spring->canCompress(state.launchDir))
+			{
+				// Enter chain compression mode - inherit current momentum
+				player.handleSpringEntry(spring->getId(), state.launchSpeed);
+				player.setPosition(nextPos);
+				player.incrementCompression();  // First cell counts as compression
+				return;  // Exit forced move - spring logic takes over
+			}
+			// If can't compress (wrong direction), just pass through
 		}
 		
 		// Check collision with wall/door
