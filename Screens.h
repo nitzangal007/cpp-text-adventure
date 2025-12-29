@@ -1,15 +1,16 @@
 #pragma once
-#include "Player.h"
-#include "utils.h"
-#include "GameConstants.h"
-#include "Switch.h"
-#include "Spring.h"
 #include <iostream>
 #include <vector>
 #include <fstream>
 #include <algorithm>
 #include <string>
 #include <filesystem>
+#include "Player.h"
+#include "utils.h"
+#include "GameConstants.h"
+#include "Switch.h"
+#include "Spring.h"
+#include "Riddle.h"
 
 class Screens
 {
@@ -19,7 +20,7 @@ public:
     // ==========================================
     enum { MAX_X = Screen::MAX_X, MAX_Y = Screen::MAX_Y };
     enum { NUM_SCREENS = Screen::NUM_SCREENS };
-    enum class ScreenId { First = 0, Second = 1, Final = 2 };
+    enum class ScreenId { First = 0, Second = 1, Third = 2, Final = 3};
 
     // Note: Tile constants moved to GameConstants.h - use Tiles:: namespace directly
     // Example: Tiles::WALL, Tiles::KEY, Radius::TORCH_LIGHT, etc.
@@ -30,6 +31,7 @@ private:
     ScreenId current = ScreenId::First;
     std::vector<Point> pendingAutoBombs;
     std::vector<Spring> screenSprings[NUM_SCREENS];
+    std::vector<Riddle> riddlesByScreen[NUM_SCREENS];
 
     // Level 1 Data (now using Switch class)
     std::vector<Switch> firstScreenSwitches;
@@ -40,12 +42,30 @@ private:
     std::vector<Switch> SecondScreenSwitches;
     Point door7Pos;
 
+    std::vector<Switch> ThirdScreenSwitches;
+
     // Darkness per screen (Screen 2 is dark)
-    bool screenIsDark[NUM_SCREENS] = { false, false, false };
+    bool screenIsDark[NUM_SCREENS] = { false, false, false,false };
+    bool partialDarkEnabled[NUM_SCREENS] = { false, false, false, false };
+
+    int partialX1[NUM_SCREENS] = { -1, -1, -1, -1 };
+    int partialY1[NUM_SCREENS] = { -1, -1, -1, -1 };
+    int partialX2[NUM_SCREENS] = { -1, -1, -1, -1 };
+    int partialY2[NUM_SCREENS] = { -1, -1, -1, -1 };
+
+    // which switch controls it (per screen). (-1,-1) means none
+    Point partialDarkSwitchPos[NUM_SCREENS] = { Point(-1,-1), Point(-1,-1), Point(-1,-1), Point(-1,-1) };
+
+    // rectangle area
+    int darkX1 = 20, darkY1 = 1;
+    int darkX2 = 60, darkY2 = 10;
+
+ 
     
+
     // File loading data
     std::vector<std::string> screenFilePaths;    // Discovered .screen file paths
-    int legendY[NUM_SCREENS] = { -1, -1, -1 };   // Y position of 'L' anchor per screen
+    int legendY[NUM_SCREENS] = { -1, -1, -1, -1};   // Y position of 'L' anchor per screen
     bool loadingFailed = false;                   // True if screen loading failed
     std::string loadingError;                     // Error message if loading failed
 
@@ -134,10 +154,11 @@ public:
     void printHint() const;
     void clearHint() const;
 
-    // Attempt to push an obstacle with specified force
-    // pushDir: direction of push (UP/DOWN/LEFT/RIGHT)
-    // primaryForce: force from pushing player (1=normal, launchSpeed=spring)
-    // otherPlayer: check for cooperative pushing
+
+    // --- Level 2 Specifics ---
+    void initThirdScreenSwitches();
+
+
     bool tryPushObstacle(const Point& nextPos, Direction pushDir,
                          int primaryForce, const Player& otherPlayer);
 
@@ -168,6 +189,12 @@ public:
 
     // Inside class Screens (Private Helper):
     void scanSpringsForScreen(int screenIndex);
+
+    // Riddle logic 
+    void addRiddle(ScreenId screen, const Riddle& r);
+    Riddle* getRiddleAt(const Point& p);
+    bool removeRiddleAt(const Point& p);
+    void clearRiddles(ScreenId screen);
 
 
 private:
@@ -207,4 +234,9 @@ private:
                             bool visited[MAX_Y][MAX_X], std::vector<Point>& chain);
     bool findSpringAnchor(int screenIndex, const std::vector<Point>& chain,
                           Point& outAnchorWall, Direction& outPushDir, Direction& outReleaseDir);
+
+    void initRiddles();
+
+	
+
 };

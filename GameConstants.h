@@ -94,7 +94,7 @@ namespace Lives {
 namespace Screen {
     constexpr int MAX_X = 80;
     constexpr int MAX_Y = 25;
-    constexpr int NUM_SCREENS = 3;
+    constexpr int NUM_SCREENS = 4;
 }
 
 // ==========================================
