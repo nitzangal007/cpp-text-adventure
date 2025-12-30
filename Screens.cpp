@@ -244,14 +244,12 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 
 				const bool darkZone = dark || isInPartialZone(x, y);
 
-				if (darkZone && !isIlluminated(x, y, p1, p2) && cell != TORCH)
-				
 				
 				// Bug #2 fix: Hide compressed spring segments
 				if (cell == SPRING && !shouldDrawSpringChar(Point(x, y), p1, p2))
 					cell = EMPTY_SPACE;
 
-				
+				if (darkZone && !isIlluminated(x, y, p1, p2) && cell != TORCH)
 					line += DARKNESS_CHAR;
 				else
 					line += cell;
