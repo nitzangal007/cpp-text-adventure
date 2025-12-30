@@ -129,6 +129,7 @@
     <ClCompile Include="Menu.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Point.cpp" />
+    <ClCompile Include="Riddle.cpp" />
     <ClCompile Include="Screens.cpp" />
     <ClCompile Include="Spring.cpp" />
     <ClCompile Include="Switch.cpp" />
@@ -146,6 +147,7 @@
     <ClInclude Include="Menu.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Point.h" />
+    <ClInclude Include="Riddle.h" />
     <ClInclude Include="Screens.h" />
     <ClInclude Include="Spring.h" />
     <ClInclude Include="Switch.h" />
