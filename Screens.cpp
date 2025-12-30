@@ -265,10 +265,15 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 
 			for (int x = 0; x < MAX_X; ++x)
 			{
-				const char cell = boards[screenIndex][y][x];
+				char cell = boards[screenIndex][y][x];
 
 				const bool inPartial = isInPartialZone(x, y);
 				const bool darkZone = (dark || inPartial);
+
+				
+				// Bug #2 fix: Hide compressed spring segments
+				if (cell == SPRING && !shouldDrawSpringChar(Point(x, y), p1, p2))
+					cell = EMPTY_SPACE;
 
 				if (darkZone && !isIlluminated(x, y, p1, p2) && cell != TORCH)
 					line += DARKNESS_CHAR;
@@ -293,10 +298,14 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 
 		for (int x = 0; x < MAX_X; ++x)
 		{
-			const char cell = boards[screenIndex][y][x];
+			char cell = boards[screenIndex][y][x];
 
 			const bool inPartial = isInPartialZone(x, y);
 			const bool darkZone = (dark || inPartial);
+
+			// Bug #2 fix: Hide compressed spring segments
+			if (cell == SPRING && !shouldDrawSpringChar(Point(x, y), p1, p2))
+				cell = EMPTY_SPACE;
 
 			char displayChar;
 			ConsoleColor charColor;
@@ -698,7 +707,7 @@ void Screens::initThirdScreenSwitches()
 void Screens::initRiddles()
 {
 	
-	// ????? – ???? ??????
+	// ????? ï¿½ ???? ??????
 	addRiddle(ScreenId::Third,
 		Riddle(
 			Point(22, 2),
@@ -937,8 +946,123 @@ Spring* Screens::getSpringAt(const Point& p)
 
 bool Screens::shouldDrawSpringChar(const Point& p, const Player& p1, const Player& p2) const
 {
-	// TODO: Implement if needed for spring compression visual feedback
-	return true;
+	// Bug #2 fix: Hide spring segments that are "behind" the player during compression
+	// This creates the visual effect of the spring shrinking as it's compressed
+	
+	// Check if this point is part of a spring
+	int screenIndex = static_cast<int>(current);
+	Spring* spring = nullptr;
+	for (auto& s : screenSprings[screenIndex])
+	{
+		if (s.contains(p))
+		{
+			spring = const_cast<Spring*>(&s);
+			break;
+		}
+	}
+	
+	if (!spring)
+		return true;  // Not a spring cell, draw normally
+	
+	// Check if player 1 is compressing this spring
+	const Player::SpringState& state1 = p1.getSpringState();
+	if (state1.mode == SpringMode::Compressing && state1.springId == spring->getId())
+	{
+		const Point& playerPos = p1.getPosition();
+		Direction pushDir = spring->getPushDirection();
+		const std::vector<Point>& cells = spring->getCells();
+		
+		// Find the actual min/max of spring cells
+		int minX = cells[0].getX(), maxX = cells[0].getX();
+		int minY = cells[0].getY(), maxY = cells[0].getY();
+		for (const Point& c : cells)
+		{
+			if (c.getX() < minX) minX = c.getX();
+			if (c.getX() > maxX) maxX = c.getX();
+			if (c.getY() < minY) minY = c.getY();
+			if (c.getY() > maxY) maxY = c.getY();
+		}
+		
+		// Calculate distance from anchor end
+		// pushDir tells us which end has the anchor
+		int cellDist = 0, playerDist = 0;
+		
+		if (pushDir == Direction::LEFT)
+		{
+			// Anchor on LEFT (minX-1), distance = X - minX
+			cellDist = p.getX() - minX;
+			playerDist = playerPos.getX() - minX;
+		}
+		else if (pushDir == Direction::RIGHT)
+		{
+			// Anchor on RIGHT (maxX+1), distance = maxX - X
+			cellDist = maxX - p.getX();
+			playerDist = maxX - playerPos.getX();
+		}
+		else if (pushDir == Direction::UP)
+		{
+			// Anchor on TOP (minY-1), distance = Y - minY
+			cellDist = p.getY() - minY;
+			playerDist = playerPos.getY() - minY;
+		}
+		else // DOWN
+		{
+			// Anchor on BOTTOM (maxY+1), distance = maxY - Y
+			cellDist = maxY - p.getY();
+			playerDist = maxY - playerPos.getY();
+		}
+		
+		// Hide cells at or beyond player position (already passed over)
+		if (cellDist >= playerDist)
+			return false;
+	}
+	
+	// Same check for player 2
+	const Player::SpringState& state2 = p2.getSpringState();
+	if (state2.mode == SpringMode::Compressing && state2.springId == spring->getId())
+	{
+		const Point& playerPos = p2.getPosition();
+		Direction pushDir = spring->getPushDirection();
+		const std::vector<Point>& cells = spring->getCells();
+		
+		int minX = cells[0].getX(), maxX = cells[0].getX();
+		int minY = cells[0].getY(), maxY = cells[0].getY();
+		for (const Point& c : cells)
+		{
+			if (c.getX() < minX) minX = c.getX();
+			if (c.getX() > maxX) maxX = c.getX();
+			if (c.getY() < minY) minY = c.getY();
+			if (c.getY() > maxY) maxY = c.getY();
+		}
+		
+		int cellDist = 0, playerDist = 0;
+		
+		if (pushDir == Direction::LEFT)
+		{
+			cellDist = p.getX() - minX;
+			playerDist = playerPos.getX() - minX;
+		}
+		else if (pushDir == Direction::RIGHT)
+		{
+			cellDist = maxX - p.getX();
+			playerDist = maxX - playerPos.getX();
+		}
+		else if (pushDir == Direction::UP)
+		{
+			cellDist = p.getY() - minY;
+			playerDist = playerPos.getY() - minY;
+		}
+		else
+		{
+			cellDist = maxY - p.getY();
+			playerDist = maxY - playerPos.getY();
+		}
+		
+		if (cellDist >= playerDist)
+			return false;
+	}
+	
+	return true;  // Not compressed, draw normally
 }
 
 // ==========================================
@@ -1003,36 +1127,93 @@ bool Screens::findSpringAnchor(
 	Direction& outPushDir,
 	Direction& outReleaseDir)
 {
-	const Direction directions[] = {
-		Direction::UP, Direction::RIGHT, Direction::DOWN, Direction::LEFT
-	};
-	const int dx[] = { 0, 1, 0, -1 };
-	const int dy[] = { -1, 0, 1, 0 };
+	if (chain.empty())
+		return false;
 
-	// Check each cell in the chain for an adjacent wall
-	for (const Point& cell : chain)
+	// Bug #3 fix: Determine spring axis (horizontal or vertical)
+	// A spring must be a straight line - all cells share same X or same Y
+	bool isHorizontal = true;
+	bool isVertical = true;
+	
+	for (size_t i = 1; i < chain.size(); ++i)
 	{
-		for (int d = 0; d < 4; ++d)
+		if (chain[i].getY() != chain[0].getY())
+			isHorizontal = false;
+		if (chain[i].getX() != chain[0].getX())
+			isVertical = false;
+	}
+	
+	// If neither horizontal nor vertical (L-shaped), reject
+	if (!isHorizontal && !isVertical)
+		return false;
+	
+	// Find endpoints along the spring axis
+	int minX = chain[0].getX(), maxX = chain[0].getX();
+	int minY = chain[0].getY(), maxY = chain[0].getY();
+	Point minPoint = chain[0], maxPoint = chain[0];
+	
+	for (const Point& p : chain)
+	{
+		if (isHorizontal)
 		{
-			Point neighbor(cell.getX() + dx[d], cell.getY() + dy[d]);
-
-			if (!isInside(neighbor))
-				continue;
-
-			char neighborChar = boards[screenIndex][neighbor.getY()][neighbor.getX()];
-
-			if (neighborChar == WALL)
-			{
-				// Found anchor wall!
-				outAnchorWall = neighbor;
-				outPushDir = directions[d];
-				outReleaseDir = getOppositeDirection(outPushDir);
-				return true;
-			}
+			if (p.getX() < minX) { minX = p.getX(); minPoint = p; }
+			if (p.getX() > maxX) { maxX = p.getX(); maxPoint = p; }
+		}
+		else // isVertical
+		{
+			if (p.getY() < minY) { minY = p.getY(); minPoint = p; }
+			if (p.getY() > maxY) { maxY = p.getY(); maxPoint = p; }
 		}
 	}
-
-	return false;  // No anchor found
+	
+	// Check for anchor wall only at the endpoints, in the axis direction
+	// Horizontal spring: check LEFT of leftmost, RIGHT of rightmost
+	// Vertical spring: check UP of topmost, DOWN of bottommost
+	
+	struct CheckInfo {
+		Point endpoint;
+		int dx, dy;
+		Direction pushDir;
+	};
+	
+	std::vector<CheckInfo> checks;
+	
+	if (isHorizontal)
+	{
+		// Check LEFT of leftmost cell
+		checks.push_back({ minPoint, -1, 0, Direction::LEFT });
+		// Check RIGHT of rightmost cell
+		checks.push_back({ maxPoint, 1, 0, Direction::RIGHT });
+	}
+	else // isVertical
+	{
+		// Check UP of topmost cell
+		checks.push_back({ minPoint, 0, -1, Direction::UP });
+		// Check DOWN of bottommost cell
+		checks.push_back({ maxPoint, 0, 1, Direction::DOWN });
+	}
+	
+	for (const CheckInfo& check : checks)
+	{
+		Point neighbor(check.endpoint.getX() + check.dx, 
+		               check.endpoint.getY() + check.dy);
+		
+		if (!isInside(neighbor))
+			continue;
+		
+		char neighborChar = boards[screenIndex][neighbor.getY()][neighbor.getX()];
+		
+		// Both WALL and UNBREAKABLE_WALL can serve as anchor
+		if (neighborChar == WALL || neighborChar == UNBREAKABLE_WALL)
+		{
+			outAnchorWall = neighbor;
+			outPushDir = check.pushDir;
+			outReleaseDir = getOppositeDirection(outPushDir);
+			return true;
+		}
+	}
+	
+	return false;  // No anchor found at endpoints
 }
 
 void Screens::scanSpringsForScreen(int screenIndex)
