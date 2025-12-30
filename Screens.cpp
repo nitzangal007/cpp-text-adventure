@@ -212,18 +212,43 @@ void Screens::drawCurrent() const
 
 void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 {
-	const int  screenIndex = static_cast<int>(current);
+	const int screenIndex = static_cast<int>(current);
 	const bool dark = screenIsDark[screenIndex];
 
-	// Check if (x,y) is inside ANY enabled partial-dark zone for THIS screen
+	// Return true if there is an ACTIVE switch at the given position on the CURRENT screen
+	auto isSwitchActiveAt = [&](const Point& pos) -> bool
+		{
+			if (pos == Point(-1, -1))
+				return false;
+
+			const std::vector<Switch>* vec = nullptr;
+			if (isFirstScreen())       vec = &firstScreenSwitches;
+			else if (isSecondScreen()) vec = &SecondScreenSwitches;
+			else if (isThirdScreen())  vec = &ThirdScreenSwitches;
+			else return false;
+
+			for (const auto& sw : *vec)
+				if (sw.position == pos)
+					return sw.isActive();
+
+			return false;
+		};
+
+	// Check if (x,y) is inside ANY partial zone that is currently DARK for THIS screen
 	auto isInPartialZone = [&](int x, int y) -> bool
 		{
 			for (const auto& z : partialZones)
 			{
-				if (!z.enabled) continue;
 				if (z.targetScreen != screenIndex) continue;
 
-				if (x >= z.x1 && x <= z.x2 && y >= z.y1 && y <= z.y2)
+				if (x < z.x1 || x > z.x2 || y < z.y1 || y > z.y2)
+					continue;
+
+				// zoneDark = startsDark XOR switchActive
+				const bool swActive = isSwitchActiveAt(z.switchPos);
+				const bool zoneDark = (z.startsDark ^ swActive);
+
+				if (zoneDark)
 					return true;
 			}
 			return false;
@@ -242,7 +267,8 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 			{
 				char cell = boards[screenIndex][y][x];
 
-				const bool darkZone = dark || isInPartialZone(x, y);
+				const bool inPartial = isInPartialZone(x, y);
+				const bool darkZone = (dark || inPartial);
 
 				
 				// Bug #2 fix: Hide compressed spring segments
@@ -274,7 +300,8 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 		{
 			char cell = boards[screenIndex][y][x];
 
-			const bool darkZone = dark || isInPartialZone(x, y);
+			const bool inPartial = isInPartialZone(x, y);
+			const bool darkZone = (dark || inPartial);
 
 			// Bug #2 fix: Hide compressed spring segments
 			if (cell == SPRING && !shouldDrawSpringChar(Point(x, y), p1, p2))
@@ -294,7 +321,6 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 				charColor = getColorForChar(cell);
 			}
 
-			// If color changed, flush buffer and switch color
 			if (!colorSet || charColor != currentColor)
 			{
 				if (!buffer.empty())
@@ -311,14 +337,13 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 			buffer += displayChar;
 		}
 
-		// Flush remaining buffer for this line
 		if (!buffer.empty())
 			std::cout << buffer;
 	}
 
-	// Reset to default at end
 	resetColor();
 }
+
 
 
 
@@ -483,23 +508,7 @@ void Screens::updateSwitchStates(const Player& p1, const Player& p2)
 				return false;
 			};
 
-		for (auto& z : partialZones)
-		{
-			if (z.targetScreen != static_cast<int>(ScreenId::Third))
-				continue;
-
-			if (z.switchPos == NO_SWITCH)
-			{
-				z.enabled = z.startEnabled;
-				continue;
-			}
-
-			const bool swActive = isSwitchActiveAt(z.switchPos);
-
-			z.enabled = z.startEnabled;
-			if (swActive)
-				z.enabled = !z.invertSwitch;
-		}
+		
 	}
 }
 
@@ -697,6 +706,7 @@ void Screens::initThirdScreenSwitches()
 
 void Screens::initRiddles()
 {
+	
 	// ????? � ???? ??????
 	addRiddle(ScreenId::Third,
 		Riddle(
@@ -1491,19 +1501,29 @@ void Screens::clearRiddles(ScreenId screen)
 }
 
 void Screens::addPartialZone(ScreenId target, int x1, int y1, int x2, int y2,
-	const Point& switchPos, bool startEnabled, bool invertSwitch)
+	const Point& switchPos, bool startsDark)
 {
 	PartialDarkZone z;
 	z.targetScreen = (int)target;
 	z.x1 = x1; z.y1 = y1; z.x2 = x2; z.y2 = y2;
-
 	z.switchPos = switchPos;
-	z.startEnabled = startEnabled;
-	z.enabled = startEnabled;            
-	z.invertSwitch = invertSwitch;
+	z.startsDark = startsDark;
 
 	partialZones.push_back(z);
 }
+
+void Screens::resetRiddlesForCurrentScreen()
+{
+	const int s = static_cast<int>(current);
+
+	// clear current screen riddles (so initRiddles won't duplicate)
+	riddlesByScreen[s].clear();
+
+	// restore '?' in the board file should already happen in resetCurrent(),
+	// but we will rely on initRiddles to re-create the riddle objects.
+	initRiddles();
+}
+
 
 
 void Screens::initPartialZones()
@@ -1511,8 +1531,8 @@ void Screens::initPartialZones()
 	partialZones.clear();
 
 	
-	addPartialZone(ScreenId::Third, 1, 6, 78, 11, Point(69, 5),false,false);
-	addPartialZone(ScreenId::Third, 1, 13, 78, 19, Point(37, 12), true, true);
+	addPartialZone(ScreenId::Third, 1, 6, 78, 11, Point(69, 5),false);
+	addPartialZone(ScreenId::Third, 1, 13, 78, 19, Point(37, 12), true);
 	
 }
 

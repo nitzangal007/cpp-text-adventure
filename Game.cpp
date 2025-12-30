@@ -196,6 +196,7 @@ void Game::resetCurrentGame()
 		return;
 	
 	currentScreen.resetCurrent();
+	currentScreen.resetRiddlesForCurrentScreen();
 	if (currentScreen.isFirstScreen())
 	{
 		player1Start = Point(5, 2, 0, 0, Players::PLAYER1_SYMBOL);	
@@ -206,13 +207,25 @@ void Game::resetCurrentGame()
 		player1Start = Point(54, 9, 0, 0, Players::PLAYER1_SYMBOL);
 		player2Start = Point(26, 9, 0, 0, Players::PLAYER2_SYMBOL);
 	}
+	else if (currentScreen.isThirdScreen())
+	{
+		player1Start = Point(36, 2, 0, 0, Players::PLAYER1_SYMBOL);
+		player2Start = Point(43, 2, 0, 0, Players::PLAYER2_SYMBOL);
+	}
+	
 	player1.reset(player1Start);
 	player2.reset(player2Start);
 	bomb = Bomb();
 	player1ReadyForNextScreen = false;
 	player2ReadyForNextScreen = false;
 	autoBombs.clear();
+
+	
+	
+
 }
+
+	
 
 // ==========================================
 // Update & Render

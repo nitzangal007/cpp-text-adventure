@@ -49,14 +49,15 @@ private:
     bool screenIsDark[NUM_SCREENS] = { false, false, false,false };
     
 
-    struct PartialDarkZone {
-        int targetScreen;
-        int x1, y1, x2, y2;
-        Point switchPos;        // Point(-1,-1) => no switch
-        bool startEnabled = false;
-        bool enabled = false;
-        bool invertSwitch = false; 
+    struct PartialDarkZone
+    {
+        int targetScreen = -1;
+        int x1 = -1, y1 = -1, x2 = -1, y2 = -1;
+
+        Point switchPos = Point(-1, -1); // (-1,-1) = no switch controls it
+        bool startsDark = false;         // default state when switch is NOT active
     };
+
 
 
 
@@ -73,7 +74,10 @@ private:
 
     void initPartialZones(); // defines ALL zones (and resets enabled=false)
     void addPartialZone(ScreenId target, int x1, int y1, int x2, int y2,
-        const Point& switchPos, bool startEnabled, bool invertSwitch);
+        const Point& switchPos, bool startsDark);
+
+    
+
 
 
 public:
@@ -204,6 +208,7 @@ public:
     bool removeRiddleAt(const Point& p);
     void clearRiddles(ScreenId screen);
 
+    void resetRiddlesForCurrentScreen();
 
 private:
     // ==========================================
