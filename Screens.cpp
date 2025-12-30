@@ -141,11 +141,17 @@ void Screens::init()
 	door7Pos.setPosition(71, 11);  // Set door7 position for screen 2
 	initFirstScreenSwitches();
 	initSecondScreenSwitches();
+	initThirdScreenSwitches();
 	
+	initPartialZones();
 	// Step 5: Scan and register all springs
 	initSprings();
 
 	initRiddles();
+
+	
+	
+
 
 	 
 	current = ScreenId::First;
@@ -171,6 +177,10 @@ void Screens::resetCurrent()
 	{
 		door7Pos.setPosition(71, 11);
 		initSecondScreenSwitches();
+	}
+	else if (current == ScreenId::Third)
+	{
+		initThirdScreenSwitches();
 	}
 }
 
@@ -202,15 +212,22 @@ void Screens::drawCurrent() const
 
 void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 {
-	const int screenIndex = static_cast<int>(current);
+	const int  screenIndex = static_cast<int>(current);
 	const bool dark = screenIsDark[screenIndex];
 
-	
-	const bool partialOn = (partialDarkEnabled[screenIndex] && partialX1[screenIndex] != -1);
-	const int x1 = partialX1[screenIndex];
-	const int y1 = partialY1[screenIndex];
-	const int x2 = partialX2[screenIndex];
-	const int y2 = partialY2[screenIndex];
+	// Check if (x,y) is inside ANY enabled partial-dark zone for THIS screen
+	auto isInPartialZone = [&](int x, int y) -> bool
+		{
+			for (const auto& z : partialZones)
+			{
+				if (!z.enabled) continue;
+				if (z.targetScreen != screenIndex) continue;
+
+				if (x >= z.x1 && x <= z.x2 && y >= z.y1 && y <= z.y2)
+					return true;
+			}
+			return false;
+		};
 
 	// When colors disabled, use fast buffered output
 	if (!g_colorsEnabled)
@@ -224,13 +241,17 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 			for (int x = 0; x < MAX_X; ++x)
 			{
 				char cell = boards[screenIndex][y][x];
-				const bool inPartial = (partialOn && x >= x1 && x <= x2 && y >= y1 && y <= y2);
 
+				const bool darkZone = dark || isInPartialZone(x, y);
+
+				if (darkZone && !isIlluminated(x, y, p1, p2) && cell != TORCH)
+				
+				
 				// Bug #2 fix: Hide compressed spring segments
 				if (cell == SPRING && !shouldDrawSpringChar(Point(x, y), p1, p2))
 					cell = EMPTY_SPACE;
 
-				if ((dark || inPartial) && !isIlluminated(x, y, p1, p2) && cell != TORCH)
+				
 					line += DARKNESS_CHAR;
 				else
 					line += cell;
@@ -254,7 +275,8 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 		for (int x = 0; x < MAX_X; ++x)
 		{
 			char cell = boards[screenIndex][y][x];
-			const bool inPartial = (partialOn && x >= x1 && x <= x2 && y >= y1 && y <= y2);
+
+			const bool darkZone = dark || isInPartialZone(x, y);
 
 			// Bug #2 fix: Hide compressed spring segments
 			if (cell == SPRING && !shouldDrawSpringChar(Point(x, y), p1, p2))
@@ -263,7 +285,7 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 			char displayChar;
 			ConsoleColor charColor;
 
-			if ((dark || inPartial) && !isIlluminated(x, y, p1, p2) && cell != TORCH)
+			if (darkZone && !isIlluminated(x, y, p1, p2) && cell != TORCH)
 			{
 				displayChar = DARKNESS_CHAR;
 				charColor = ConsoleColor::Default;
@@ -275,7 +297,7 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 			}
 
 			// If color changed, flush buffer and switch color
-			if (charColor != currentColor || !colorSet)
+			if (!colorSet || charColor != currentColor)
 			{
 				if (!buffer.empty())
 				{
@@ -293,14 +315,13 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 
 		// Flush remaining buffer for this line
 		if (!buffer.empty())
-		{
 			std::cout << buffer;
-		}
 	}
 
 	// Reset to default at end
 	resetColor();
 }
+
 
 
 bool Screens::isDarkScreen() const
@@ -422,6 +443,9 @@ void Screens::updateSwitchStates(const Player& p1, const Player& p2)
 	else if (isSecondScreen()) {
 		switches = &SecondScreenSwitches;
 	}
+	else if (isThirdScreen()) {
+		switches = &ThirdScreenSwitches;
+	}
 	else {
 		return;
 	}
@@ -429,15 +453,14 @@ void Screens::updateSwitchStates(const Player& p1, const Player& p2)
 	// Lambda to modify board characters
 	auto setCharAtLambda = [this](const Point& p, char ch) {
 		this->setCharAt(p, ch);
-	};
+		};
 
 	for (auto& s : *switches)
 	{
-		bool on = (p1.getPosition() == s.position || p2.getPosition() == s.position);
-		
-		// Use Switch class update method
+		const bool on = (p1.getPosition() == s.position || p2.getPosition() == s.position);
+
 		s.update(on, setCharAtLambda);
-		
+
 		// Collect pending auto-bomb triggers
 		std::vector<Point> triggers = s.getAndClearPendingTriggers();
 		for (const Point& b : triggers)
@@ -448,7 +471,40 @@ void Screens::updateSwitchStates(const Player& p1, const Player& p2)
 	{
 		updateDoor7ByBinaryPuzzle();
 	}
+
+	// --- Partial darkness logic (Room 3 / Third) ---
+	if (isThirdScreen())
+	{
+		const Point NO_SWITCH(-1, -1);
+
+		auto isSwitchActiveAt = [&](const Point& pos) -> bool
+			{
+				for (const auto& sw : ThirdScreenSwitches)
+					if (sw.position == pos)
+						return sw.isActive();
+				return false;
+			};
+
+		for (auto& z : partialZones)
+		{
+			if (z.targetScreen != static_cast<int>(ScreenId::Third))
+				continue;
+
+			if (z.switchPos == NO_SWITCH)
+			{
+				z.enabled = z.startEnabled;
+				continue;
+			}
+
+			const bool swActive = isSwitchActiveAt(z.switchPos);
+
+			z.enabled = z.startEnabled;
+			if (swActive)
+				z.enabled = !z.invertSwitch;
+		}
+	}
 }
+
 
 // --- Level 1 Specifics ---
 
@@ -608,6 +664,37 @@ void Screens::initSecondScreenSwitches()
 		SecondScreenSwitches.push_back(s);
 	}
 }
+
+// --- Level 3 Specifics ---
+void Screens::initThirdScreenSwitches()
+{
+	ThirdScreenSwitches.clear();
+	{
+		Switch s;
+		s.position = Point(69, 5);
+		s.isPermanent = true;
+		s.oneTime = true;
+		s.bitIndex = -1;
+
+		ThirdScreenSwitches.push_back(s);
+	}
+	{
+		;
+		Switch s;
+		s.position = Point(37, 12);
+		s.isPermanent = true;
+		s.oneTime = true;
+		s.bitIndex = -1;
+
+		ThirdScreenSwitches.push_back(s);
+	}
+
+
+
+}
+	
+
+
 
 
 void Screens::initRiddles()
@@ -1404,3 +1491,30 @@ void Screens::clearRiddles(ScreenId screen)
 	const int screenIndex = static_cast<int>(screen);
 	riddlesByScreen[screenIndex].clear();
 }
+
+void Screens::addPartialZone(ScreenId target, int x1, int y1, int x2, int y2,
+	const Point& switchPos, bool startEnabled, bool invertSwitch)
+{
+	PartialDarkZone z;
+	z.targetScreen = (int)target;
+	z.x1 = x1; z.y1 = y1; z.x2 = x2; z.y2 = y2;
+
+	z.switchPos = switchPos;
+	z.startEnabled = startEnabled;
+	z.enabled = startEnabled;            
+	z.invertSwitch = invertSwitch;
+
+	partialZones.push_back(z);
+}
+
+
+void Screens::initPartialZones()
+{
+	partialZones.clear();
+
+	
+	addPartialZone(ScreenId::Third, 1, 6, 78, 11, Point(69, 5),false,false);
+	addPartialZone(ScreenId::Third, 1, 13, 78, 19, Point(37, 12), true, true);
+	
+}
+

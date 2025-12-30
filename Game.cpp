@@ -593,28 +593,40 @@ bool Game::handleRiddleEncounter(Player& player, const Point& nextPos)
 	Riddle* r = currentScreen.getRiddleAt(nextPos);
 	if (!r)
 	{
-	
 		player.stop();
-		return true; 
+		return true;
 	}
 
-	const int y = currentScreen.getLegendY() + 2;
+	// נשתמש באזור הסטטוס/legend (השורות שמתחת ללוח)
+	const int y = currentScreen.getLegendY(); // שורה ראשונה של הסטטוס
+	int x = 0;
+	auto clearLine = [&](int yy)
+		{
+			gotoxy(0, yy);
+			std::cout << "                                                                                ";
+		};
+
+	// ננקה מספיק שורות בשביל סטטוס + חידה + הודעה
+	for (int i = 0; i <= 3; ++i)
+		clearLine(y + i);
+
+
+	// ---- הדפסת החידה ----
 	const auto& opts = r->getOptions();
 
-	
-	gotoxy(0, y);
-	std::cout << "RIDDLE: " << r->getQuestion() << "                                        ";
+	gotoxy(x, y);
+	std::cout << "RIDDLE: " << r->getQuestion();
 
-	gotoxy(0, y + 1);
-	std::cout << "A) " << opts[0] << "   B) " << opts[1] << "                                  ";
+	gotoxy(x, y+1);
+	std::cout << "A) " << opts[0] << "   B) " << opts[1];
 
-	gotoxy(0, y + 2);
-	std::cout << "C) " << opts[2] << "   D) " << opts[3] << "                                  ";
+	gotoxy(x, y+2);
+	std::cout << "C) " << opts[2] << "   D) " << opts[3];
 
-	gotoxy(0, y + 3);
+	gotoxy(x, y+3);
 	std::cout << "Choose (A-D / 1-4): ";
- 
 
+	// ---- קלט ----
 	char ch = _getch();
 	std::string input(1, ch);
 	int choiceIndex = Riddle::parseChoice(input);
@@ -622,40 +634,42 @@ bool Game::handleRiddleEncounter(Player& player, const Point& nextPos)
 	bool ok = false;
 	if (choiceIndex != -1)
 		ok = r->trySolve(choiceIndex);
-	else
-		ok = false; 
 
-	gotoxy(0, y + 4);
-
-	if (ok)
-		std::cout << "Correct! Press any key to continue...                                   ";
-	else
-		std::cout << "Wrong answer! -400 score. Press any key to continue...                    ";
-
-	_getch(); // wait so the player can read it
-
-	gotoxy(0, y + 4);
-	std::cout << "                                                                                ";
 	
-	gotoxy(0, y);     std::cout << "                                                                                ";
-	gotoxy(0, y + 1); std::cout << "                                                                                ";
-	gotoxy(0, y + 2); std::cout << "                                                                                ";
-	gotoxy(0, y + 3); std::cout << "                                                                                ";
+	for (int i = 0; i <= 3; ++i)
+		clearLine(y + i);
+	gotoxy(0, y + 1);
 
 	if (ok)
 	{
-		currentScreen.removeRiddleAt(nextPos); 
-		player.move();                         
+		std::cout << "Correct! Press any key to continue...";
 	}
 	else
 	{
-		
 		score = (score >= 400 ? score - 400 : 0);
-		player.stop();   
+		std::cout << "Wrong! -400 score. Press any key to continue...";
+		player.stop();
 	}
 
-	return true; 
+	_getch();
+
+	// ---- סיום: אם הצליח, מוחקים את הרידל ומכניסים את השחקן ----
+	if (ok)
+	{
+		currentScreen.removeRiddleAt(nextPos);
+		player.move();
+	}
+
+	 
+	for (int i = 0; i <= 3; ++i)
+		clearLine(y + i);
+
+
+	 drawStatusBar();
+
+	return true;
 }
+
 
 
 // ==========================================

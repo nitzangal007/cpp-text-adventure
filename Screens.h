@@ -42,23 +42,25 @@ private:
     std::vector<Switch> SecondScreenSwitches;
     Point door7Pos;
 
+    // Level 3 Data (now using Switch class)
     std::vector<Switch> ThirdScreenSwitches;
 
     // Darkness per screen (Screen 2 is dark)
     bool screenIsDark[NUM_SCREENS] = { false, false, false,false };
-    bool partialDarkEnabled[NUM_SCREENS] = { false, false, false, false };
+    
 
-    int partialX1[NUM_SCREENS] = { -1, -1, -1, -1 };
-    int partialY1[NUM_SCREENS] = { -1, -1, -1, -1 };
-    int partialX2[NUM_SCREENS] = { -1, -1, -1, -1 };
-    int partialY2[NUM_SCREENS] = { -1, -1, -1, -1 };
+    struct PartialDarkZone {
+        int targetScreen;
+        int x1, y1, x2, y2;
+        Point switchPos;        // Point(-1,-1) => no switch
+        bool startEnabled = false;
+        bool enabled = false;
+        bool invertSwitch = false; 
+    };
 
-    // which switch controls it (per screen). (-1,-1) means none
-    Point partialDarkSwitchPos[NUM_SCREENS] = { Point(-1,-1), Point(-1,-1), Point(-1,-1), Point(-1,-1) };
 
-    // rectangle area
-    int darkX1 = 20, darkY1 = 1;
-    int darkX2 = 60, darkY2 = 10;
+
+    std::vector<PartialDarkZone> partialZones;
 
  
     
@@ -68,6 +70,11 @@ private:
     int legendY[NUM_SCREENS] = { -1, -1, -1, -1};   // Y position of 'L' anchor per screen
     bool loadingFailed = false;                   // True if screen loading failed
     std::string loadingError;                     // Error message if loading failed
+
+    void initPartialZones(); // defines ALL zones (and resets enabled=false)
+    void addPartialZone(ScreenId target, int x1, int y1, int x2, int y2,
+        const Point& switchPos, bool startEnabled, bool invertSwitch);
+
 
 public:
     Screens();
@@ -132,6 +139,7 @@ public:
     // Screen identity checks
     bool isFirstScreen() const { return (current == ScreenId::First); }
     bool isSecondScreen() const { return (current == ScreenId::Second); }
+    bool isThirdScreen() const { return (current == ScreenId::Third); }
     bool isFinalScreen() const { return (current == ScreenId::Final); }
 
     // ==========================================
@@ -155,7 +163,7 @@ public:
     void clearHint() const;
 
 
-    // --- Level 2 Specifics ---
+    // --- Level 3 Specifics ---
     void initThirdScreenSwitches();
 
 
