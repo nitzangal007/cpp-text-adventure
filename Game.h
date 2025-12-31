@@ -2,6 +2,7 @@
 
 #include <conio.h>
 #include <vector>
+#include <chrono>
 #include "Player.h"
 #include "Screens.h"
 #include "Menu.h"
@@ -51,6 +52,15 @@ class Game
     int lives = 6;              // Starting lives
     int score = 0;              // Cumulative score
     int levelStartTime = 0;     // Timestamp when level started (in seconds)
+    
+    // M-Trap timer state
+    std::chrono::steady_clock::time_point mTrapTimerStart;
+    bool mTrapVisible = true;   // Current visibility state
+    
+    // Pause duration tracking (for freezing timers)
+    std::chrono::steady_clock::time_point pauseStartTime;
+    long long accumulatedPauseMs = 0;  // Total pause duration in ms
+    long long accumulatedPauseSec = 0; // Total pause duration in seconds (for score)
 
 public:
     Game();
@@ -156,5 +166,18 @@ private:
     int getCurrentTimeSeconds() const;
 
     bool handleRiddleEncounter(Player& player, const Point& nextPos);
+
+    // ==========================================
+    // M-Trap Logic
+    // ==========================================
+    
+    // Update timer and check for visibility toggle
+    void updateMTrapTimer();
+    
+    // Query current visibility state
+    bool isMTrapVisible() const;
+    
+    // Check if player is standing on a visible M-trap (returns true if death)
+    bool checkMTrapDeath(const Player& player) const;
 
 };

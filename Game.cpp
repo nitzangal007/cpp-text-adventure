@@ -108,6 +108,14 @@ void Game::initGame() {
 	score = 0;
 	levelStartTime = getCurrentTimeSeconds();
 	
+	// Initialize M-trap timer
+	mTrapTimerStart = std::chrono::steady_clock::now();
+	mTrapVisible = true;
+	
+	// Reset pause tracking
+	accumulatedPauseMs = 0;
+	accumulatedPauseSec = 0;
+	
 	player1.draw();
 	player2.draw();
 	drawStatusBar();
@@ -134,6 +142,8 @@ void Game::runGame()
 				{
 					cls();
 					paused = true;
+					// Record when pause started (for timer freezing)
+					pauseStartTime = std::chrono::steady_clock::now();
 					printCentered("       Game Paused        ", 8);
 					printCentered("Press ESC to continue or H for Menu", 9);
 				}
@@ -162,6 +172,14 @@ void Game::runGame()
 			{
 				if (ch == ESC)
 				{
+					// Calculate pause duration and add to accumulators
+					auto now = std::chrono::steady_clock::now();
+					auto pauseDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
+						now - pauseStartTime
+					).count();
+					accumulatedPauseMs += pauseDuration;
+					accumulatedPauseSec += pauseDuration / 1000;
+					
 					paused = false;
 					cls();
 					render();
@@ -219,10 +237,12 @@ void Game::resetCurrentGame()
 	player1ReadyForNextScreen = false;
 	player2ReadyForNextScreen = false;
 	autoBombs.clear();
-
 	
-	
-
+	// Reset M-trap timer on level restart
+	mTrapTimerStart = std::chrono::steady_clock::now();
+	mTrapVisible = true;
+	accumulatedPauseMs = 0;
+	accumulatedPauseSec = 0;
 }
 
 	
@@ -233,6 +253,22 @@ void Game::resetCurrentGame()
 
 void Game::updateLogic()
 {
+	// ========================================
+	// M-Trap Timer Update (FIRST, before any movement)
+	// ========================================
+	bool wasVisible = mTrapVisible;
+	updateMTrapTimer();
+	
+	// Death check: M toggled from hidden to visible while player standing on M
+	if (!wasVisible && mTrapVisible)
+	{
+		if (checkMTrapDeath(player1) || checkMTrapDeath(player2))
+		{
+			resetCurrentGame();
+			return;
+		}
+	}
+	
 	// ========================================
 	// Spring Logic (process before normal movement)
 	// ========================================
@@ -252,6 +288,13 @@ void Game::updateLogic()
 		updatePlayerMovement(player1);
 	if (player2.getSpringState().mode == SpringMode::None)
 		updatePlayerMovement(player2);
+
+	// M-trap death check: Player walked onto visible M-trap
+	if (checkMTrapDeath(player1) || checkMTrapDeath(player2))
+	{
+		resetCurrentGame();
+		return;
+	}
 
 	if (!playerIsReadyForNextScreen(player1))
 		collectItemIfPossible(player1);
@@ -282,7 +325,7 @@ void Game::updateLogic()
 void Game::render()
 {
 	// Use torch-aware drawing for dark screen support
-	currentScreen.drawCurrentWithTorch(player1, player2);
+	currentScreen.drawCurrentWithTorch(player1, player2, mTrapVisible);
 	if (currentScreen.getCurrentScreen() != Screens::ScreenId::Final)
 	{
 		player1.draw();
@@ -450,6 +493,9 @@ void Game::updatePlayerMovement(Player& player)
 	{
 		player.stop();
 	}
+	
+	// M-trap death check: if player moved onto a visible M-trap, they die
+	// Note: This is called from updateLogic() which handles the reset
 }
 
 void Game::collectItemIfPossible(Player& player)
@@ -1020,7 +1066,9 @@ void Game::decrementLife()
 void Game::addLevelCompletionScore()
 {
 	// Time-based score (faster = more points)
-	int elapsedSeconds = getCurrentTimeSeconds() - levelStartTime;
+	// Subtract accumulated pause time to freeze timer during pause
+	int elapsedSeconds = getCurrentTimeSeconds() - levelStartTime - static_cast<int>(accumulatedPauseSec);
+	if (elapsedSeconds < 0) elapsedSeconds = 0;  // Safety check
 	int timeScore;
 	if (elapsedSeconds <= Score::TIER1_SECONDS)        // Under 1 minute
 		timeScore = Score::TIER1_POINTS;
@@ -1058,4 +1106,41 @@ int Game::getCurrentTimeSeconds() const
 	auto now = std::chrono::system_clock::now();
 	auto duration = now.time_since_epoch();
 	return static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(duration).count());
+}
+
+// ==========================================
+// M-Trap Logic
+// ==========================================
+
+void Game::updateMTrapTimer()
+{
+	auto now = std::chrono::steady_clock::now();
+	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+		now - mTrapTimerStart
+	).count();
+	
+	// Subtract accumulated pause time to freeze timer during pause
+	elapsed -= accumulatedPauseMs;
+	if (elapsed < 0) elapsed = 0;  // Safety check
+	
+	// Calculate position in cycle (0 to CYCLE_MS-1)
+	int cyclePos = static_cast<int>(elapsed % Timing::M_TRAP_CYCLE_MS);
+	
+	// Visible during first half of cycle
+	mTrapVisible = (cyclePos < Timing::M_TRAP_VISIBLE_MS);
+}
+
+bool Game::isMTrapVisible() const
+{
+	return mTrapVisible;
+}
+
+bool Game::checkMTrapDeath(const Player& player) const
+{
+	if (!mTrapVisible)
+		return false;
+	
+	const Point& pos = player.getPosition();
+	char cell = currentScreen.getCharAtPublic(pos);
+	return (cell == Tiles::M_TRAP);
 }

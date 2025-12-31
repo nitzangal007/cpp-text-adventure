@@ -19,6 +19,7 @@ namespace Tiles {
     constexpr char LEGEND_ANCHOR = 'L';
     constexpr char SPRING = '#';
     constexpr char DARKNESS_CHAR = ' ';  // Same as EMPTY_SPACE, used for unlit areas
+    constexpr char M_TRAP = 'M';         // Blinking death trap
 }
 
 // ==========================================
@@ -49,6 +50,11 @@ namespace Timing {
     constexpr int AUTO_BOMB_DELAY_TICKS = 21;   // Ticks for auto-bomb timer
     constexpr int BOMB_BLINK_THRESHOLD = 5;     // Start blinking at this many ticks
     constexpr int AUTO_BOMB_BLINK_THRESHOLD = 18;
+    
+    // M-Trap blink timing (in milliseconds)
+    constexpr int M_TRAP_VISIBLE_MS = 1200;     // M visible for 3 seconds
+    constexpr int M_TRAP_HIDDEN_MS = 1200;      // M hidden for 3 seconds
+    constexpr int M_TRAP_CYCLE_MS = M_TRAP_VISIBLE_MS + M_TRAP_HIDDEN_MS;
 }
 
 // ==========================================

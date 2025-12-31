@@ -210,7 +210,7 @@ void Screens::drawCurrent() const
 	}
 }
 
-void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
+void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2, bool mTrapVisible) const
 {
 	const int screenIndex = static_cast<int>(current);
 	const bool dark = screenIsDark[screenIndex];
@@ -270,12 +270,20 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 				const bool inPartial = isInPartialZone(x, y);
 				const bool darkZone = (dark || inPartial);
 
+				// M-trap visibility logic: when hidden, show as floor
+				if (cell == M_TRAP && !mTrapVisible)
+					cell = EMPTY_SPACE;
 				
 				// Bug #2 fix: Hide compressed spring segments
 				if (cell == SPRING && !shouldDrawSpringChar(Point(x, y), p1, p2))
 					cell = EMPTY_SPACE;
 
-				if (darkZone && !isIlluminated(x, y, p1, p2) && cell != TORCH)
+				// M-trap is ALWAYS visible when mTrapVisible is true (ignores darkness)
+				if (cell == M_TRAP && mTrapVisible)
+				{
+					line += M_TRAP;
+				}
+				else if (darkZone && !isIlluminated(x, y, p1, p2) && cell != TORCH)
 					line += DARKNESS_CHAR;
 				else
 					line += cell;
@@ -303,6 +311,10 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 			const bool inPartial = isInPartialZone(x, y);
 			const bool darkZone = (dark || inPartial);
 
+			// M-trap visibility logic: when hidden, show as floor
+			if (cell == M_TRAP && !mTrapVisible)
+				cell = EMPTY_SPACE;
+
 			// Bug #2 fix: Hide compressed spring segments
 			if (cell == SPRING && !shouldDrawSpringChar(Point(x, y), p1, p2))
 				cell = EMPTY_SPACE;
@@ -310,7 +322,13 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2) const
 			char displayChar;
 			ConsoleColor charColor;
 
-			if (darkZone && !isIlluminated(x, y, p1, p2) && cell != TORCH)
+			// M-trap is ALWAYS visible when mTrapVisible is true (ignores darkness)
+			if (cell == M_TRAP && mTrapVisible)
+			{
+				displayChar = M_TRAP;
+				charColor = getColorForChar(M_TRAP);
+			}
+			else if (darkZone && !isIlluminated(x, y, p1, p2) && cell != TORCH)
 			{
 				displayChar = DARKNESS_CHAR;
 				charColor = ConsoleColor::Default;
@@ -430,6 +448,14 @@ bool Screens::isHint(const Point& p) const {
 bool Screens::isunbreakable_wall(const Point& p) const
 {
 	return (getCharAt(p) == UNBREAKABLE_WALL);
+}
+bool Screens::isMTrap(const Point& p) const
+{
+	return (getCharAt(p) == M_TRAP);
+}
+char Screens::getCharAtPublic(const Point& p) const
+{
+	return getCharAt(p);
 }
 
 bool Screens::isFreeCellForPlayer(const Point& p) const

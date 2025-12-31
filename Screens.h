@@ -101,7 +101,8 @@ public:
     void drawCurrent() const;
     
     // Draw with torch illumination (for dark screens)
-    void drawCurrentWithTorch(const Player& p1, const Player& p2) const;
+    // mTrapVisible controls whether 'M' tiles are shown or hidden
+    void drawCurrentWithTorch(const Player& p1, const Player& p2, bool mTrapVisible) const;
     
     // Check if screen is dark
     bool isDarkScreen() const;
@@ -136,6 +137,10 @@ public:
     bool isRiddle(const Point& p) const;
     bool isHint(const Point& p) const;
     bool isunbreakable_wall(const Point& p) const;
+    bool isMTrap(const Point& p) const;
+    
+    // Public board access (for M-trap death check)
+    char getCharAtPublic(const Point& p) const;
 
     // Checks if a cell is walkable (not wall/obstacle/door)
     bool isFreeCellForPlayer(const Point& p) const;
