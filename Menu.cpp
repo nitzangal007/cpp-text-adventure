@@ -3,8 +3,7 @@
 #include "ColorUtils.h"
 #include <conio.h>
 #include <iostream>
-#include <windows.h> 
-#include <cstdlib>
+#include <windows.h>
 
 
 void Menu::displayMenu() {
@@ -46,8 +45,8 @@ Options Menu::getUserChoice() {
 
         cls();
         printCentered("Invalid choice. Please try again.", 12);
-        std::cout << std::endl << std::endl;
-        system("pause");
+        printCentered("Press any key...", 14);
+        _getch();
         return INVALID;
     }
 }

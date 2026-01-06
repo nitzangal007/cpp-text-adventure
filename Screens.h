@@ -45,6 +45,14 @@ private:
     // Level 3 Data (now using Switch class)
     std::vector<Switch> ThirdScreenSwitches;
 
+    // M-Trap cluster tracking (for size-based behavior)
+    struct MCluster {
+        std::vector<Point> positions;  // All positions in this cluster
+        int size() const { return static_cast<int>(positions.size()); }
+        bool isDeadly() const { return size() > 1; }  // Size > 1 kills, size 1 blocks
+    };
+    std::vector<MCluster> mClusters[NUM_SCREENS];  // Clusters per screen
+
     // Darkness per screen (Screen 2 is dark)
     bool screenIsDark[NUM_SCREENS] = { false, false, false,false };
     
@@ -215,6 +223,19 @@ public:
 
     void resetRiddlesForCurrentScreen();
 
+    // ==========================================
+    // M-Trap Cluster Logic
+    // ==========================================
+    
+    // Initialize M clusters for all screens (call after loading screens)
+    void initMClusters();
+    
+    // Get the size of the M cluster at position p (0 if not an M tile)
+    int getMClusterSize(const Point& p) const;
+    
+    // Check if M at position is deadly (size > 1) or just blocking (size 1)
+    bool isMTrapDeadly(const Point& p) const;
+
 private:
     // ==========================================
     // Internal Helpers
@@ -254,7 +275,10 @@ private:
                           Point& outAnchorWall, Direction& outPushDir, Direction& outReleaseDir);
 
     void initRiddles();
+    bool loadRiddlesFromFile(const std::string& filename);
+
+    // M cluster scanning helper
+    void scanMClustersForScreen(int screenIndex);
 
 	
-
 };

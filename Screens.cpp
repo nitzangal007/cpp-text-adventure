@@ -148,12 +148,10 @@ void Screens::init()
 	initSprings();
 
 	initRiddles();
-
 	
-	
+	// Step 6: Scan M clusters for size-based behavior
+	initMClusters();
 
-
-	 
 	current = ScreenId::First;
 }
 
@@ -241,6 +239,7 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2, bool mTra
 			{
 				if (z.targetScreen != screenIndex) continue;
 
+
 				if (x < z.x1 || x > z.x2 || y < z.y1 || y > z.y2)
 					continue;
 
@@ -270,20 +269,37 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2, bool mTra
 				const bool inPartial = isInPartialZone(x, y);
 				const bool darkZone = (dark || inPartial);
 
-				// M-trap visibility logic: when hidden, show as floor
+				// M-trap visibility logic:
+				// - Size 1: always visible (blocking)
+				// - Size > 1: blinks based on mTrapVisible (deadly when visible)
 				if (cell == M_TRAP && !mTrapVisible)
-					cell = EMPTY_SPACE;
+				{
+					int clusterSize = getMClusterSize(Point(x, y));
+					if (clusterSize > 1)
+						cell = EMPTY_SPACE;  // Only hide deadly M when not visible
+					// Size-1 M stays visible (doesn't blink)
+				}
 				
 				// Bug #2 fix: Hide compressed spring segments
 				if (cell == SPRING && !shouldDrawSpringChar(Point(x, y), p1, p2))
 					cell = EMPTY_SPACE;
 
-				// M-trap is ALWAYS visible when mTrapVisible is true (ignores darkness)
-				if (cell == M_TRAP && mTrapVisible)
+				// M-trap visibility in darkness:
+				// - Size > 1: ignores darkness (always visible when blinking on)
+				// - Size 1: follows normal darkness rules
+				if (cell == M_TRAP)
 				{
-					line += M_TRAP;
+					int clusterSize = getMClusterSize(Point(x, y));
+					if (clusterSize > 1)
+					{
+						// Deadly M ignores darkness
+						line += M_TRAP;
+						continue;
+					}
+					// Size-1 M falls through to normal darkness handling
 				}
-				else if (darkZone && !isIlluminated(x, y, p1, p2) && cell != TORCH)
+				
+				if (darkZone && !isIlluminated(x, y, p1, p2) && cell != TORCH)
 					line += DARKNESS_CHAR;
 				else
 					line += cell;
@@ -311,9 +327,16 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2, bool mTra
 			const bool inPartial = isInPartialZone(x, y);
 			const bool darkZone = (dark || inPartial);
 
-			// M-trap visibility logic: when hidden, show as floor
+			// M-trap visibility logic:
+			// - Size 1: always visible (blocking)
+			// - Size > 1: blinks based on mTrapVisible (deadly when visible)
 			if (cell == M_TRAP && !mTrapVisible)
-				cell = EMPTY_SPACE;
+			{
+				int clusterSize = getMClusterSize(Point(x, y));
+				if (clusterSize > 1)
+					cell = EMPTY_SPACE;  // Only hide deadly M when not visible
+				// Size-1 M stays visible (doesn't blink)
+			}
 
 			// Bug #2 fix: Hide compressed spring segments
 			if (cell == SPRING && !shouldDrawSpringChar(Point(x, y), p1, p2))
@@ -322,11 +345,29 @@ void Screens::drawCurrentWithTorch(const Player& p1, const Player& p2, bool mTra
 			char displayChar;
 			ConsoleColor charColor;
 
-			// M-trap is ALWAYS visible when mTrapVisible is true (ignores darkness)
-			if (cell == M_TRAP && mTrapVisible)
+			// M-trap visibility in darkness:
+			// - Size > 1: ignores darkness (always visible when blinking on) - RED
+			// - Size 1: follows normal darkness rules - GRAY
+			if (cell == M_TRAP)
 			{
-				displayChar = M_TRAP;
-				charColor = getColorForChar(M_TRAP);
+				int clusterSize = getMClusterSize(Point(x, y));
+				if (clusterSize > 1)
+				{
+					// Deadly M ignores darkness
+					displayChar = M_TRAP;
+					charColor = ConsoleColor::BrightRed;
+				}
+				else if (darkZone && !isIlluminated(x, y, p1, p2))
+				{
+					// Size-1 M follows darkness rules
+					displayChar = DARKNESS_CHAR;
+					charColor = ConsoleColor::Default;
+				}
+				else
+				{
+					displayChar = M_TRAP;
+					charColor = ConsoleColor::Gray;
+				}
 			}
 			else if (darkZone && !isIlluminated(x, y, p1, p2) && cell != TORCH)
 			{
@@ -506,7 +547,12 @@ void Screens::updateSwitchStates(const Player& p1, const Player& p2)
 
 	for (auto& s : *switches)
 	{
-		const bool on = (p1.getPosition() == s.position || p2.getPosition() == s.position);
+		// Check if player OR obstacle is on the switch
+		bool playerOn = (p1.getPosition() == s.position || p2.getPosition() == s.position);
+		bool obstacleOn = isObstacle(s.position);  // Check if obstacle is on switch
+		
+		// For non-permanent switches, either player or obstacle can hold it down
+		bool on = playerOn || obstacleOn;
 
 		s.update(on, setCharAtLambda);
 
@@ -702,28 +748,67 @@ void Screens::initSecondScreenSwitches()
 void Screens::initThirdScreenSwitches()
 {
 	ThirdScreenSwitches.clear();
+	
+
+	// Example Switch 1: Near position (69, 5)
 	{
 		Switch s;
-		s.position = Point(69, 5);
+		s.position = Point(69, 5);  // Switch location
+		s.isPermanent = true;
+		s.oneTime = true;
+		s.bitIndex = -1;
+		
+		
+		ThirdScreenSwitches.push_back(s);
+	}
+	
+
+	{
+		Switch s;
+		s.position = Point(37, 12);  // Switch location
 		s.isPermanent = true;
 		s.oneTime = true;
 		s.bitIndex = -1;
 
 		ThirdScreenSwitches.push_back(s);
 	}
+	
 	{
-		;
 		Switch s;
-		s.position = Point(37, 12);
+		s.position = Point(48, 11);  // Backslash position on file line 12
+		s.isPermanent = true;
+		s.oneTime = true;
+		s.bitIndex = -1;
+		// The 4 B bombs in 2x2 formation
+		s.autobombs.push_back(Point(40, 10));  // Top row
+		s.autobombs.push_back(Point(41, 10)); 
+		s.autobombs.push_back(Point(40, 11));  // Bottom row
+		s.autobombs.push_back(Point(41, 11));  
+		ThirdScreenSwitches.push_back(s);
+	}
+	{
+		Switch s;
+		s.position = Point(23, 6);  // Switch location
+		s.isPermanent = false;
+		s.oneTime = false;
+		s.bitIndex = -1;
+		
+		s.affectedMTraps.push_back(Point(25, 12));
+
+		ThirdScreenSwitches.push_back(s);
+	} 
+	{
+		Switch s;
+		s.position = Point(28, 13);  // Switch location
 		s.isPermanent = true;
 		s.oneTime = true;
 		s.bitIndex = -1;
 
+		s.affectedMTraps.push_back(Point(37, 12));
+
 		ThirdScreenSwitches.push_back(s);
 	}
-
-
-
+	
 }
 	
 
@@ -732,42 +817,134 @@ void Screens::initThirdScreenSwitches()
 
 void Screens::initRiddles()
 {
+	// Clear any existing riddles from all screens
+	for (int i = 0; i < NUM_SCREENS; ++i)
+		riddlesByScreen[i].clear();
 	
-	// ????? � ???? ??????
-	addRiddle(ScreenId::Third,
-		Riddle(
-			Point(22, 2),
-			"What is 2+2?",
-			std::array<std::string, 4>{"3", "4", "5", "22"},
-			1
-		)
-	);
+	// Load riddles from file (file is optional - game works without riddles)
+	loadRiddlesFromFile("riddles.txt");
+}
 
-	addRiddle(ScreenId::Third,
-		Riddle(
-			Point(56, 2),
-			"Which key drops a bomb for Player 1?",
-			std::array<std::string, 4>{"E", "O", "R", "H"},
-			0
-		)
-	);
+// ==========================================
+// Riddles File Loading
+// ==========================================
+// Format: SCREEN|X,Y|question|opt1,opt2,opt3,opt4|correctIndex
+// Lines starting with '#' are comments, empty lines are ignored
+
+bool Screens::loadRiddlesFromFile(const std::string& filename)
+{
+	std::ifstream file(filename);
+	if (!file.is_open())
+	{
+		// Riddles file is optional - continue without riddles
+		return false;
+	}
+	
+	std::string line;
+	
+	while (std::getline(file, line))
+	{
+		// Skip empty lines
+		if (line.empty())
+			continue;
+		
+		// Trim leading whitespace
+		size_t start = line.find_first_not_of(" \t\r\n");
+		if (start == std::string::npos)
+			continue;
+		line = line.substr(start);
+		
+		// Skip comments
+		if (line[0] == '#')
+			continue;
+		
+		// Parse: SCREEN|X,Y|question|opt1,opt2,opt3,opt4|correctIndex
+		// Split by '|' delimiter
+		std::vector<std::string> parts;
+		size_t pos = 0;
+		while ((pos = line.find('|')) != std::string::npos)
+		{
+			parts.push_back(line.substr(0, pos));
+			line.erase(0, pos + 1);
+		}
+		parts.push_back(line);  // Last part (correctIndex)
+		
+		// Validate we have 5 parts
+		if (parts.size() != 5)
+			continue;
+		
+		// Parse screen number (1-3)
+		int screenNum = 0;
+		try { screenNum = std::stoi(parts[0]); }
+		catch (...) { continue; }
+		
+		if (screenNum < 1 || screenNum > 3)
+			continue;
+		
+		ScreenId screenId = static_cast<ScreenId>(screenNum - 1);
+		
+		// Parse X,Y position
+		size_t commaPos = parts[1].find(',');
+		if (commaPos == std::string::npos)
+			continue;
+		
+		int x = 0, y = 0;
+		try
+		{
+			x = std::stoi(parts[1].substr(0, commaPos));
+			y = std::stoi(parts[1].substr(commaPos + 1));
+		}
+		catch (...) { continue; }
+		
+		// Parse question
+		std::string question = parts[2];
+		
+		// Parse options (comma-separated)
+		std::array<std::string, 4> options;
+		std::string optStr = parts[3];
+		int optIndex = 0;
+		while ((pos = optStr.find(',')) != std::string::npos && optIndex < 4)
+		{
+			options[optIndex++] = optStr.substr(0, pos);
+			optStr.erase(0, pos + 1);
+		}
+		if (optIndex < 4)
+			options[optIndex] = optStr;
+		
+		// Parse correct index
+		int correctIndex = 0;
+		try { correctIndex = std::stoi(parts[4]); }
+		catch (...) { continue; }
+		
+		if (correctIndex < 0 || correctIndex > 3)
+			continue;
+		
+		// Create and add riddle
+		addRiddle(screenId, Riddle(Point(x, y), question, options, correctIndex));
+	}
+	
+	return true;
 }
 
 
 void Screens::printHint() const
 {
-	if (!isSecondScreen())
-		return;
-	gotoxy(25, 22);
-	std::cout << "Hint: The door password is shown but in decimal";
+	if (isSecondScreen())
+	{
+		gotoxy(0, 23);
+		std::cout << "Hint: The door password is shown but in decimal";
+	}
+	// Note: Screen 3 hints are handled in Game.cpp render() 
+	// to check specific position (8,11) for puzzle hint
 }
 
 void Screens::clearHint() const
 {
-	if (!isSecondScreen())
-		return;
-	gotoxy(40, 22);
-	std::cout << "                                                          ";
+	if (isSecondScreen() || isThirdScreen())
+	{
+		gotoxy(0, 23);
+		std::cout << "                                                          ";
+	}
 }
 
 // ==========================================
@@ -1562,3 +1739,87 @@ void Screens::initPartialZones()
 	
 }
 
+// ==========================================
+// M-Trap Cluster Logic
+// ==========================================
+
+void Screens::initMClusters()
+{
+	for (int i = 0; i < NUM_SCREENS; ++i)
+	{
+		mClusters[i].clear();
+		scanMClustersForScreen(i);
+	}
+}
+
+void Screens::scanMClustersForScreen(int screenIndex)
+{
+	bool visited[MAX_Y][MAX_X] = { false };
+	
+	for (int y = 0; y < MAX_Y; ++y)
+	{
+		for (int x = 0; x < MAX_X; ++x)
+		{
+			if (boards[screenIndex][y][x] == M_TRAP && !visited[y][x])
+			{
+				// Found unvisited M - flood fill to find cluster
+				MCluster cluster;
+				std::vector<Point> stack;
+				stack.push_back(Point(x, y));
+				
+				while (!stack.empty())
+				{
+					Point p = stack.back();
+					stack.pop_back();
+					
+					int px = p.getX();
+					int py = p.getY();
+					
+					if (px < 0 || px >= MAX_X || py < 0 || py >= MAX_Y)
+						continue;
+					if (visited[py][px])
+						continue;
+					if (boards[screenIndex][py][px] != M_TRAP)
+						continue;
+					
+					visited[py][px] = true;
+					cluster.positions.push_back(Point(px, py));
+					
+					// Add 4-connected neighbors
+					stack.push_back(Point(px + 1, py));
+					stack.push_back(Point(px - 1, py));
+					stack.push_back(Point(px, py + 1));
+					stack.push_back(Point(px, py - 1));
+				}
+				
+				if (!cluster.positions.empty())
+				{
+					mClusters[screenIndex].push_back(cluster);
+				}
+			}
+		}
+	}
+}
+
+int Screens::getMClusterSize(const Point& p) const
+{
+	int screenIndex = static_cast<int>(current);
+	
+	for (const auto& cluster : mClusters[screenIndex])
+	{
+		for (const auto& pos : cluster.positions)
+		{
+			if (pos.getX() == p.getX() && pos.getY() == p.getY())
+			{
+				return cluster.size();
+			}
+		}
+	}
+	return 0;  // Not an M tile
+}
+
+bool Screens::isMTrapDeadly(const Point& p) const
+{
+	int size = getMClusterSize(p);
+	return size > 1;  // Size > 1 is deadly, size 1 just blocks
+}

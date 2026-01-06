@@ -9,6 +9,7 @@
 #include "Bomb.h"
 #include "AutoBomb.h"
 #include "Riddle.h"
+#include "Room3Boss.h"
 
 // What should happen when the game loop exits
 enum class GameResult { BackToMenu, QuitProgram };
@@ -61,6 +62,13 @@ class Game
     std::chrono::steady_clock::time_point pauseStartTime;
     long long accumulatedPauseMs = 0;  // Total pause duration in ms
     long long accumulatedPauseSec = 0; // Total pause duration in seconds (for score)
+
+    // Room 3 Boss
+    Room3Boss room3Boss;
+
+    // Story overlay flags (reset only on new game, not on death)
+    bool shownStory1 = false;
+    bool shownStory2 = false;
 
 public:
     Game();
@@ -179,5 +187,12 @@ private:
     
     // Check if player is standing on a visible M-trap (returns true if death)
     bool checkMTrapDeath(const Player& player) const;
+
+    // ==========================================
+    // Story Overlay System
+    // ==========================================
+    
+    // Display a story message overlay (waits for keypress)
+    void showStoryOverlay(int storyNumber);
 
 };
