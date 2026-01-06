@@ -6,7 +6,9 @@
 // ==========================================
 // Provides optional colored rendering for the game.
 // When g_colorsEnabled is false, all color functions are no-ops.
-
+//
+//We used chatGpt to help us design the state machine and overall structure of this class. 
+//
 // Global toggle for colored rendering (default: OFF for backward compatibility)
 extern bool g_colorsEnabled;
 

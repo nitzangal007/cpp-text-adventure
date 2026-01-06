@@ -19,6 +19,7 @@ public:
     Point position;
     std::vector<Point> affectedWalls;   // Walls to remove when active
     std::vector<Point> addWhenActive;   // Walls to add when active
+    std::vector<Point> affectedMTraps;  // M traps to remove when active
     std::vector<Point> autobombs;       // Auto-bombs to trigger when activated
     bool isPermanent = false;           // If true, state persists after stepping off
     bool oneTime = false;               // If true, can only activate once
@@ -161,6 +162,10 @@ void Switch::applyEffect(bool activate, BoardModifier setCharAt)
         for (const Point& w : affectedWalls)
             setCharAt(w, Tiles::EMPTY_SPACE);
         
+        // Remove affected M traps
+        for (const Point& m : affectedMTraps)
+            setCharAt(m, Tiles::EMPTY_SPACE);
+        
         // Add walls when active
         for (const Point& w : addWhenActive)
             setCharAt(w, Tiles::WALL);
@@ -170,6 +175,10 @@ void Switch::applyEffect(bool activate, BoardModifier setCharAt)
         // Restore affected walls
         for (const Point& w : affectedWalls)
             setCharAt(w, Tiles::WALL);
+        
+        // Restore affected M traps
+        for (const Point& m : affectedMTraps)
+            setCharAt(m, Tiles::M_TRAP);
         
         // Remove added walls
         for (const Point& w : addWhenActive)

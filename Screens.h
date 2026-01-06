@@ -45,6 +45,14 @@ private:
     // Level 3 Data (now using Switch class)
     std::vector<Switch> ThirdScreenSwitches;
 
+    // M-Trap cluster tracking (for size-based behavior)
+    struct MCluster {
+        std::vector<Point> positions;  // All positions in this cluster
+        int size() const { return static_cast<int>(positions.size()); }
+        bool isDeadly() const { return size() > 1; }  // Size > 1 kills, size 1 blocks
+    };
+    std::vector<MCluster> mClusters[NUM_SCREENS];  // Clusters per screen
+
     // Darkness per screen (Screen 2 is dark)
     bool screenIsDark[NUM_SCREENS] = { false, false, false,false };
     
@@ -101,7 +109,8 @@ public:
     void drawCurrent() const;
     
     // Draw with torch illumination (for dark screens)
-    void drawCurrentWithTorch(const Player& p1, const Player& p2) const;
+    // mTrapVisible controls whether 'M' tiles are shown or hidden
+    void drawCurrentWithTorch(const Player& p1, const Player& p2, bool mTrapVisible) const;
     
     // Check if screen is dark
     bool isDarkScreen() const;
@@ -136,6 +145,10 @@ public:
     bool isRiddle(const Point& p) const;
     bool isHint(const Point& p) const;
     bool isunbreakable_wall(const Point& p) const;
+    bool isMTrap(const Point& p) const;
+    
+    // Public board access (for M-trap death check)
+    char getCharAtPublic(const Point& p) const;
 
     // Checks if a cell is walkable (not wall/obstacle/door)
     bool isFreeCellForPlayer(const Point& p) const;
@@ -210,6 +223,19 @@ public:
 
     void resetRiddlesForCurrentScreen();
 
+    // ==========================================
+    // M-Trap Cluster Logic
+    // ==========================================
+    
+    // Initialize M clusters for all screens (call after loading screens)
+    void initMClusters();
+    
+    // Get the size of the M cluster at position p (0 if not an M tile)
+    int getMClusterSize(const Point& p) const;
+    
+    // Check if M at position is deadly (size > 1) or just blocking (size 1)
+    bool isMTrapDeadly(const Point& p) const;
+
 private:
     // ==========================================
     // Internal Helpers
@@ -249,7 +275,10 @@ private:
                           Point& outAnchorWall, Direction& outPushDir, Direction& outReleaseDir);
 
     void initRiddles();
+    bool loadRiddlesFromFile(const std::string& filename);
+
+    // M cluster scanning helper
+    void scanMClustersForScreen(int screenIndex);
 
 	
-
 };

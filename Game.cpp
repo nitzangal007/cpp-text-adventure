@@ -35,8 +35,8 @@ Game::Game()
 	exits[2] = ExitInfo{
 		Screens::ScreenId::Third,
 		Screens::ScreenId::Final,
-		Point(38, 13),
-		Point(38, 13),
+		Point(41, 20),
+		Point(41, 20),
 		Point(),
 		Point()
 	};
@@ -75,10 +75,8 @@ void Game::run()
 
 void Game::initGame() {
 	cls();
-	player1Start = Point(36, 2, 0, 0, Players::PLAYER1_SYMBOL);
-	player2Start = Point(43, 2, 0, 0, Players::PLAYER2_SYMBOL);
-	//player1Start = Point(5, 2, 0, 0, Players::PLAYER1_SYMBOL);
-	//player2Start = Point(9, 2, 0, 0, Players::PLAYER2_SYMBOL);
+	player1Start = Point(5, 2, 0, 0, Players::PLAYER1_SYMBOL);
+	player2Start = Point(9, 2, 0, 0, Players::PLAYER2_SYMBOL);
 	currentScreen.init();
 	
 	// Check if screen loading failed
@@ -97,20 +95,43 @@ void Game::initGame() {
 		return;
 	}
 	
-	currentScreen.setCurrentScreen(Screens::ScreenId::Third);
-	//currentScreen.setCurrentScreen(Screens::ScreenId::First);
+	currentScreen.setCurrentScreen(Screens::ScreenId::First);
 	player1.reset(player1Start);
 	player2.reset(player2Start);
 	bomb = Bomb();
+	
+	// Initialize Room 3 Boss if starting on Room 3
+	if (currentScreen.isThirdScreen()) {
+		room3Boss.init();
+	}
 	
 	// Reset lives & score for new game
 	lives = Lives::STARTING_LIVES;
 	score = 0;
 	levelStartTime = getCurrentTimeSeconds();
 	
+	// Initialize M-trap timer
+	mTrapTimerStart = std::chrono::steady_clock::now();
+	mTrapVisible = true;
+	
+	// Reset pause tracking
+	accumulatedPauseMs = 0;
+	accumulatedPauseSec = 0;
+	
+	// Reset story flags for new game
+	shownStory1 = false;
+	shownStory2 = false;
+	
 	player1.draw();
 	player2.draw();
 	drawStatusBar();
+	
+	// Show STORY_1 at start of game (only once)
+	if (!shownStory1) {
+		render();
+		showStoryOverlay(1);
+		shownStory1 = true;
+	}
 }
 
 void Game::runGame()
@@ -130,10 +151,39 @@ void Game::runGame()
 
 			if (!paused)
 			{
+				// ========================================
+				// Room 3 Boss Input Handling
+				// ========================================
+				if (currentScreen.isThirdScreen() && room3Boss.isActive())
+				{
+					// Handle V submission and other boss input
+					if (room3Boss.handleInput(ch, currentScreen, player1, player2))
+					{
+						// Apply any pending penalties
+						if (room3Boss.getLifePenalty() > 0) {
+							lives -= room3Boss.getLifePenalty();
+							if (lives <= 0) {
+								lives = 0;
+								showGameOverScreen();
+								gameOver = true;
+								return;
+							}
+						}
+						if (room3Boss.getScorePenalty() > 0) {
+							score = (score >= room3Boss.getScorePenalty()) 
+								? score - room3Boss.getScorePenalty() : 0;
+						}
+						room3Boss.clearPenalties();
+						continue;
+					}
+				}
+				
 				if (ch == ESC)
 				{
 					cls();
 					paused = true;
+					// Record when pause started (for timer freezing)
+					pauseStartTime = std::chrono::steady_clock::now();
 					printCentered("       Game Paused        ", 8);
 					printCentered("Press ESC to continue or H for Menu", 9);
 				}
@@ -150,7 +200,13 @@ void Game::runGame()
 						tryPlaceBomb(player2);
 				}
 				else if (ch == 'R' || ch == 'r') {
-					resetCurrentGame();
+					// Disable R during active boss fight
+					if (currentScreen.isThirdScreen() && room3Boss.isRestartDisabled()) {
+						// R is disabled during boss - do nothing
+					}
+					else {
+						resetCurrentGame();
+					}
 				}
 				else
 				{
@@ -162,6 +218,14 @@ void Game::runGame()
 			{
 				if (ch == ESC)
 				{
+					// Calculate pause duration and add to accumulators
+					auto now = std::chrono::steady_clock::now();
+					auto pauseDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
+						now - pauseStartTime
+					).count();
+					accumulatedPauseMs += pauseDuration;
+					accumulatedPauseSec += pauseDuration / 1000;
+					
 					paused = false;
 					cls();
 					render();
@@ -219,10 +283,12 @@ void Game::resetCurrentGame()
 	player1ReadyForNextScreen = false;
 	player2ReadyForNextScreen = false;
 	autoBombs.clear();
-
 	
-	
-
+	// Reset M-trap timer on level restart
+	mTrapTimerStart = std::chrono::steady_clock::now();
+	mTrapVisible = true;
+	accumulatedPauseMs = 0;
+	accumulatedPauseSec = 0;
 }
 
 	
@@ -233,6 +299,22 @@ void Game::resetCurrentGame()
 
 void Game::updateLogic()
 {
+	// ========================================
+	// M-Trap Timer Update (FIRST, before any movement)
+	// ========================================
+	bool wasVisible = mTrapVisible;
+	updateMTrapTimer();
+	
+	// Death check: M toggled from hidden to visible while player standing on M
+	if (!wasVisible && mTrapVisible)
+	{
+		if (checkMTrapDeath(player1) || checkMTrapDeath(player2))
+		{
+			resetCurrentGame();
+			return;
+		}
+	}
+	
 	// ========================================
 	// Spring Logic (process before normal movement)
 	// ========================================
@@ -252,6 +334,13 @@ void Game::updateLogic()
 		updatePlayerMovement(player1);
 	if (player2.getSpringState().mode == SpringMode::None)
 		updatePlayerMovement(player2);
+
+	// M-trap death check: Player walked onto visible M-trap
+	if (checkMTrapDeath(player1) || checkMTrapDeath(player2))
+	{
+		resetCurrentGame();
+		return;
+	}
 
 	if (!playerIsReadyForNextScreen(player1))
 		collectItemIfPossible(player1);
@@ -276,18 +365,117 @@ void Game::updateLogic()
 			explodeBomb();
 		}
 	}
+	
+	// ========================================
+	// Room 3 Boss Update
+	// ========================================
+	if (currentScreen.isThirdScreen() && room3Boss.isActive())
+	{
+		// Check if player stepped on a 'B' bomb tile during TaskRunning
+		if (room3Boss.getState() == BossState::TaskRunning)
+		{
+			Point p1Pos = player1.getPosition();
+			Point p2Pos = player2.getPosition();
+			
+			// Check if either player is on a bomb tile
+			if (currentScreen.getCharAtPublic(p1Pos) == AUTO_BOMB ||
+				currentScreen.getCharAtPublic(p2Pos) == AUTO_BOMB)
+			{
+				room3Boss.onBombStepped(currentScreen, player1, player2);
+				
+				// Apply penalties
+				if (room3Boss.getLifePenalty() > 0) {
+					lives -= room3Boss.getLifePenalty();
+					if (lives <= 0) {
+						lives = 0;
+						showGameOverScreen();
+						gameOver = true;
+						return;
+					}
+				}
+				if (room3Boss.getScorePenalty() > 0) {
+					score = (score >= room3Boss.getScorePenalty()) 
+						? score - room3Boss.getScorePenalty() : 0;
+				}
+				room3Boss.clearPenalties();
+				return;
+			}
+		}
+		
+		// Regular boss update
+		room3Boss.update(currentScreen, player1, player2);
+		
+		// Apply any penalties generated during update (e.g., timeout)
+		if (room3Boss.getLifePenalty() > 0) {
+			lives -= room3Boss.getLifePenalty();
+			if (lives <= 0) {
+				lives = 0;
+				showGameOverScreen();
+				gameOver = true;
+				return;
+			}
+		}
+		if (room3Boss.getScorePenalty() > 0) {
+			score = (score >= room3Boss.getScorePenalty()) 
+				? score - room3Boss.getScorePenalty() : 0;
+		}
+		room3Boss.clearPenalties();
+	}
+	
 	tryAdvanceToNextScreen();
 }
 
 void Game::render()
 {
 	// Use torch-aware drawing for dark screen support
-	currentScreen.drawCurrentWithTorch(player1, player2);
+	currentScreen.drawCurrentWithTorch(player1, player2, mTrapVisible);
 	if (currentScreen.getCurrentScreen() != Screens::ScreenId::Final)
 	{
 		player1.draw();
 		player2.draw();
-		drawStatusBar();
+		
+		// ========================================
+		// Room 3 Boss Rendering
+		// ========================================
+		if (currentScreen.isThirdScreen() && room3Boss.isActive())
+		{
+			// Draw boss overlays (countdown)
+			room3Boss.drawOverlay();
+			
+			// Draw task bar instead of normal status bar during task
+			if (room3Boss.getState() == BossState::TaskRunning || 
+				room3Boss.getState() == BossState::Victory)
+			{
+				room3Boss.drawTaskBar(currentScreen.getLegendY());
+				
+				// Also show lives/score on a separate line
+				int legendStart = currentScreen.getLegendY();
+				gotoxy(0, legendStart + 2);
+				std::cout << "Lives:" << lives << "  Score:" << score << "          ";
+			}
+			else
+			{
+				drawStatusBar();
+			}
+			
+			// Boss bomb blinking (last 10 seconds) - hide all B tiles when not visible
+			if (room3Boss.shouldBombsBlink() && !room3Boss.areBombsCurrentlyVisible())
+			{
+				// Hide all 'B' tiles by overwriting with space
+				for (int y = 0; y < Screen::MAX_Y; ++y) {
+					for (int x = 0; x < Screen::MAX_X; ++x) {
+						if (currentScreen.getCharAtPublic(Point(x, y)) == AUTO_BOMB) {
+							gotoxy(x, y);
+							std::cout << ' ';
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			drawStatusBar();
+		}
 
 		// Bomb blinking animation (using Bomb class)
 		if (bomb.shouldBlinkOff()) {
@@ -306,13 +494,44 @@ void Game::render()
 		const Point& p1Pos = player1.getPosition();
 		const Point& p2Pos = player2.getPosition();
 
-		if (currentScreen.isHint(p1Pos) || currentScreen.isHint(p2Pos))
+		// Skip hint display during boss task running (would overwrite task bar)
+		bool bossTaskActive = currentScreen.isThirdScreen() && room3Boss.isActive() &&
+			(room3Boss.getState() == BossState::TaskRunning || room3Boss.getState() == BossState::Victory);
+		
+		if (!bossTaskActive)
 		{
-			currentScreen.printHint();   
-		}
-		else
-		{
-			currentScreen.clearHint();   
+			// Screen 3: Only show puzzle hint at specific position (8, 11)
+			if (currentScreen.isThirdScreen())
+			{
+				const Point puzzleHintPos(8, 11);
+				if (p1Pos == puzzleHintPos || p2Pos == puzzleHintPos)
+				{
+					gotoxy(0, 23);
+					std::cout << "Hint: Find a way to activate the switch";
+					gotoxy(0, 24);
+					std::cout << "so both players can pass M doors";
+				}
+				else
+				{
+					// Clear hint area
+					gotoxy(0, 23);
+					std::cout << "                                                          ";
+					gotoxy(0, 24);
+					std::cout << "                                                          ";
+				}
+			}
+			else
+			{
+				// Screen 1 and 2: Use normal hint logic
+				if (currentScreen.isHint(p1Pos) || currentScreen.isHint(p2Pos))
+				{
+					currentScreen.printHint();   
+				}
+				else
+				{
+					currentScreen.clearHint();   
+				}
+			}
 		}
 
 
@@ -440,7 +659,30 @@ void Game::updatePlayerMovement(Player& player)
 		if (handleRiddleEncounter(player, nextPos))
 			return;
 	}
-
+	// Block movement onto M tiles based on type:
+	// - Size 1 M: always blocks (always visible)
+	// - Size > 1 M: when visible, player moves onto it and dies (handled separately)
+	//               when hidden (mTrapVisible=false), player can walk through
+	else if (currentScreen.isMTrap(nextPos))
+	{
+		if (!currentScreen.isMTrapDeadly(nextPos))
+		{
+			// Size-1 M always blocks
+			player.stop();
+			return;
+		}
+		// Size > 1 M - check if visible
+		if (mTrapVisible)
+		{
+			// Player walks onto deadly visible M - will die after movement
+			player.move();
+		}
+		else
+		{
+			// Deadly M is hidden - player can walk through
+			player.move();
+		}
+	}
 
 	else if (currentScreen.isFreeCellForPlayer(nextPos))
 	{
@@ -450,6 +692,9 @@ void Game::updatePlayerMovement(Player& player)
 	{
 		player.stop();
 	}
+	
+	// M-trap death check: if player moved onto a visible M-trap, they die
+	// Note: This is called from updateLogic() which handles the reset
 }
 
 void Game::collectItemIfPossible(Player& player)
@@ -868,6 +1113,9 @@ void Game::processForcedMove(Player& player, Player& otherPlayer)
 		
 		// Clear path - move player
 		player.setPosition(nextPos);
+		
+		// Update switches at this position (fixes spring-launched switch activation)
+		currentScreen.updateSwitchStates(player, otherPlayer);
 	}
 	
 	// Lateral Movement: Allow ONE perpendicular move per frame
@@ -964,6 +1212,19 @@ void Game::tryAdvanceToNextScreen()
 		{
 			// Reset timer for next level
 			levelStartTime = getCurrentTimeSeconds();
+			
+			// Show STORY_2 when entering Screen 2 for first time
+			if (currentScreen.isSecondScreen() && !shownStory2) {
+				render();
+				showStoryOverlay(2);
+				shownStory2 = true;
+			}
+			
+			// Initialize Room 3 Boss if transitioning to Room 3
+			if (currentScreen.isThirdScreen()) {
+				room3Boss.init();
+			}
+			
 			player1.draw();
 			player2.draw();
 			drawStatusBar();
@@ -1020,7 +1281,9 @@ void Game::decrementLife()
 void Game::addLevelCompletionScore()
 {
 	// Time-based score (faster = more points)
-	int elapsedSeconds = getCurrentTimeSeconds() - levelStartTime;
+	// Subtract accumulated pause time to freeze timer during pause
+	int elapsedSeconds = getCurrentTimeSeconds() - levelStartTime - static_cast<int>(accumulatedPauseSec);
+	if (elapsedSeconds < 0) elapsedSeconds = 0;  // Safety check
 	int timeScore;
 	if (elapsedSeconds <= Score::TIER1_SECONDS)        // Under 1 minute
 		timeScore = Score::TIER1_POINTS;
@@ -1058,4 +1321,84 @@ int Game::getCurrentTimeSeconds() const
 	auto now = std::chrono::system_clock::now();
 	auto duration = now.time_since_epoch();
 	return static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(duration).count());
+}
+
+// ==========================================
+// M-Trap Logic
+// ==========================================
+
+void Game::updateMTrapTimer()
+{
+	auto now = std::chrono::steady_clock::now();
+	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+		now - mTrapTimerStart
+	).count();
+	
+	// Subtract accumulated pause time to freeze timer during pause
+	elapsed -= accumulatedPauseMs;
+	if (elapsed < 0) elapsed = 0;  // Safety check
+	
+	// Calculate position in cycle (0 to CYCLE_MS-1)
+	int cyclePos = static_cast<int>(elapsed % Timing::M_TRAP_CYCLE_MS);
+	
+	// Visible during first half of cycle
+	mTrapVisible = (cyclePos < Timing::M_TRAP_VISIBLE_MS);
+}
+
+bool Game::isMTrapVisible() const
+{
+	return mTrapVisible;
+}
+
+bool Game::checkMTrapDeath(const Player& player) const
+{
+	if (!mTrapVisible)
+		return false;
+	
+	const Point& pos = player.getPosition();
+	char cell = currentScreen.getCharAtPublic(pos);
+	
+	// Only deadly M (size > 1) kills player
+	// Size-1 M just blocks movement, doesn't kill
+	if (cell != Tiles::M_TRAP)
+		return false;
+	
+	return currentScreen.isMTrapDeadly(pos);
+}
+
+// ==========================================
+// Story Overlay System
+// ==========================================
+
+void Game::showStoryOverlay(int storyNumber)
+{
+	cls();
+	
+	if (storyNumber == 1)
+	{
+		// STORY_1: Game start - Goni's Warning #1
+		printCentered("=== GONI'S WARNING #1 ===", 5);
+		printCentered("Welcome, brave geniuses. I'm Goni.", 8);
+		printCentered("This maze is not a game - it's a career-ending decision.", 10);
+		printCentered("Fun fact: 73 people tried to beat it. 0 succeeded.", 12);
+		printCentered("If you value your dignity, turn back now.", 14);
+		printCentered("(Yes, I'm counting you as 74 and 75. Don't argue.)", 16);
+	}
+	else if (storyNumber == 2)
+	{
+		// STORY_2: Screen 2 entry - Goni's Warning #2
+		printCentered("=== GONI'S WARNING #2 ===", 5);
+		printCentered("You made it here?!", 8);
+		printCentered("Wow. This brings back memories...", 10);
+		printCentered("The last time I felt this shocked was during my 12th divorce.", 12);
+		printCentered("Same confusion. Same regret.", 14);
+		printCentered("Turn back now. Let's not make this number 13.", 16);
+	}
+	
+	printCentered("Press any key to continue...", 20);
+	_getch();
+	
+	// Clear and re-render the game
+	cls();
+	render();
 }

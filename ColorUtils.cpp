@@ -98,6 +98,7 @@ ConsoleColor getColorForChar(char ch)
     // Other
     case Tiles::OBSTACLE:  return ConsoleColor::Gray;           // Obstacle
     case Tiles::AUTO_BOMB:  return ConsoleColor::BrightRed;      // Auto-bomb
+    case Tiles::M_TRAP:    return ConsoleColor::Gray;            // M-trap (default, overridden by size)
 
     default:
         return ConsoleColor::Default;

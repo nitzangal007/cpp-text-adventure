@@ -119,6 +119,10 @@ public:
     void collectTorch() {
         heldItem = Tiles::TORCH;
     }
+    void setHasTorch(bool has) {
+        if (has) heldItem = Tiles::TORCH;
+        else if (heldItem == Tiles::TORCH) heldItem = Tiles::EMPTY_SPACE;
+    }
   
 
     bool hasBomb() const {
