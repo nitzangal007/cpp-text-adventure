@@ -91,7 +91,7 @@ namespace Score {
 // Lives System
 // ==========================================
 namespace Lives {
-    constexpr int STARTING_LIVES = 6;
+    constexpr int STARTING_LIVES = 12;
 }
 
 // ==========================================
