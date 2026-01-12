@@ -69,9 +69,13 @@ class Game
     // Story overlay flags (reset only on new game, not on death)
     bool shownStory1 = false;
     bool shownStory2 = false;
+    
+    // Iteration counter for steps/results recording (Exercise 3)
+    size_t currentIteration_ = 0;
 
 public:
     Game();
+    virtual ~Game() = default;  // Virtual destructor for polymorphism
 
     // ==========================================
     // Public Interface
@@ -79,6 +83,34 @@ public:
 
     // Main entry point: shows menu, handles loops
     void run();
+
+protected:
+    // ==========================================
+    // Virtual Hooks for Polymorphism (Exercise 3)
+    // ==========================================
+    // These allow derived classes to customize behavior
+    // without changing the core game loop.
+    
+    // Gets next keyboard input. Override to read from file instead.
+    // Returns 0 if no input available this frame.
+    virtual char getNextInput();
+    
+    // Called when a valid movement/action key is pressed.
+    // Override to record steps to file.
+    virtual void onInputReceived(size_t iteration, int playerId, char key) {}
+    
+    // Called when a significant game event occurs.
+    // eventType: 0=ScreenTransition, 1=LifeLost, 2=Riddle, 3=GameFinished
+    virtual void onResultEvent(size_t iteration, int playerId, int eventType, int extraData = 0) {}
+    
+    // Should rendering happen? Override to disable for silent mode.
+    virtual bool shouldRender() const { return true; }
+    
+    // Sleep duration in ms. Override for faster replay.
+    virtual int getSleepDuration() const;
+    
+    // Should menu be shown? Override to skip menu in load mode.
+    virtual bool shouldShowMenu() const { return true; }
 
 private:
     // ==========================================

@@ -136,6 +136,8 @@
     <ClCompile Include="Switch.cpp" />
     <ClCompile Include="Torch.cpp" />
     <ClCompile Include="utils.cpp" />
+    <ClCompile Include="Steps.cpp" />
+    <ClCompile Include="Results.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AutoBomb.h" />
@@ -155,6 +157,8 @@
     <ClInclude Include="Switch.h" />
     <ClInclude Include="Torch.h" />
     <ClInclude Include="utils.h" />
+    <ClInclude Include="Steps.h" />
+    <ClInclude Include="Results.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

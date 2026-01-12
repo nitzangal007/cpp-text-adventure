@@ -123,6 +123,16 @@ public:
     
     // Check if 'R' key should be disabled
     bool isRestartDisabled() const;
+    
+    // ==========================================
+    // RNG Seed Management (Exercise 3)
+    // ==========================================
+    
+    // Get the RNG seed used for task generation (for recording)
+    unsigned long getRngSeed() const { return rngSeed_; }
+    
+    // Set the RNG seed (for replay - must be called before init())
+    void setRngSeed(unsigned long seed);
 
 private:
     // ==========================================
@@ -175,6 +185,7 @@ private:
     // ==========================================
     
     std::mt19937 rng_;
+    unsigned long rngSeed_ = 0;  // Stored seed for replay (Exercise 3)
     void generateTaskValues();
 
     // ==========================================

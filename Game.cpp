@@ -42,11 +42,40 @@ Game::Game()
 	};
 }
 // ==========================================
+// Virtual Hook Default Implementations (Exercise 3)
+// ==========================================
+
+char Game::getNextInput()
+{
+	// Default: read from keyboard
+	if (_kbhit()) {
+		return _getch();
+	}
+	return 0;  // No input this frame
+}
+
+int Game::getSleepDuration() const
+{
+	return Timing::GAME_TICK_MS;  // Default: normal game speed
+}
+
+// ==========================================
 // Public Interface
 // ==========================================
 
 void Game::run()
 {
+	// Check if menu should be shown (overridable for -load mode)
+	if (!shouldShowMenu()) {
+		// No menu - direct game start (for -load mode)
+		initGame();
+		if (!gameOver) {  // initGame may set gameOver on loading error
+			runGame();
+		}
+		return;
+	}
+	
+	// Normal mode: show menu
 	Menu menu;
 	bool done = false;
 	while (!done) {
@@ -139,16 +168,24 @@ void Game::runGame()
 	const char ESC = Keys::ESC;
 	bool paused = false;
 	bool running = true;
+	
+	// Reset iteration counter for new game session
+	currentIteration_ = 0;
 
 	cls();
-	render();
+	if (shouldRender()) {
+		render();
+	}
 	
 	while (running)
 	{
-		if (_kbhit())
+		++currentIteration_;  // Increment game cycle counter
+		
+		// Get input using virtual hook (keyboard or file)
+		char ch = getNextInput();
+		
+		if (ch != 0)  // Only process if there's input
 		{
-			char ch = _getch();
-
 			if (!paused)
 			{
 				// ========================================
@@ -188,12 +225,16 @@ void Game::runGame()
 					printCentered("Press ESC to continue or H for Menu", 9);
 				}
 				else if (ch == 'E' || ch == 'e') {
+					// Record input for player 1 action
+					onInputReceived(currentIteration_, 1, ch);
 					if (player1.hasTorch())
 						dropTorch(player1);
 					else
 						tryPlaceBomb(player1);
 				}
 				else if (ch == 'O' || ch == 'o') {
+					// Record input for player 2 action
+					onInputReceived(currentIteration_, 2, ch);
 					if (player2.hasTorch())
 						dropTorch(player2);
 					else
@@ -210,12 +251,22 @@ void Game::runGame()
 				}
 				else
 				{
-					player1.handleKeyPress(ch);
-					player2.handleKeyPress(ch);
+					// Check which player this key belongs to for recording
+					bool handled1 = player1.handleKeyPress(ch);
+					bool handled2 = player2.handleKeyPress(ch);
+					
+					// Record input for the appropriate player
+					if (handled1) {
+						onInputReceived(currentIteration_, 1, ch);
+					}
+					if (handled2) {
+						onInputReceived(currentIteration_, 2, ch);
+					}
 				}
 			}
 			else
 			{
+				// Paused state input handling
 				if (ch == ESC)
 				{
 					// Calculate pause duration and add to accumulators
@@ -228,7 +279,9 @@ void Game::runGame()
 					
 					paused = false;
 					cls();
-					render();
+					if (shouldRender()) {
+						render();
+					}
 				}
 				else if (ch == 'h' || ch == 'H')
 				{
@@ -245,10 +298,12 @@ void Game::runGame()
 				gameOver = false;
 				return;
 			}
-			render();
+			if (shouldRender()) {
+				render();
+			}
 		}
 
-		Sleep(Timing::GAME_TICK_MS);
+		Sleep(getSleepDuration());
 	}
 }
 

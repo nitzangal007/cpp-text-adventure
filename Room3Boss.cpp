@@ -20,12 +20,20 @@ Room3Boss::Room3Boss()
     , pendingScorePenalty_(0)
     , pendingLifePenalty_(0)
 {
-    // Seed RNG with current time
-    rng_.seed(static_cast<unsigned>(
+    // Seed RNG with current time and store it for replay
+    rngSeed_ = static_cast<unsigned long>(
         std::chrono::steady_clock::now().time_since_epoch().count()
-    ));
+    );
+    rng_.seed(static_cast<unsigned>(rngSeed_));
     
     initSwitchPositions();
+}
+
+// Set RNG seed for replay (Exercise 3)
+void Room3Boss::setRngSeed(unsigned long seed)
+{
+    rngSeed_ = seed;
+    rng_.seed(static_cast<unsigned>(seed));
 }
 
 // ==========================================
