@@ -107,15 +107,18 @@ void Screens::init()
 	loadingError.clear();
 	pendingAutoBombs.clear();
 	
-	// Step 1: Discover screen files
-	if (!discoverScreenFiles())
+	// Step 1: Discover screen files (unless pre-set for replay mode)
+	if (screenFilePaths.empty())
 	{
-		if (!loadingFailed)  // No files found (not a filesystem error)
+		if (!discoverScreenFiles())
 		{
-			loadingError = "No screen files found! Place adv-world*.screen files in the game directory.";
-			loadingFailed = true;
+			if (!loadingFailed)  // No files found (not a filesystem error)
+			{
+				loadingError = "No screen files found! Place adv-world*.screen files in the game directory.";
+				loadingFailed = true;
+			}
+			return;
 		}
-		return;
 	}
 	
 	// Step 2: Check we have enough screen files

@@ -1,0 +1,605 @@
+================================================================================
+                    GAME BASE REFACTORING - COMPREHENSIVE WALKTHROUGH
+                    Exercise 3: Recording and Replay Functionality
+================================================================================
+
+OVERVIEW
+--------
+This document explains the complete refactoring done to implement Exercise 3 of
+the C++ text adventure game. The goal is to add recording and replay functionality
+using OOP principles (inheritance and polymorphism).
+
+The implementation is divided into 5 phases:
+- Phase 1: Infrastructure (Steps + Results classes) - COMPLETED
+- Phase 2: Virtual Hooks in Game base class - COMPLETED  
+- Phase 3: Derived Classes (GameKeyboardInput, GameFileInput) - COMPLETED
+- Phase 4: Entry Point + CLI (Main.cpp updates) - NOT YET DONE
+- Phase 5: Test Files + Documentation - NOT YET DONE
+
+================================================================================
+                              PHASE 1: INFRASTRUCTURE
+                              Status: COMPLETED ✅
+================================================================================
+
+GOAL:
+Create the data structures needed to record and replay game sessions.
+
+FILES CREATED:
+1. Steps.h / Steps.cpp
+2. Results.h / Results.cpp
+
+--------------------------------------------------------------------------------
+1. STEPS CLASS (Steps.h / Steps.cpp)
+--------------------------------------------------------------------------------
+
+PURPOSE:
+Records every key press (step) during gameplay with its exact game cycle
+(iteration). This allows deterministic replay of the game.
+
+DATA STRUCTURES:
+
+    struct StepEntry {
+        size_t iteration;   // Game cycle when the key was pressed
+        int playerId;       // 1 or 2 (two-player game)
+        char key;           // The key that was pressed (w,a,s,d,x,z,i,j,k,l,m,n)
+    };
+
+    class Steps {
+        unsigned long randomSeed_;         // For Room3Boss RNG reproducibility
+        std::vector<std::string> screenFiles_;  // Screen files used in game
+        std::list<StepEntry> steps_;       // Recorded steps
+    };
+
+KEY METHODS:
+- loadFromFile(filename)  - Load steps from .steps file for replay
+- saveToFile(filename)    - Save recorded steps to file
+- setRandomSeed(seed)     - Store RNG seed for boss room replay
+- getRandomSeed()         - Retrieve stored RNG seed
+- setScreenFiles(files)   - Store which screen files were used
+- addStep(iteration, playerId, key) - Record a key press
+- isNextStepOnIteration(iteration)  - Check if next step matches current cycle
+- popStep()               - Get and remove next step for replay
+- hasMoreSteps()          - Check if more steps remain
+
+FILE FORMAT (adv-world.steps):
+    <random_seed>
+    <screen1.screen>,<screen2.screen>,<screen3.screen>
+    <iteration> <player_id> <key>
+    <iteration> <player_id> <key>
+    ...
+
+EXAMPLE:
+    1126025823
+    adv-world_01.screen,adv-world_02.screen,adv-world_03.screen
+    14 1 d
+    58 2 j
+    68 1 a
+    75 2 i
+
+--------------------------------------------------------------------------------
+2. RESULTS CLASS (Results.h / Results.cpp)
+--------------------------------------------------------------------------------
+
+PURPOSE:
+Records significant game events (results) for verification during replay.
+In silent mode, actual results are compared against expected results.
+
+DATA STRUCTURES:
+
+    enum class ResultType {
+        ScreenTransition = 0,  // Player moved to another screen
+        LifeLost = 1,          // Player lost a life
+        RiddleEncounter = 2,   // Player encountered a riddle
+        GameFinished = 3       // Game completed
+    };
+
+    struct ResultEntry {
+        size_t iteration;      // Game cycle when event occurred
+        int playerId;          // 1 or 2 (0 for game-wide events)
+        ResultType type;       // Type of event
+        
+        // Extra data depending on type:
+        int screenId;          // For ScreenTransition: destination screen
+        int riddleId;          // For RiddleEncounter: which riddle
+        bool riddleCorrect;    // For RiddleEncounter: was answer correct
+        int finalScore;        // For GameFinished: final score
+    };
+
+KEY METHODS:
+- loadFromFile(filename)  - Load expected results for verification
+- saveToFile(filename)    - Save recorded results to file
+- addScreenTransition(iteration, playerId, toScreenId)
+- addLifeLost(iteration, playerId)
+- addRiddleEncounter(iteration, playerId, riddleId, correct)
+- addGameFinished(iteration, finalScore)
+- popResult()             - Get and remove next expected result
+- hasMoreResults()        - Check if more expected results remain
+
+FILE FORMAT (adv-world.result):
+    <number_of_results>
+    <iteration> <type> <player_id> [extra_data...]
+    ...
+
+--------------------------------------------------------------------------------
+BUILD VERIFICATION:
+--------------------------------------------------------------------------------
+- Files added to cpp-texy-adventure.vcxproj
+- Build passed with no errors
+
+================================================================================
+                              PHASE 2: VIRTUAL HOOKS
+                              Status: COMPLETED ✅
+================================================================================
+
+GOAL:
+Add virtual methods to the Game base class that derived classes can override
+to customize behavior. This follows the Template Method design pattern.
+
+FILES MODIFIED:
+1. Game.h
+2. Game.cpp
+3. Player.h (minor)
+4. Room3Boss.h (RNG seed getter/setter)
+
+--------------------------------------------------------------------------------
+VIRTUAL HOOKS ADDED TO GAME CLASS
+--------------------------------------------------------------------------------
+
+1. getNextInput()
+   - DEFAULT: Reads from keyboard using _kbhit() and _getch()
+   - PURPOSE: Override in GameFileInput to read from file instead
+   
+2. onInputReceived(iteration, playerId, key)
+   - DEFAULT: Empty (no-op)
+   - PURPOSE: Override in GameKeyboardInput to record steps to file
+   
+3. onResultEvent(iteration, playerId, eventType, extraData)
+   - DEFAULT: Empty (no-op)
+   - PURPOSE: Override to record/verify result events
+   - eventType values:
+     * 0 = ScreenTransition (extraData = destination screen ID)
+     * 1 = LifeLost (extraData unused)
+     * 2 = RiddleEncounter (extraData encodes riddle info)
+     * 3 = GameFinished (extraData = final score)
+
+4. shouldRender()
+   - DEFAULT: Returns true
+   - PURPOSE: Override in GameFileInput to return false for silent mode
+   
+5. getSleepDuration()
+   - DEFAULT: Returns 50ms (normal game speed)
+   - PURPOSE: Override for faster replay (10ms) or instant (0ms)
+   
+6. shouldShowMenu()
+   - DEFAULT: Returns true
+   - PURPOSE: Override in GameFileInput to skip menu in load mode
+
+--------------------------------------------------------------------------------
+GAME BASE CLASS CHANGES
+--------------------------------------------------------------------------------
+
+Made the following members PROTECTED (accessible to derived classes):
+- currentScreen      (Screens object)
+- room3Boss          (Room3Boss object)
+- currentIteration_  (Game cycle counter)
+- score              (Cumulative score)
+
+Added virtual destructor for proper polymorphic deletion:
+    virtual ~Game() = default;
+
+--------------------------------------------------------------------------------
+CALLING VIRTUAL HOOKS IN GAME.CPP
+--------------------------------------------------------------------------------
+
+The onResultEvent() hook is called at these key points:
+
+LOCATION                      | EVENT TYPE | WHAT IT RECORDS
+------------------------------|------------|----------------------------------
+tryAdvanceToNextScreen()      | 0          | Player transitioned to screen X
+decrementLife()               | 1          | Player lost a life
+handleRiddleEncounter()       | 2          | Player encountered riddle
+showGameOverScreen()          | 3          | Game ended with score X
+
+--------------------------------------------------------------------------------
+ROOM3BOSS RNG SEED
+--------------------------------------------------------------------------------
+
+Added to Room3Boss class:
+- getRngSeed()     - Get the random seed used for task generation
+- setRngSeed(seed) - Set the random seed (for deterministic replay)
+
+WHY THIS MATTERS:
+The Room 3 Boss generates random math tasks. To replay correctly, we must
+capture the RNG seed when recording and restore it before replay.
+
+--------------------------------------------------------------------------------
+BUILD VERIFICATION:
+--------------------------------------------------------------------------------
+- All changes compile successfully
+- Game runs identically to before (no behavioral change yet)
+
+================================================================================
+                              PHASE 3: DERIVED CLASSES
+                              Status: COMPLETED ✅
+================================================================================
+
+GOAL:
+Create two derived classes that inherit from Game and override virtual hooks
+for different running modes.
+
+FILES CREATED:
+1. GameKeyboardInput.h / GameKeyboardInput.cpp
+2. GameFileInput.h / GameFileInput.cpp
+
+FILES MODIFIED:
+1. Game.h (protected members)
+2. Game.cpp (onResultEvent calls)
+3. Screens.h (added getScreenFileNames method)
+
+--------------------------------------------------------------------------------
+CLASS HIERARCHY
+--------------------------------------------------------------------------------
+
+    Game (base class - has virtual hooks)
+      │
+      ├── GameKeyboardInput
+      │     • Normal mode + optional save to files
+      │     • Shows menu
+      │     • Records steps and results when -save flag used
+      │
+      └── GameFileInput
+            • Load mode (from files)
+            • Optional silent flag
+            • Skips menu
+            • Verifies results in silent mode
+
+--------------------------------------------------------------------------------
+1. GAMEKEYBOARDINPUT CLASS
+--------------------------------------------------------------------------------
+
+PURPOSE:
+Handles normal gameplay and the -save mode. When saveEnabled_ is true,
+it records all key presses and game events to files.
+
+HEADER (GameKeyboardInput.h):
+
+    class GameKeyboardInput : public Game {
+        Steps steps_;
+        Results results_;
+        bool saveEnabled_ = false;
+        bool filesInitialized_ = false;
+        
+    public:
+        explicit GameKeyboardInput(bool saveToFiles = false);
+        ~GameKeyboardInput() override;
+        
+    protected:
+        void onInputReceived(size_t iteration, int playerId, char key) override;
+        void onResultEvent(size_t iteration, int playerId, int eventType, int extraData) override;
+        
+    private:
+        void initRecording();
+        void saveFilesOnExit();
+    };
+
+BEHAVIOR:
+- Constructor: Stores saveEnabled_ flag
+- initRecording(): Captures screen files and RNG seed at game start
+- onInputReceived(): Adds step to steps_ if recording
+- onResultEvent(): Adds result to results_ if recording
+- Destructor: Saves files when game exits (if recording was enabled)
+
+USAGE:
+    // Normal mode (no args)
+    GameKeyboardInput game(false);  // saveEnabled = false
+    game.run();
+    
+    // Save mode (-save)
+    GameKeyboardInput game(true);   // saveEnabled = true
+    game.run();
+    // Files saved automatically on exit
+
+--------------------------------------------------------------------------------
+2. GAMEFILEINPUT CLASS
+--------------------------------------------------------------------------------
+
+PURPOSE:
+Handles replay modes (-load and -load -silent). Reads input from files
+instead of keyboard and optionally verifies results.
+
+HEADER (GameFileInput.h):
+
+    class GameFileInput : public Game {
+        Steps steps_;
+        Results expectedResults_;
+        Results actualResults_;
+        bool isSilent_ = false;
+        bool testPassed_ = true;
+        std::string failureMessage_;
+        bool filesLoaded_ = false;
+        
+    public:
+        explicit GameFileInput(bool silent = false);
+        
+    protected:
+        char getNextInput() override;
+        void onResultEvent(size_t iteration, int playerId, int eventType, int extraData) override;
+        bool shouldShowMenu() const override { return false; }
+        bool shouldRender() const override { return !isSilent_; }
+        int getSleepDuration() const override;
+        
+    public:
+        bool didTestPass() const { return testPassed_; }
+        const std::string& getFailureMessage() const;
+        void printTestResult() const;
+        
+    private:
+        bool loadFiles();
+        void verifyResult(size_t iteration, int playerId, int eventType, int extraData);
+    };
+
+BEHAVIOR:
+- Constructor: Loads step and result files, sets RNG seed
+- getNextInput(): Returns step from file (NOT from keyboard!)
+- shouldShowMenu(): Returns false (skip menu)
+- shouldRender(): Returns !isSilent_ (no rendering in silent mode)
+- getSleepDuration(): Returns 0 if silent, 10 otherwise (fast replay)
+- onResultEvent(): Verifies against expected results if silent
+- printTestResult(): Outputs "Test PASSED" or "Test FAILED: <reason>"
+
+USAGE:
+    // Load mode (-load) - visual replay
+    GameFileInput game(false);  // silent = false
+    game.run();
+    
+    // Silent mode (-load -silent) - verification only
+    GameFileInput game(true);   // silent = true
+    game.run();
+    game.printTestResult();
+
+--------------------------------------------------------------------------------
+3. SCREENS CLASS MODIFICATION
+--------------------------------------------------------------------------------
+
+Added method:
+    std::vector<std::string> getScreenFileNames() const;
+
+PURPOSE:
+Returns the list of screen file names used in the game. This is saved
+to the .steps file so replay knows which screens were used.
+
+--------------------------------------------------------------------------------
+KEY DESIGN DECISIONS
+--------------------------------------------------------------------------------
+
+1. POLYMORPHISM OVER CONDITIONALS:
+   Instead of having if-else chains like:
+       if (!isLoad) { read keyboard } else { read file }
+   We use virtual methods that derived classes override.
+
+2. TEMPLATE METHOD PATTERN:
+   The base Game::runGame() method defines the algorithm skeleton.
+   Derived classes customize specific steps via virtual hooks.
+
+3. SINGLE RESPONSIBILITY:
+   - Steps class: Only handles step recording/playback
+   - Results class: Only handles result recording/verification
+   - GameKeyboardInput: Only handles keyboard mode specifics
+   - GameFileInput: Only handles file replay specifics
+
+4. RNG SEED HANDLING:
+   Room3Boss generates random math tasks. For replay to work:
+   - Recording: Capture RNG seed before boss tasks are generated
+   - Replay: Set RNG seed before entering boss room
+
+--------------------------------------------------------------------------------
+BUILD VERIFICATION:
+--------------------------------------------------------------------------------
+- All new files added to vcxproj
+- Build passed with no errors
+- Existing game functionality unchanged
+
+================================================================================
+                          PHASE 4: ENTRY POINT + CLI
+                         Status: NOT YET IMPLEMENTED ⏳
+================================================================================
+
+GOAL:
+Update Main.cpp to parse command-line arguments and instantiate the correct
+Game subclass.
+
+PLANNED CHANGES TO MAIN.CPP:
+
+    int main(int argc, char** argv) {
+        bool isLoad = hasArg(argc, argv, "-load");
+        bool isSave = hasArg(argc, argv, "-save");
+        bool isSilent = hasArg(argc, argv, "-silent");
+        
+        std::unique_ptr<Game> game;
+        
+        if (isLoad) {
+            game = std::make_unique<GameFileInput>(isSilent);
+        } else {
+            game = std::make_unique<GameKeyboardInput>(isSave);
+        }
+        
+        game->run();
+        
+        // Print test result in silent mode
+        if (isLoad && isSilent) {
+            static_cast<GameFileInput*>(game.get())->printTestResult();
+        }
+        
+        return 0;
+    }
+
+COMMAND-LINE USAGE:
+
+    cpp-texy-adventure.exe              # Normal mode (Exercise 2 behavior)
+    cpp-texy-adventure.exe -save        # Normal + record to files
+    cpp-texy-adventure.exe -load        # Replay from files (visual)
+    cpp-texy-adventure.exe -load -silent # Replay for verification (no display)
+
+================================================================================
+                       PHASE 5: TEST FILES + DOCUMENTATION
+                          Status: NOT YET IMPLEMENTED ⏳
+================================================================================
+
+GOAL:
+Create documentation and example test files.
+
+PLANNED DELIVERABLES:
+
+1. files_format.txt
+   - Explains the format of .steps and .result files
+   - Describes event type codes and data formats
+
+2. Three example file pairs:
+   - example1.steps + example1.result (simple gameplay)
+   - example2.steps + example2.result (riddle encounter)
+   - example3.steps + example3.result (boss room completion)
+
+3. Testing verification:
+   - Each example should pass in -load -silent mode
+
+================================================================================
+                              HOW TO TEST (AFTER PHASE 4)
+================================================================================
+
+TEST 1: NORMAL MODE (No Arguments)
+----------------------------------
+Command: cpp-texy-adventure.exe
+
+Expected:
+1. Menu appears
+2. Game plays normally
+3. No files created
+4. Same as Exercise 2 behavior
+
+Verify: adv-world.steps should NOT exist after playing
+
+
+TEST 2: SAVE MODE (-save)
+-------------------------
+Command: cpp-texy-adventure.exe -save
+
+Steps:
+1. Menu appears (same as normal)
+2. Select "Start Game"
+3. Play briefly (move both players)
+4. Press ESC → return to menu
+5. Exit game
+
+Expected Output:
+    Game recorded. Files saved:
+      - adv-world.steps (X steps)
+      - adv-world.result (Y results)
+
+Verify:
+1. adv-world.steps exists
+2. adv-world.result exists
+3. Open adv-world.steps - should contain RNG seed, screen files, steps
+
+
+TEST 3: LOAD MODE (-load)
+-------------------------
+Prerequisites: Run Test 2 first to create files
+
+Command: cpp-texy-adventure.exe -load
+
+Steps:
+1. NO menu should appear
+2. Game starts immediately
+3. Watch the replay - players move automatically
+4. Speed is faster than normal (~10ms vs 50ms)
+5. Your keyboard inputs are IGNORED
+
+Verify:
+- Movement matches what you recorded in Test 2
+- Pressing keys does nothing
+
+
+TEST 4: SILENT MODE (-load -silent)
+-----------------------------------
+Prerequisites: Run Test 2 first to create files
+
+Command: cpp-texy-adventure.exe -load -silent
+
+Expected Output:
+    Test PASSED
+or
+    Test FAILED: <reason>
+
+Steps:
+1. NO visual output (screen stays empty)
+2. Test completes almost instantly
+3. Result printed to console
+
+Verify:
+- Result should be "Test PASSED" if files are correct
+- To test failure detection:
+  1. Manually edit adv-world.result
+  2. Change an iteration number
+  3. Run again - should show "Test FAILED"
+
+
+ROOM 3 BOSS VERIFICATION
+------------------------
+The Room 3 Boss uses RNG for task generation. This is why we save the RNG seed.
+
+To verify boss replay works correctly:
+
+1. Record in -save mode:
+   - Play through to Room 3
+   - Complete at least one boss task
+   - Exit game
+
+2. Replay in -load mode:
+   - The boss tasks should have EXACTLY same values
+   - Same target numbers, same time limits
+
+If boss values differ in replay:
+- The RNG seed was not properly saved/restored
+- Check that steps_.getRandomSeed() returns correct value
+
+================================================================================
+                                  SUMMARY
+================================================================================
+
+COMPLETED (Phases 1-3):
+-----------------------
+✅ Created Steps class for recording/replaying key presses
+✅ Created Results class for recording/verifying game events
+✅ Added 6 virtual hooks to Game base class
+✅ Made key Game members protected for derived class access
+✅ Added RNG seed getter/setter to Room3Boss
+✅ Created GameKeyboardInput derived class for normal/save modes
+✅ Created GameFileInput derived class for load/silent modes
+✅ Added getScreenFileNames() to Screens class
+✅ All code compiles successfully
+
+REMAINING (Phases 4-5):
+-----------------------
+⏳ Update Main.cpp with argument parsing
+⏳ Wire up correct Game subclass based on arguments
+⏳ Create files_format.txt documentation
+⏳ Create 3 example step/result file pairs
+⏳ Test all 4 command-line combinations
+
+FILES CREATED:
+- Steps.h / Steps.cpp
+- Results.h / Results.cpp  
+- GameKeyboardInput.h / GameKeyboardInput.cpp
+- GameFileInput.h / GameFileInput.cpp
+
+FILES MODIFIED:
+- Game.h (virtual hooks, protected members, virtual destructor)
+- Game.cpp (onResultEvent calls at key points)
+- Player.h (handleKeyPress return type)
+- Room3Boss.h (RNG seed getter/setter)
+- Screens.h (getScreenFileNames method)
+- cpp-texy-adventure.vcxproj (added new files)
+
+================================================================================
+                              END OF WALKTHROUGH
+================================================================================

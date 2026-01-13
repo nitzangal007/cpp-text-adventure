@@ -622,6 +622,12 @@ void Room3Boss::drawOverlay() const
 
 void Room3Boss::showBriefing()
 {
+    // In silent/replay mode, skip the briefing entirely
+    if (silentMode_) {
+        state_ = BossState::PreBoss;
+        return;
+    }
+    
     // This is a BLOCKING method - displays once and waits for key
     
     // Clear screen once

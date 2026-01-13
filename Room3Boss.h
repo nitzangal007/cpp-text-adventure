@@ -133,6 +133,9 @@ public:
     
     // Set the RNG seed (for replay - must be called before init())
     void setRngSeed(unsigned long seed);
+    
+    // Set silent mode (for replay - skips briefing and keypress waits)
+    void setSilentMode(bool silent) { silentMode_ = silent; }
 
 private:
     // ==========================================
@@ -220,6 +223,9 @@ private:
     
     int pendingScorePenalty_ = 0;
     int pendingLifePenalty_ = 0;
+    
+    // Silent mode (for replay - skips briefing and keypress waits)
+    bool silentMode_ = false;
 
     // ==========================================
     // Key Coordinates (Y, X format)

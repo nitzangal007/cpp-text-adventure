@@ -1,0 +1,215 @@
+================================================================================
+                         PHASE 4 WALKTHROUGH - Entry Point + CLI
+                                  Exercise 3
+================================================================================
+
+WHAT WAS DONE
+-------------
+Updated Main.cpp to parse command-line arguments and create the correct Game 
+subclass using polymorphism.
+
+================================================================================
+                              CODE CHANGES
+================================================================================
+
+FILE: Main.cpp
+
+BEFORE (10 lines):
+------------------
+#include "Game.h"
+
+int main() {
+    hideCursor();
+    Game game;
+    game.run();
+}
+
+AFTER (47 lines):
+-----------------
+Added:
+- Includes for GameKeyboardInput.h, GameFileInput.h, <memory>, <cstring>
+- hasArg() helper function to check for command-line flags
+- Changed main() signature to accept argc, argv
+- Uses std::unique_ptr<Game> for polymorphic instantiation
+
+NEW CODE:
+
+#include "Game.h"
+#include "GameKeyboardInput.h"
+#include "GameFileInput.h"
+#include <memory>
+#include <cstring>
+
+// Helper: check if a command-line argument exists
+bool hasArg(int argc, char** argv, const char* arg) {
+    for (int i = 1; i < argc; ++i) {
+        if (std::strcmp(argv[i], arg) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int main(int argc, char** argv) {
+    hideCursor();
+    
+    // Parse command-line arguments
+    bool isLoad = hasArg(argc, argv, "-load");
+    bool isSave = hasArg(argc, argv, "-save");
+    bool isSilent = hasArg(argc, argv, "-silent");
+    
+    // Create the appropriate Game subclass
+    std::unique_ptr<Game> game;
+    
+    if (isLoad) {
+        // Replay mode: load steps from file
+        game = std::make_unique<GameFileInput>(isSilent);
+    } else {
+        // Normal mode: keyboard input
+        game = std::make_unique<GameKeyboardInput>(isSave);
+    }
+    
+    // Run the game
+    game->run();
+    
+    // Print test result in silent mode
+    if (isLoad && isSilent) {
+        static_cast<GameFileInput*>(game.get())->printTestResult();
+    }
+    
+    return 0;
+}
+
+================================================================================
+                           BUILD STATUS: PASSED
+================================================================================
+
+MSBuild version 17.14.23
+cpp-texy-adventure.vcxproj -> cpp-texy-adventure.exe
+
+================================================================================
+                           COMMAND-LINE USAGE
+================================================================================
+
+COMMAND                                     MODE        CLASS
+------------------------------------------- ----------- -------------------------
+cpp-texy-adventure.exe                      Normal      GameKeyboardInput(false)
+cpp-texy-adventure.exe -save                Save        GameKeyboardInput(true)
+cpp-texy-adventure.exe -load                Load        GameFileInput(false)
+cpp-texy-adventure.exe -load -silent        Silent      GameFileInput(true)
+
+================================================================================
+                           HOW EACH MODE WORKS
+================================================================================
+
+NORMAL MODE (no arguments)
+--------------------------
+1. Menu appears
+2. Player controls game with keyboard
+3. No files created
+4. Identical to Exercise 2 behavior
+
+SAVE MODE (-save)
+-----------------
+1. Menu appears (same as normal)
+2. Player controls game normally
+3. All key presses recorded to Steps object
+4. All game events recorded to Results object
+5. On exit, files saved:
+   - adv-world.steps - key presses with iteration numbers
+   - adv-world.result - game events (deaths, screen changes, etc.)
+
+LOAD MODE (-load)
+-----------------
+1. NO MENU - game starts immediately
+2. Inputs come from adv-world.steps file
+3. KEYBOARD IGNORED - you cannot control the game
+4. Players move automatically (replaying the recording)
+5. Speed is faster (10ms delay vs 50ms)
+6. Game ends when replay completes
+
+SILENT MODE (-load -silent)
+---------------------------
+1. NO VISUAL OUTPUT - screen stays blank
+2. Runs as fast as possible (0ms delay)
+3. Compares actual game events against adv-world.result
+4. Prints "Test PASSED" or "Test FAILED: <reason>"
+5. Used for automated testing/verification
+
+================================================================================
+                        MANUAL TESTING INSTRUCTIONS
+================================================================================
+
+IMPORTANT: Tests 3 and 4 require Test 2 to run first (creates recording files).
+
+TEST 1: NORMAL MODE
+-------------------
+Command: x64\Debug\cpp-texy-adventure.exe
+
+Verify:
+- Menu appears
+- Game plays normally
+- adv-world.steps does NOT exist
+
+TEST 2: SAVE MODE
+-----------------
+Command: x64\Debug\cpp-texy-adventure.exe -save
+
+Steps:
+1. Menu appears -> Start Game
+2. Move both players briefly (WASD, IJKL)
+3. ESC -> Exit game
+
+Verify:
+- Console shows "Game recorded. Files saved..."
+- adv-world.steps created
+- adv-world.result created
+
+TEST 3: LOAD MODE
+-----------------
+Command: x64\Debug\cpp-texy-adventure.exe -load
+(Requires files from Test 2)
+
+Verify:
+- NO menu appears
+- Players move automatically
+- Keyboard does nothing
+- Faster speed
+
+TEST 4: SILENT MODE
+-------------------
+Command: x64\Debug\cpp-texy-adventure.exe -load -silent
+(Requires files from Test 2)
+
+Verify:
+- No visual output
+- Completes instantly
+- Prints "Test PASSED"
+
+To test failure detection:
+1. Edit adv-world.result - change an iteration number
+2. Run silent mode again
+3. Should print "Test FAILED: Iteration mismatch..."
+
+================================================================================
+                              OVERALL STATUS
+================================================================================
+
+PHASE 1: Infrastructure (Steps + Results)     - COMPLETE
+PHASE 2: Virtual Hooks in Game base class     - COMPLETE
+PHASE 3: Derived Classes                      - COMPLETE
+PHASE 4: Entry Point + CLI                    - COMPLETE  <-- THIS PHASE
+PHASE 5: Test Files + Documentation           - NOT YET DONE
+
+================================================================================
+                                NEXT STEPS
+================================================================================
+
+PHASE 5 will include:
+- Create files_format.txt documentation
+- Create 3 example step/result file pairs
+- Verify examples pass in silent mode
+
+================================================================================
+                              END OF WALKTHROUGH
+================================================================================

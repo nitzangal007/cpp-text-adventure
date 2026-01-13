@@ -1,5 +1,6 @@
 #include "Results.h"
 #include <fstream>
+#include <sstream>
 
 // ==========================================
 // File I/O
@@ -14,40 +15,55 @@ Results Results::loadFromFile(const std::string& filename) {
     }
     
     // Line 1: Number of results
-    size_t count;
-    file >> count;
+    std::string firstLine;
+    std::getline(file, firstLine);
+    size_t count = 0;
+    std::istringstream(firstLine) >> count;
     
-    // Each line: iteration playerId type [extra_data...]
+    // Detect format by checking first data line
+    // NEW format: iteration type (2 fields)
+    // OLD format: iteration playerId type [extra...] (3+ fields)
+    bool isNewFormat = true;
+    
+    if (count > 0) {
+        std::streampos dataStart = file.tellg();
+        std::string sampleLine;
+        if (std::getline(file, sampleLine)) {
+            // Count fields in sample line
+            std::istringstream iss(sampleLine);
+            int fieldCount = 0;
+            std::string field;
+            while (iss >> field) fieldCount++;
+            
+            isNewFormat = (fieldCount == 2);
+        }
+        // Seek back to read data properly
+        file.seekg(dataStart);
+    }
+    
+    // Parse based on detected format
     for (size_t i = 0; i < count && !file.eof(); ++i) {
+        std::string line;
+        if (!std::getline(file, line)) break;
+        if (line.empty()) continue;
+        
+        std::istringstream iss(line);
         size_t iteration;
-        int playerId;
         int typeInt;
         
-        file >> iteration >> playerId >> typeInt;
+        if (isNewFormat) {
+            // NEW format: iteration type
+            iss >> iteration >> typeInt;
+        } else {
+            // OLD format: iteration playerId type [extra...]
+            int playerId;
+            iss >> iteration >> playerId >> typeInt;
+            // Ignore extra fields
+        }
         
         ResultEntry entry;
         entry.iteration = iteration;
-        entry.playerId = playerId;
         entry.type = static_cast<ResultType>(typeInt);
-        
-        // Read extra data based on type
-        switch (entry.type) {
-            case ResultType::ScreenTransition:
-                file >> entry.screenId;
-                break;
-            case ResultType::LifeLost:
-                // No extra data
-                break;
-            case ResultType::RiddleEncounter:
-                file >> entry.riddleId;
-                int correct;
-                file >> correct;
-                entry.riddleCorrect = (correct != 0);
-                break;
-            case ResultType::GameFinished:
-                file >> entry.finalScore;
-                break;
-        }
         
         results.results_.push_back(entry);
     }
@@ -66,29 +82,10 @@ bool Results::saveToFile(const std::string& filename) const {
     // Line 1: Number of results
     file << results_.size() << '\n';
     
-    // Each line: iteration playerId type [extra_data...]
+    // Each line: iteration type (NEW format - 2 fields only)
     for (const auto& entry : results_) {
         file << entry.iteration << ' ' 
-             << entry.playerId << ' ' 
-             << static_cast<int>(entry.type);
-        
-        // Write extra data based on type
-        switch (entry.type) {
-            case ResultType::ScreenTransition:
-                file << ' ' << entry.screenId;
-                break;
-            case ResultType::LifeLost:
-                // No extra data
-                break;
-            case ResultType::RiddleEncounter:
-                file << ' ' << entry.riddleId << ' ' << (entry.riddleCorrect ? 1 : 0);
-                break;
-            case ResultType::GameFinished:
-                file << ' ' << entry.finalScore;
-                break;
-        }
-        
-        file << '\n';
+             << static_cast<int>(entry.type) << '\n';
     }
     
     file.close();
@@ -99,40 +96,24 @@ bool Results::saveToFile(const std::string& filename) const {
 // Recording
 // ==========================================
 
-void Results::addScreenTransition(size_t iteration, int playerId, int toScreenId) {
-    ResultEntry entry;
-    entry.iteration = iteration;
-    entry.playerId = playerId;
-    entry.type = ResultType::ScreenTransition;
-    entry.screenId = toScreenId;
-    results_.push_back(entry);
+void Results::addStagePassed(size_t iteration) {
+    results_.push_back({iteration, ResultType::StagePassed});
 }
 
-void Results::addLifeLost(size_t iteration, int playerId) {
-    ResultEntry entry;
-    entry.iteration = iteration;
-    entry.playerId = playerId;
-    entry.type = ResultType::LifeLost;
-    results_.push_back(entry);
+void Results::addLifeLost(size_t iteration) {
+    results_.push_back({iteration, ResultType::LifeLost});
 }
 
-void Results::addRiddleEncounter(size_t iteration, int playerId, int riddleId, bool correct) {
-    ResultEntry entry;
-    entry.iteration = iteration;
-    entry.playerId = playerId;
-    entry.type = ResultType::RiddleEncounter;
-    entry.riddleId = riddleId;
-    entry.riddleCorrect = correct;
-    results_.push_back(entry);
+void Results::addGameWon(size_t iteration) {
+    results_.push_back({iteration, ResultType::GameWon});
 }
 
-void Results::addGameFinished(size_t iteration, int finalScore) {
-    ResultEntry entry;
-    entry.iteration = iteration;
-    entry.playerId = 0;  // Game-wide event
-    entry.type = ResultType::GameFinished;
-    entry.finalScore = finalScore;
-    results_.push_back(entry);
+void Results::addGameLost(size_t iteration) {
+    results_.push_back({iteration, ResultType::GameLost});
+}
+
+void Results::addGameAborted(size_t iteration) {
+    results_.push_back({iteration, ResultType::GameAborted});
 }
 
 // ==========================================

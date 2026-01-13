@@ -30,10 +30,21 @@ class Game
         Point nextStartP2;
     };
 
+protected:
     // ==========================================
-    // Member Variables
+    // Protected Members (accessible to derived classes)
     // ==========================================
+    
+    // Core game state needed by derived classes
     Screens currentScreen;
+    Room3Boss room3Boss;
+    size_t currentIteration_ = 0;  // Game cycle counter for steps/results
+    int score = 0;                  // Cumulative score (for result recording)
+
+private:
+    // ==========================================
+    // Private Member Variables
+    // ==========================================
     Player  player1;
     Player  player2;
     Point   player1Start;
@@ -51,7 +62,6 @@ class Game
 
     // Lives & Score System
     int lives = 6;              // Starting lives
-    int score = 0;              // Cumulative score
     int levelStartTime = 0;     // Timestamp when level started (in seconds)
     
     // M-Trap timer state
@@ -63,15 +73,9 @@ class Game
     long long accumulatedPauseMs = 0;  // Total pause duration in ms
     long long accumulatedPauseSec = 0; // Total pause duration in seconds (for score)
 
-    // Room 3 Boss
-    Room3Boss room3Boss;
-
     // Story overlay flags (reset only on new game, not on death)
     bool shownStory1 = false;
     bool shownStory2 = false;
-    
-    // Iteration counter for steps/results recording (Exercise 3)
-    size_t currentIteration_ = 0;
 
 public:
     Game();
@@ -111,6 +115,14 @@ protected:
     
     // Should menu be shown? Override to skip menu in load mode.
     virtual bool shouldShowMenu() const { return true; }
+    
+    // Is the replay complete? Override in GameFileInput to signal end of replay.
+    // Returns true when there are no more steps to replay.
+    virtual bool isReplayComplete() const { return false; }
+    
+    // Should the game wait for user input? Override in replay modes to skip blocking waits.
+    // Returns false in replay mode (even visual replay -load) to skip _getch() calls.
+    virtual bool shouldWaitForInput() const { return true; }
 
 private:
     // ==========================================
@@ -194,7 +206,7 @@ private:
     // ==========================================
 
     // Decrements life and triggers game over if lives reach 0
-    void decrementLife();
+    void decrementLife(int playerId);
 
     // Calculates and adds score when completing a level
     void addLevelCompletionScore();

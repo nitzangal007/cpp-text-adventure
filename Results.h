@@ -3,28 +3,22 @@
 #include <list>
 #include <string>
 
-// Types of result events to track
+// Minimal event types for Exercise 3 verification
 enum class ResultType {
-    ScreenTransition = 0,  // Player moved to another screen
-    LifeLost = 1,          // Player lost a life
-    RiddleEncounter = 2,   // Player encountered a riddle
-    GameFinished = 3       // Game completed
+    StagePassed = 0,   // Screen transition completed
+    LifeLost = 1,      // A life was lost (shared lives)
+    GameWon = 2,       // Game completed successfully
+    GameLost = 3,      // Game over (ran out of lives)
+    GameAborted = 4    // User exited via ESC mid-game
 };
 
-// Represents a single result event
+// Minimal result entry - just iteration and type
 struct ResultEntry {
-    size_t iteration;      // Game cycle when event occurred
-    int playerId;          // 1 or 2 (0 for game-wide events)
-    ResultType type;       // Type of event
-    
-    // Extra data depending on type:
-    int screenId = 0;      // For ScreenTransition: destination screen
-    int riddleId = 0;      // For RiddleEncounter: which riddle
-    bool riddleCorrect = false;  // For RiddleEncounter: was answer correct
-    int finalScore = 0;    // For GameFinished: final score
+    size_t iteration;  // Game tick when event occurred
+    ResultType type;   // Type of event
 };
 
-// Records and verifies game result events for testing
+// Records and verifies minimal game events for testing
 class Results {
     std::list<ResultEntry> results_;
 
@@ -34,10 +28,11 @@ public:
     bool saveToFile(const std::string& filename) const;
     
     // Recording (used by GameKeyboardInput)
-    void addScreenTransition(size_t iteration, int playerId, int toScreenId);
-    void addLifeLost(size_t iteration, int playerId);
-    void addRiddleEncounter(size_t iteration, int playerId, int riddleId, bool correct);
-    void addGameFinished(size_t iteration, int finalScore);
+    void addStagePassed(size_t iteration);
+    void addLifeLost(size_t iteration);
+    void addGameWon(size_t iteration);
+    void addGameLost(size_t iteration);
+    void addGameAborted(size_t iteration);
     
     // Verification (used by GameFileInput in silent mode)
     bool hasMoreResults() const { return !results_.empty(); }

@@ -138,6 +138,8 @@
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="Steps.cpp" />
     <ClCompile Include="Results.cpp" />
+    <ClCompile Include="GameKeyboardInput.cpp" />
+    <ClCompile Include="GameFileInput.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AutoBomb.h" />
@@ -159,6 +161,8 @@
     <ClInclude Include="utils.h" />
     <ClInclude Include="Steps.h" />
     <ClInclude Include="Results.h" />
+    <ClInclude Include="GameKeyboardInput.h" />
+    <ClInclude Include="GameFileInput.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
