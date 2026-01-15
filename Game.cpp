@@ -42,11 +42,40 @@ Game::Game()
 	};
 }
 // ==========================================
+// Virtual Hook Default Implementations (Exercise 3)
+// ==========================================
+
+char Game::getNextInput()
+{
+	// Default: read from keyboard
+	if (_kbhit()) {
+		return _getch();
+	}
+	return 0;  // No input this frame
+}
+
+int Game::getSleepDuration() const
+{
+	return Timing::GAME_TICK_MS;  // Default: normal game speed
+}
+
+// ==========================================
 // Public Interface
 // ==========================================
 
 void Game::run()
 {
+	// Check if menu should be shown (overridable for -load mode)
+	if (!shouldShowMenu()) {
+		// No menu - direct game start (for -load mode)
+		initGame();
+		if (!gameOver) {  // initGame may set gameOver on loading error
+			runGame();
+		}
+		return;
+	}
+	
+	// Normal mode: show menu
 	Menu menu;
 	bool done = false;
 	while (!done) {
@@ -74,28 +103,40 @@ void Game::run()
 // ==========================================
 
 void Game::initGame() {
-	cls();
-	player1Start = Point(5, 2, 0, 0, Players::PLAYER1_SYMBOL);
-	player2Start = Point(9, 2, 0, 0, Players::PLAYER2_SYMBOL);
+	if (shouldRender()) {
+		cls();
+	}
+	//player1Start = Point(5, 2, 0, 0, Players::PLAYER1_SYMBOL);
+	player1Start = Point(36, 2, 0, 0, Players::PLAYER1_SYMBOL);
+	//player2Start = Point(9, 2, 0, 0, Players::PLAYER2_SYMBOL);
+	player2Start = Point(43, 2, 0, 0, Players::PLAYER2_SYMBOL);
 	currentScreen.init();
 	
 	// Check if screen loading failed
 	if (currentScreen.hasLoadingError())
 	{
-		// Display error message and return to menu
-		cls();
-		gotoxy(5, 10);
-		std::cout << "ERROR: " << currentScreen.getLoadingError();
-		gotoxy(5, 12);
-		std::cout << "Make sure adv-world*.screen files are in the game directory.";
-		gotoxy(5, 14);
-		std::cout << "Press any key to return to menu...";
-		_getch();
+		// Display error message and return to menu (only if rendering)
+		if (shouldRender()) {
+			cls();
+			gotoxy(5, 10);
+			std::cout << "ERROR: " << currentScreen.getLoadingError();
+			gotoxy(5, 12);
+			std::cout << "Make sure adv-world*.screen files are in the game directory.";
+			gotoxy(5, 14);
+			std::cout << "Press any key to return to menu...";
+			
+			if (shouldWaitForInput()) {
+				_getch();
+			} else {
+				Sleep(2000);
+			}
+		}
 		gameOver = true;  // Signal to return to menu
 		return;
 	}
 	
-	currentScreen.setCurrentScreen(Screens::ScreenId::First);
+	//currentScreen.setCurrentScreen(Screens::ScreenId::First);
+	currentScreen.setCurrentScreen(Screens::ScreenId::Third);
 	player1.reset(player1Start);
 	player2.reset(player2Start);
 	bomb = Bomb();
@@ -122,14 +163,20 @@ void Game::initGame() {
 	shownStory1 = false;
 	shownStory2 = false;
 	
-	player1.draw();
-	player2.draw();
-	drawStatusBar();
+	// Only draw if rendering is enabled
+	if (shouldRender()) {
+		player1.draw();
+		player2.draw();
+		drawStatusBar();
 	
-	// Show STORY_1 at start of game (only once)
-	if (!shownStory1) {
-		render();
-		showStoryOverlay(1);
+		// Show STORY_1 at start of game (only once)
+		if (!shownStory1) {
+			render();
+			showStoryOverlay(1);
+			shownStory1 = true;
+		}
+	} else {
+		// In silent mode, mark story as shown to skip overlay logic
 		shownStory1 = true;
 	}
 }
@@ -139,16 +186,24 @@ void Game::runGame()
 	const char ESC = Keys::ESC;
 	bool paused = false;
 	bool running = true;
+	
+	// Reset iteration counter for new game session
+	currentIteration_ = 0;
 
-	cls();
-	render();
+	if (shouldRender()) {
+		cls();
+		render();
+	}
 	
 	while (running)
 	{
-		if (_kbhit())
+		++currentIteration_;  // Increment game cycle counter
+		
+		// Get input using virtual hook (keyboard or file)
+		char ch = getNextInput();
+		
+		if (ch != 0)  // Only process if there's input
 		{
-			char ch = _getch();
-
 			if (!paused)
 			{
 				// ========================================
@@ -180,6 +235,8 @@ void Game::runGame()
 				
 				if (ch == ESC)
 				{
+					// Record ESC input for replay (Exercise 3)
+					onInputReceived(currentIteration_, 0, ch);
 					cls();
 					paused = true;
 					// Record when pause started (for timer freezing)
@@ -188,18 +245,24 @@ void Game::runGame()
 					printCentered("Press ESC to continue or H for Menu", 9);
 				}
 				else if (ch == 'E' || ch == 'e') {
+					// Record input for player 1 action
+					onInputReceived(currentIteration_, 1, ch);
 					if (player1.hasTorch())
 						dropTorch(player1);
 					else
 						tryPlaceBomb(player1);
 				}
 				else if (ch == 'O' || ch == 'o') {
+					// Record input for player 2 action
+					onInputReceived(currentIteration_, 2, ch);
 					if (player2.hasTorch())
 						dropTorch(player2);
 					else
 						tryPlaceBomb(player2);
 				}
 				else if (ch == 'R' || ch == 'r') {
+					// Record R input for replay (Exercise 3)
+					onInputReceived(currentIteration_, 0, ch);
 					// Disable R during active boss fight
 					if (currentScreen.isThirdScreen() && room3Boss.isRestartDisabled()) {
 						// R is disabled during boss - do nothing
@@ -210,14 +273,26 @@ void Game::runGame()
 				}
 				else
 				{
-					player1.handleKeyPress(ch);
-					player2.handleKeyPress(ch);
+					// Check which player this key belongs to for recording
+					bool handled1 = player1.handleKeyPress(ch);
+					bool handled2 = player2.handleKeyPress(ch);
+					
+					// Record input for the appropriate player
+					if (handled1) {
+						onInputReceived(currentIteration_, 1, ch);
+					}
+					if (handled2) {
+						onInputReceived(currentIteration_, 2, ch);
+					}
 				}
 			}
 			else
 			{
+				// Paused state input handling
 				if (ch == ESC)
 				{
+					// Record ESC input for replay (Exercise 3)
+					onInputReceived(currentIteration_, 0, ch);
 					// Calculate pause duration and add to accumulators
 					auto now = std::chrono::steady_clock::now();
 					auto pauseDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -227,11 +302,17 @@ void Game::runGame()
 					accumulatedPauseSec += pauseDuration / 1000;
 					
 					paused = false;
-					cls();
-					render();
+					if (shouldRender()) {
+						cls();
+						render();
+					}
 				}
 				else if (ch == 'h' || ch == 'H')
 				{
+					// Record H input for replay (Exercise 3)
+					onInputReceived(currentIteration_, 0, ch);
+					// Record game aborted event (Exercise 3 - user exit)
+					onResultEvent(currentIteration_, 0, 4, 0);  // type 4 = GameAborted
 					return;  
 				}
 			}
@@ -245,17 +326,24 @@ void Game::runGame()
 				gameOver = false;
 				return;
 			}
-			render();
+			if (shouldRender()) {
+				render();
+			}
+			
+			// Check if replay is complete (for -load mode)
+			if (isReplayComplete()) {
+				return;  // Exit game loop - replay finished
+			}
 		}
 
-		Sleep(Timing::GAME_TICK_MS);
+		Sleep(getSleepDuration());
 	}
 }
 
 void Game::resetCurrentGame()
 {
-	// Decrement life (may trigger game over)
-	decrementLife();
+	// Decrement life - player pressed R which is considered triggered by both
+	decrementLife(0);  // 0 = manual restart (both players)
 	if (gameOver)
 		return;
 	
@@ -764,7 +852,9 @@ void Game::explodeBomb()
 
 	if (p1Dead || p2Dead)
 	{
-		decrementLife();
+		// Track which player died (or both)
+		int deadPlayer = (p1Dead && p2Dead) ? 0 : (p1Dead ? 1 : 2);
+		decrementLife(deadPlayer);
 		if (!gameOver)
 		{
 			currentScreen.resetCurrent();
@@ -855,37 +945,58 @@ bool Game::handleRiddleEncounter(Player& player, const Point& nextPos)
 		return true;
 	}
 
-	// נשתמש באזור הסטטוס/legend (השורות שמתחת ללוח)
-	const int y = currentScreen.getLegendY(); // שורה ראשונה של הסטטוס
-	int x = 0;
-	auto clearLine = [&](int yy)
-		{
-			gotoxy(0, yy);
-			std::cout << "                                                                                ";
-		};
+	// Riddle input logic:
+	// - shouldRender(): controls whether to DISPLAY the riddle UI
+	// - shouldWaitForInput(): controls whether to read from KEYBOARD vs REPLAY
+	char ch;
+	
+	if (shouldRender()) {
+		// Display riddle UI (for normal mode and visual replay -load)
+		const int y = currentScreen.getLegendY();
+		int x = 0;
+		auto clearLine = [&](int yy)
+			{
+				gotoxy(0, yy);
+				std::cout << "                                                                                ";
+			};
 
-	// ננקה מספיק שורות בשביל סטטוס + חידה + הודעה
-	for (int i = 0; i <= 3; ++i)
-		clearLine(y + i);
+		for (int i = 0; i <= 3; ++i)
+			clearLine(y + i);
 
+		const auto& opts = r->getOptions();
 
-	// ---- הדפסת החידה ----
-	const auto& opts = r->getOptions();
+		gotoxy(x, y);
+		std::cout << "RIDDLE: " << r->getQuestion();
 
-	gotoxy(x, y);
-	std::cout << "RIDDLE: " << r->getQuestion();
+		gotoxy(x, y+1);
+		std::cout << "A) " << opts[0] << "   B) " << opts[1];
 
-	gotoxy(x, y+1);
-	std::cout << "A) " << opts[0] << "   B) " << opts[1];
+		gotoxy(x, y+2);
+		std::cout << "C) " << opts[2] << "   D) " << opts[3];
 
-	gotoxy(x, y+2);
-	std::cout << "C) " << opts[2] << "   D) " << opts[3];
+		gotoxy(x, y+3);
+		std::cout << "Choose (A-D / 1-4): ";
+	}
+	
+	// Get input from keyboard OR replay based on shouldWaitForInput
+	if (shouldWaitForInput()) {
+		// Normal mode: get input from keyboard
+		ch = _getch();
+		
+		// Record the riddle answer with SPECIAL playerId 100 (distinguishes from movement keys)
+		// This ensures main loop's getNextInput() won't consume riddle answers
+		onInputReceived(currentIteration_, 100, ch);  // playerId 100 = riddle answer
+	} else {
+		// Replay mode: get riddle answer from steps file
+		// We need getRiddleInput() which specifically fetches riddle answers (playerId 100)
+		ch = getRiddleInput();
+		
+		// If no riddle input found, use default answer
+		if (ch == 0) {
+			ch = 'a';  // Default answer
+		}
+	}
 
-	gotoxy(x, y+3);
-	std::cout << "Choose (A-D / 1-4): ";
-
-	// ---- קלט ----
-	char ch = _getch();
 	std::string input(1, ch);
 	int choiceIndex = Riddle::parseChoice(input);
 
@@ -893,37 +1004,55 @@ bool Game::handleRiddleEncounter(Player& player, const Point& nextPos)
 	if (choiceIndex != -1)
 		ok = r->trySolve(choiceIndex);
 
-	
-	for (int i = 0; i <= 3; ++i)
-		clearLine(y + i);
-	gotoxy(0, y + 1);
+	if (shouldRender()) {
+		const int y = currentScreen.getLegendY();
+		auto clearLine = [&](int yy)
+			{
+				gotoxy(0, yy);
+				std::cout << "                                                                                ";
+			};
+		
+		for (int i = 0; i <= 3; ++i)
+			clearLine(y + i);
+		gotoxy(0, y + 1);
 
-	if (ok)
-	{
-		std::cout << "Correct! Press any key to continue...";
+		if (ok)
+		{
+			std::cout << "Correct! Press any key to continue...";
+		}
+		else
+		{
+			score = (score >= 400 ? score - 400 : 0);
+			std::cout << "Wrong! -400 score. Press any key to continue...";
+			player.stop();
+		}
+
+		// Only wait for key in normal mode
+		if (shouldWaitForInput()) {
+			_getch();
+		} else {
+			Sleep(300);  // Brief pause in visual replay
+		}
+
+		for (int i = 0; i <= 3; ++i)
+			clearLine(y + i);
+		drawStatusBar();
+	} else {
+		// Silent mode: apply score penalty without display
+		if (!ok) {
+			score = (score >= 400 ? score - 400 : 0);
+			player.stop();
+		}
 	}
-	else
-	{
-		score = (score >= 400 ? score - 400 : 0);
-		std::cout << "Wrong! -400 score. Press any key to continue...";
-		player.stop();
-	}
 
-	_getch();
-
-	// ---- סיום: אם הצליח, מוחקים את הרידל ומכניסים את השחקן ----
+	// If correct, remove riddle and move player
 	if (ok)
 	{
 		currentScreen.removeRiddleAt(nextPos);
 		player.move();
 	}
 
-	 
-	for (int i = 0; i <= 3; ++i)
-		clearLine(y + i);
-
-
-	 drawStatusBar();
+	// Note: Riddle results are no longer tracked in Exercise 3 minimal Results
 
 	return true;
 }
@@ -1186,6 +1315,9 @@ void Game::tryAdvanceToNextScreen()
 		// Extra life for completing level
 		lives++;
 
+		// Record screen transition event (Exercise 3)
+		onResultEvent(currentIteration_, 0, 0, static_cast<int>(exit.to));
+
 		currentScreen.setCurrentScreen(exit.to);
 
 		player1.reset(exit.nextStartP1);
@@ -1194,18 +1326,33 @@ void Game::tryAdvanceToNextScreen()
 		player1ReadyForNextScreen = false;
 		player2ReadyForNextScreen = false;
 
-		cls();
-		currentScreen.drawCurrent();
+		if (shouldRender()) {
+			cls();
+			currentScreen.drawCurrent();
+		}
 
 		if (exit.to == Screens::ScreenId::Final)
 		{
 			// Victory screen - show final score on FINAL_SCREEN_TEMPLATE
-			currentScreen.drawCurrent();
-			gotoxy(30, 17);
-			std::cout << "Final Score: " << score;
-			gotoxy(18, 19);
-			std::cout << "Congratulations! Press any key to return to menu...";
-			_getch();      
+			if (shouldRender()) {
+				currentScreen.drawCurrent();
+				gotoxy(30, 17);
+				std::cout << "Final Score: " << score;
+				gotoxy(18, 19);
+				std::cout << "Congratulations! Press any key to return to menu...";
+			}
+			
+			// Record game won event (Exercise 3) - positive extraData = won
+			onResultEvent(currentIteration_, 0, 3, score);
+			
+			if (shouldRender()) {
+				// Only wait for key in normal mode
+				if (shouldWaitForInput()) {
+					_getch();
+				} else {
+					Sleep(2000); // linger on victory screen
+				}
+			}
 			gameOver = true;
 		}
 		else
@@ -1213,10 +1360,12 @@ void Game::tryAdvanceToNextScreen()
 			// Reset timer for next level
 			levelStartTime = getCurrentTimeSeconds();
 			
-			// Show STORY_2 when entering Screen 2 for first time
+			// Show STORY_2 when entering Screen 2 for first time (skip in replay mode)
 			if (currentScreen.isSecondScreen() && !shownStory2) {
-				render();
-				showStoryOverlay(2);
+				if (shouldRender()) {
+					render();
+					showStoryOverlay(2);
+				}
 				shownStory2 = true;
 			}
 			
@@ -1225,9 +1374,11 @@ void Game::tryAdvanceToNextScreen()
 				room3Boss.init();
 			}
 			
-			player1.draw();
-			player2.draw();
-			drawStatusBar();
+			if (shouldRender()) {
+				player1.draw();
+				player2.draw();
+				drawStatusBar();
+			}
 		}
 
 		return;
@@ -1268,11 +1419,17 @@ bool Game::isExitWaitPosition(const Point& p) const
 // Lives & Score System
 // ==========================================
 
-void Game::decrementLife()
+void Game::decrementLife(int playerId)
 {
+	// Record life lost event (Exercise 3)
+	// playerId: 0 = both/game-wide, 1 = player 1, 2 = player 2
+	onResultEvent(currentIteration_, playerId, 1, 0);
+	
 	lives--;
 	if (lives <= 0)
 	{
+		// Record game lost event (Exercise 3)
+		onResultEvent(currentIteration_, 0, 3, -1);  // -1 = game lost
 		showGameOverScreen();
 		gameOver = true;
 	}
@@ -1304,6 +1461,11 @@ void Game::addLevelCompletionScore()
 
 void Game::showGameOverScreen()
 {
+	// Skip display in replay mode
+	if (!shouldRender()) {
+		return;
+	}
+	
 	cls();
 	// Use FINAL_SCREEN_TEMPLATE (which shows "GAME OVER")
 	currentScreen.setCurrentScreen(Screens::ScreenId::Final);
@@ -1311,9 +1473,14 @@ void Game::showGameOverScreen()
 	
 	gotoxy(30, 17);
 	std::cout << "Final Score: " << score;
-	gotoxy(22, 19);
-	std::cout << "Press any key to return to the main menu...";
-	_getch();
+	// Wait for input only in normal mode
+	if (shouldWaitForInput()) {
+		gotoxy(22, 19);
+		std::cout << "Press any key to return to the main menu...";
+		_getch();
+	} else {
+		Sleep(2000); // Linger for replay
+	}
 }
 
 int Game::getCurrentTimeSeconds() const
@@ -1329,17 +1496,16 @@ int Game::getCurrentTimeSeconds() const
 
 void Game::updateMTrapTimer()
 {
-	auto now = std::chrono::steady_clock::now();
-	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-		now - mTrapTimerStart
-	).count();
+	// M-trap timing is 100% ITERATION-BASED for deterministic replay
+	// Using real clock time would cause desync between save and load modes
+	// because iterations run at different speeds (50ms in save, 10ms/0ms in replay)
 	
-	// Subtract accumulated pause time to freeze timer during pause
-	elapsed -= accumulatedPauseMs;
-	if (elapsed < 0) elapsed = 0;  // Safety check
+	// Calculate elapsed "time" based on iteration count
+	// Each iteration represents GAME_TICK_MS of game time (100ms)
+	int simulatedElapsedMs = static_cast<int>(currentIteration_) * Timing::GAME_TICK_MS;
 	
 	// Calculate position in cycle (0 to CYCLE_MS-1)
-	int cyclePos = static_cast<int>(elapsed % Timing::M_TRAP_CYCLE_MS);
+	int cyclePos = simulatedElapsedMs % Timing::M_TRAP_CYCLE_MS;
 	
 	// Visible during first half of cycle
 	mTrapVisible = (cyclePos < Timing::M_TRAP_VISIBLE_MS);
@@ -1372,6 +1538,12 @@ bool Game::checkMTrapDeath(const Player& player) const
 
 void Game::showStoryOverlay(int storyNumber)
 {
+	// In silent mode, skip entirely (shouldRender is already checked by caller,
+	// but double-check here for safety)
+	if (!shouldRender()) {
+		return;
+	}
+	
 	cls();
 	
 	if (storyNumber == 1)
@@ -1395,8 +1567,14 @@ void Game::showStoryOverlay(int storyNumber)
 		printCentered("Turn back now. Let's not make this number 13.", 16);
 	}
 	
-	printCentered("Press any key to continue...", 20);
-	_getch();
+	// Only wait for input in normal mode, not in replay modes
+	if (shouldWaitForInput()) {
+		printCentered("Press any key to continue...", 20);
+		_getch();
+	} else {
+		// In visual replay, briefly show the overlay then continue
+		Sleep(500);  // Brief pause so player can see it
+	}
 	
 	// Clear and re-render the game
 	cls();

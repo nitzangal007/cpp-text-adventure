@@ -30,10 +30,21 @@ class Game
         Point nextStartP2;
     };
 
+protected:
     // ==========================================
-    // Member Variables
+    // Protected Members (accessible to derived classes)
     // ==========================================
+    
+    // Core game state needed by derived classes
     Screens currentScreen;
+    Room3Boss room3Boss;
+    size_t currentIteration_ = 0;  // Game cycle counter for steps/results
+    int score = 0;                  // Cumulative score (for result recording)
+
+private:
+    // ==========================================
+    // Private Member Variables
+    // ==========================================
     Player  player1;
     Player  player2;
     Point   player1Start;
@@ -51,7 +62,6 @@ class Game
 
     // Lives & Score System
     int lives = 6;              // Starting lives
-    int score = 0;              // Cumulative score
     int levelStartTime = 0;     // Timestamp when level started (in seconds)
     
     // M-Trap timer state
@@ -63,15 +73,13 @@ class Game
     long long accumulatedPauseMs = 0;  // Total pause duration in ms
     long long accumulatedPauseSec = 0; // Total pause duration in seconds (for score)
 
-    // Room 3 Boss
-    Room3Boss room3Boss;
-
     // Story overlay flags (reset only on new game, not on death)
     bool shownStory1 = false;
     bool shownStory2 = false;
 
 public:
     Game();
+    virtual ~Game() = default;  // Virtual destructor for polymorphism
 
     // ==========================================
     // Public Interface
@@ -79,6 +87,47 @@ public:
 
     // Main entry point: shows menu, handles loops
     void run();
+
+protected:
+    // ==========================================
+    // Virtual Hooks for Polymorphism (Exercise 3)
+    // ==========================================
+    // These allow derived classes to customize behavior
+    // without changing the core game loop.
+    
+    // Gets next keyboard input. Override to read from file instead.
+    // Returns 0 if no input available this frame.
+    // Note: This skips riddle answers (playerId 100) in replay mode.
+    virtual char getNextInput();
+    
+    // Gets next riddle answer input. Override to read riddle answers from file.
+    // This is separate from getNextInput() to avoid riddle answers being consumed by main loop.
+    virtual char getRiddleInput() { return 0; }  // Base implementation does nothing
+    
+    // Called when a valid movement/action key is pressed.
+    // Override to record steps to file.
+    virtual void onInputReceived(size_t iteration, int playerId, char key) {}
+    
+    // Called when a significant game event occurs.
+    // eventType: 0=ScreenTransition, 1=LifeLost, 2=Riddle, 3=GameFinished
+    virtual void onResultEvent(size_t iteration, int playerId, int eventType, int extraData = 0) {}
+    
+    // Should rendering happen? Override to disable for silent mode.
+    virtual bool shouldRender() const { return true; }
+    
+    // Sleep duration in ms. Override for faster replay.
+    virtual int getSleepDuration() const;
+    
+    // Should menu be shown? Override to skip menu in load mode.
+    virtual bool shouldShowMenu() const { return true; }
+    
+    // Is the replay complete? Override in GameFileInput to signal end of replay.
+    // Returns true when there are no more steps to replay.
+    virtual bool isReplayComplete() const { return false; }
+    
+    // Should the game wait for user input? Override in replay modes to skip blocking waits.
+    // Returns false in replay mode (even visual replay -load) to skip _getch() calls.
+    virtual bool shouldWaitForInput() const { return true; }
 
 private:
     // ==========================================
@@ -162,7 +211,7 @@ private:
     // ==========================================
 
     // Decrements life and triggers game over if lives reach 0
-    void decrementLife();
+    void decrementLife(int playerId);
 
     // Calculates and adds score when completing a level
     void addLevelCompletionScore();
