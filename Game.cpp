@@ -106,8 +106,10 @@ void Game::initGame() {
 	if (shouldRender()) {
 		cls();
 	}
-	player1Start = Point(5, 2, 0, 0, Players::PLAYER1_SYMBOL);
-	player2Start = Point(9, 2, 0, 0, Players::PLAYER2_SYMBOL);
+	//player1Start = Point(5, 2, 0, 0, Players::PLAYER1_SYMBOL);
+	player1Start = Point(36, 2, 0, 0, Players::PLAYER1_SYMBOL);
+	//player2Start = Point(9, 2, 0, 0, Players::PLAYER2_SYMBOL);
+	player2Start = Point(43, 2, 0, 0, Players::PLAYER2_SYMBOL);
 	currentScreen.init();
 	
 	// Check if screen loading failed
@@ -133,7 +135,8 @@ void Game::initGame() {
 		return;
 	}
 	
-	currentScreen.setCurrentScreen(Screens::ScreenId::First);
+	//currentScreen.setCurrentScreen(Screens::ScreenId::First);
+	currentScreen.setCurrentScreen(Screens::ScreenId::Third);
 	player1.reset(player1Start);
 	player2.reset(player2Start);
 	bomb = Bomb();
@@ -258,6 +261,8 @@ void Game::runGame()
 						tryPlaceBomb(player2);
 				}
 				else if (ch == 'R' || ch == 'r') {
+					// Record R input for replay (Exercise 3)
+					onInputReceived(currentIteration_, 0, ch);
 					// Disable R during active boss fight
 					if (currentScreen.isThirdScreen() && room3Boss.isRestartDisabled()) {
 						// R is disabled during boss - do nothing
@@ -978,31 +983,15 @@ bool Game::handleRiddleEncounter(Player& player, const Point& nextPos)
 		// Normal mode: get input from keyboard
 		ch = _getch();
 		
-		// Record the riddle answer (for -save mode)
-		int playerId = (player.getId() == Player::Id::First) ? 1 : 2;
-		onInputReceived(currentIteration_, playerId, ch);
+		// Record the riddle answer with SPECIAL playerId 100 (distinguishes from movement keys)
+		// This ensures main loop's getNextInput() won't consume riddle answers
+		onInputReceived(currentIteration_, 100, ch);  // playerId 100 = riddle answer
 	} else {
-		// Replay mode: get the next recorded step directly
-		// For riddles, we need the next input regardless of iteration timing
-		ch = 0;
+		// Replay mode: get riddle answer from steps file
+		// We need getRiddleInput() which specifically fetches riddle answers (playerId 100)
+		ch = getRiddleInput();
 		
-		// Safety: limit iterations to prevent infinite loops
-		const int MAX_SEARCH_ITERATIONS = 10000;
-		int searchCount = 0;
-		
-		while (ch == 0 && searchCount < MAX_SEARCH_ITERATIONS) {
-			++currentIteration_;
-			ch = getNextInput();
-			++searchCount;
-			
-			// If replay is complete, use default answer
-			if (isReplayComplete()) {
-				ch = 'a';  // Default answer
-				break;
-			}
-		}
-		
-		// If we hit the safety limit, use default answer
+		// If no riddle input found, use default answer
 		if (ch == 0) {
 			ch = 'a';  // Default answer
 		}
@@ -1507,17 +1496,16 @@ int Game::getCurrentTimeSeconds() const
 
 void Game::updateMTrapTimer()
 {
-	auto now = std::chrono::steady_clock::now();
-	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-		now - mTrapTimerStart
-	).count();
+	// M-trap timing is 100% ITERATION-BASED for deterministic replay
+	// Using real clock time would cause desync between save and load modes
+	// because iterations run at different speeds (50ms in save, 10ms/0ms in replay)
 	
-	// Subtract accumulated pause time to freeze timer during pause
-	elapsed -= accumulatedPauseMs;
-	if (elapsed < 0) elapsed = 0;  // Safety check
+	// Calculate elapsed "time" based on iteration count
+	// Each iteration represents GAME_TICK_MS of game time (100ms)
+	int simulatedElapsedMs = static_cast<int>(currentIteration_) * Timing::GAME_TICK_MS;
 	
 	// Calculate position in cycle (0 to CYCLE_MS-1)
-	int cyclePos = static_cast<int>(elapsed % Timing::M_TRAP_CYCLE_MS);
+	int cyclePos = simulatedElapsedMs % Timing::M_TRAP_CYCLE_MS;
 	
 	// Visible during first half of cycle
 	mTrapVisible = (cyclePos < Timing::M_TRAP_VISIBLE_MS);

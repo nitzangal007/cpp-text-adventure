@@ -23,8 +23,11 @@ public:
     explicit GameFileInput(bool silent = false);
     
 protected:
-    // Override: get input from file instead of keyboard
+    // Override: get input from file instead of keyboard (skips riddle answers)
     char getNextInput() override;
+    
+    // Override: get riddle answer from file (playerId == 100)
+    char getRiddleInput() override;
     
     // Override: verify results in silent mode
     void onResultEvent(size_t iteration, int playerId, int eventType, int extraData) override;

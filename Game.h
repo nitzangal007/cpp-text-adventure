@@ -97,7 +97,12 @@ protected:
     
     // Gets next keyboard input. Override to read from file instead.
     // Returns 0 if no input available this frame.
+    // Note: This skips riddle answers (playerId 100) in replay mode.
     virtual char getNextInput();
+    
+    // Gets next riddle answer input. Override to read riddle answers from file.
+    // This is separate from getNextInput() to avoid riddle answers being consumed by main loop.
+    virtual char getRiddleInput() { return 0; }  // Base implementation does nothing
     
     // Called when a valid movement/action key is pressed.
     // Override to record steps to file.

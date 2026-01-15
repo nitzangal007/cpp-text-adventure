@@ -71,17 +71,21 @@ bool GameFileInput::loadFiles()
 
 char GameFileInput::getNextInput()
 {
-    // IMPORTANT: Do NOT read from keyboard!
-    // Return step from file if it matches current iteration OR is overdue
+    // Return step from file ONLY if it's NOT a riddle answer (playerId != 100)
+    // Riddle answers are fetched via getRiddleInput() to prevent main loop from consuming them
     
     if (!filesLoaded_) {
         return 0;
     }
     
     // Check if there are steps remaining
-    if (steps_.hasMoreSteps()) {
-        // Peek at the next step
+    while (steps_.hasMoreSteps()) {
         const StepEntry& nextStep = steps_.peekStep();
+        
+        // Skip riddle answers (playerId 100) - they're consumed by getRiddleInput()
+        if (nextStep.playerId == 100) {
+            return 0;  // Don't consume riddle answer in main loop
+        }
         
         // If the step is for this iteration OR it's from the past (overdue),
         // we should consume it now to prevent desync/blocking.
@@ -89,9 +93,43 @@ char GameFileInput::getNextInput()
             StepEntry step = steps_.popStep();
             return step.key;
         }
+        break;  // Step is for future iteration
     }
     
     return 0;  // No input this frame
+}
+
+char GameFileInput::getRiddleInput()
+{
+    // Return the next riddle answer (playerId == 100) from steps
+    // This is called by handleRiddleEncounter() in replay mode
+    
+    if (!filesLoaded_) {
+        return 0;
+    }
+    
+    // Search for the next riddle answer in the queue
+    while (steps_.hasMoreSteps()) {
+        const StepEntry& nextStep = steps_.peekStep();
+        
+        // Found a riddle answer
+        if (nextStep.playerId == 100) {
+            StepEntry step = steps_.popStep();
+            return step.key;
+        }
+        
+        // If next step is a movement key at/before current iteration, skip it
+        // (it should have been consumed by main loop but wasn't)
+        if (nextStep.iteration <= currentIteration_) {
+            steps_.popStep();  // Discard stale movement key
+            continue;
+        }
+        
+        // No riddle answer found in the immediate queue
+        break;
+    }
+    
+    return 0;  // No riddle answer found
 }
 
 int GameFileInput::getSleepDuration() const
