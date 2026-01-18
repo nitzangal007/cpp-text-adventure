@@ -172,6 +172,7 @@ void Game::runGame()
 								lives = 0;
 								showGameOverScreen();
 								recordGameEnded(score);
+								recordStep(ch, '\0');  // Record the V key that caused death
 								gameOver = true;
 								return;
 							}
@@ -1250,13 +1251,21 @@ void Game::tryAdvanceToNextScreen()
 
 		if (exit.to == Screens::ScreenId::Final)
 		{
+			// Victory - record game ended
+			recordGameEnded(score);
+			
+			// In silent mode, skip visual display
+			if (getSleepDuration() == 0) {
+				gameOver = true;
+				return;
+			}
+			
 			// Victory screen - show final score on FINAL_SCREEN_TEMPLATE
 			currentScreen.drawCurrent();
 			gotoxy(30, 17);
 			std::cout << "Final Score: " << score;
 			gotoxy(18, 19);
 			std::cout << "Congratulations! Press any key to return to menu...";
-			recordGameEnded(score);  // Record victory with final score
 			_getch();      
 			gameOver = true;
 		}

@@ -348,7 +348,9 @@ void Room3Boss::restoreSnapshot(Screens& screens, Player& p1, Player& p2)
     // Restore player positions to FIXED spawn points (not snapshot positions)
     // Left player (P1) to (20, 15), Right player (P2) to (52, 15)
     p1.setPosition(Point(20, 15));
+    p1.setDirection(Direction::STAY);  // Stop player movement
     p2.setPosition(Point(52, 15));
+    p2.setDirection(Direction::STAY);  // Stop player movement
     
     // Restore switch states
     for (int i = 0; i < 8; ++i) {

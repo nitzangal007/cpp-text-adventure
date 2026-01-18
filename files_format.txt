@@ -49,12 +49,14 @@ Event Types:
 - 1 (screenChange): Player moved to another screen
 - 2 (riddle): Riddle was encountered
 - 3 (gameEnded): Game finished
+- 4 (bossTaskComplete): Boss task completed in Room 3
 
 Event Data by Type:
 - lostLife: No additional data
 - screenChange: Screen number (1, 2, 3, 4=Final)
 - riddle: "question" "answer" correct(0/1)
 - gameEnded: Final score (integer)
+- bossTaskComplete: Task number (1, 2, or 3)
 
 Example:
 ```
