@@ -25,10 +25,6 @@ public:
 		return !(*this == other);
 	}
 	void draw(char c) {
-		// Skip console output in silent mode (set by GameFileInput)
-		extern bool g_silentMode;  // Defined in GameFileInput.cpp
-		if (g_silentMode) return;
-		
 		gotoxy(x, y);
 		if (g_colorsEnabled)
 			setConsoleColor(getColorForChar(c));

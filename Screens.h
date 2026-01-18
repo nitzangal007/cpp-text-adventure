@@ -121,13 +121,6 @@ public:
     // Check if loading failed and get error message
     bool hasLoadingError() const { return loadingFailed; }
     const std::string& getLoadingError() const { return loadingError; }
-    
-    // Get list of screen file names (for Steps recording - Exercise 3)
-    const std::vector<std::string>& getScreenFileNames() const { return screenFilePaths; }
-    
-    // Set screen files to use (for replay mode - Exercise 3)
-    // Call this BEFORE init() to skip auto-discovery
-    void setScreenFiles(const std::vector<std::string>& files) { screenFilePaths = files; }
 
     // ==========================================
     // Board Access & Modification

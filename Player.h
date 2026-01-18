@@ -78,8 +78,8 @@ public:
         pos.setPosition(p.getX(), p.getY());  // Only change x,y, keep symbol
     }
 
-    // keyboard input handling - returns true if key was handled by this player
-    bool handleKeyPress(char key_pressed);
+    // keyboard input handling
+    void handleKeyPress(char key_pressed);
 
     //Spring logics
     // Enters the spring: sets mode to Compressing and stores inherited momentum
