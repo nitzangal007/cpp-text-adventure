@@ -9,15 +9,16 @@ void Player::move()                                                         //we
 }
 
 
-void Player::handleKeyPress(char key_pressed) {                              //we took this function from class
+bool Player::handleKeyPress(char key_pressed) {                              //we took this function from class
     size_t index = 0;
     for (char k : keys) {
         if (std::tolower(k) == std::tolower(key_pressed)) {
 			setDirection((Direction)index);
-            return;
+            return true;  // Key was handled by this player
         }
         ++index;
     }
+    return false;  // Key not relevant for this player
 }
 
 void Player::handleSpringEntry(int springId, int inheritedForce)

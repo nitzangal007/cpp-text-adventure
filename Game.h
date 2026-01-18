@@ -10,11 +10,19 @@
 #include "AutoBomb.h"
 #include "Riddle.h"
 #include "Room3Boss.h"
+#include "Steps.h"
+#include "Results.h"
 
 // What should happen when the game loop exits
 enum class GameResult { BackToMenu, QuitProgram };
 
-
+// Game mode for polymorphism
+enum class GameMode { 
+    Normal,      // Regular game (no save/load)
+    Save,        // Save mode - record steps and results
+    Load,        // Load mode - play from file
+    LoadSilent   // Load silent - no display, just verify
+};
 
 class Game
 {
@@ -47,7 +55,11 @@ class Game
     ExitInfo exits[Screens::NUM_SCREENS-1];
     bool player1ReadyForNextScreen;
     bool player2ReadyForNextScreen;
-    bool gameOver = false;
+
+protected:
+    bool gameOver = false;  // Accessible to derived classes
+
+private:
 
     // Lives & Score System
     int lives = 6;              // Starting lives
@@ -58,10 +70,13 @@ class Game
     std::chrono::steady_clock::time_point mTrapTimerStart;
     bool mTrapVisible = true;   // Current visibility state
     
-    // Pause duration tracking (for freezing timers)
+    // Pause duration tracking (deprecated with new gameTimeMs system, but kept if needed for other logic)
     std::chrono::steady_clock::time_point pauseStartTime;
     long long accumulatedPauseMs = 0;  // Total pause duration in ms
     long long accumulatedPauseSec = 0; // Total pause duration in seconds (for score)
+
+    // Deterministic Game Time (accumulates per tick, regardless of real execution speed)
+    long long gameTimeMs = 0;
 
     // Room 3 Boss
     Room3Boss room3Boss;
@@ -70,8 +85,56 @@ class Game
     bool shownStory1 = false;
     bool shownStory2 = false;
 
+protected:
+    // ==========================================
+    // Polymorphism Support (for save/load modes)
+    // ==========================================
+    
+    // Game iteration counter (for save/load synchronization)
+    size_t iteration = 0;
+    
+    // Steps and Results for save/load
+    Steps steps;
+    Results results;
+    
+    // ==========================================
+    // Virtual Functions (override in derived classes)
+    // ==========================================
+    
+    // Check if there's input available (keyboard or file)
+    virtual bool hasInput();
+    
+    // Get the next input character
+    virtual char getNextInput();
+    
+    // Render the game (can be empty in silent mode)
+    virtual void doRender();
+    
+    // Get sleep duration in milliseconds
+    virtual int getSleepDuration() const;
+    
+    // Check if we should show story overlays
+    virtual bool shouldShowOverlay() const;
+    
+    // Record a step (save mode only)
+    virtual void recordStep(char p1Key, char p2Key);
+    
+    // Record a result event
+    virtual void recordLostLife();
+    virtual void recordScreenChange(int screenNumber);
+    virtual void recordRiddle(const std::string& question, const std::string& answer, bool correct);
+    virtual void recordGameEnded(int finalScore);
+    virtual void recordBossTaskComplete(int taskNumber);
+    
+    // Check if game should finish (e.g. end of replay in load mode)
+    virtual bool shouldFinishGame() const;
+
+    // Virtual function to handle riddle solving (interactive vs from file)
+    virtual bool solveRiddle(class Riddle* r);
+
 public:
     Game();
+    virtual ~Game() = default;
 
     // ==========================================
     // Public Interface
@@ -80,9 +143,9 @@ public:
     // Main entry point: shows menu, handles loops
     void run();
 
-private:
+protected:
     // ==========================================
-    // Core Game Control
+    // Core Game Control (accessible to derived classes)
     // ==========================================
 
     // Initialize/Reset game state
@@ -93,6 +156,11 @@ private:
     
     // Reinits current level (e.g. after death)
     void resetCurrentGame();
+    
+    // Draw map, players, UI (accessible to derived classes for doRender override)
+    void render();
+
+private:
 
     // ==========================================
     // Update & Render
@@ -101,8 +169,6 @@ private:
     // Frame logic: movement, switches, bombs
     void updateLogic();
 
-    // Draw map, players, UI
-    void render();
     void drawStatusBar();
 
     // ==========================================
