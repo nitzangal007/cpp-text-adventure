@@ -1,0 +1,98 @@
+=== Files Format Documentation ===
+Required by Exercise 3, Part 2
+
+Last Updated: January 2026
+
+--------------------------------------------------------------------------------
+STEPS FILE: adv-world.steps
+--------------------------------------------------------------------------------
+
+Purpose: Records all player inputs during a game session for replay.
+
+Format:
+Line 1: Random seed (long integer) - Used to ensure deterministic random events
+Line 2: Screen files (comma-separated list) - e.g., "adv-world_01.screen,adv-world_02.screen"
+Line 3: Number of steps (integer)
+Lines 4+: Step entries in format: <iteration> <player1_key> [player2_key]
+
+Example:
+```
+1126025823
+adv-world_01.screen,adv-world_02.screen,adv-world_03.screen
+15
+14 d l
+58 x
+60 k
+75 w i
+120 a
+```
+
+Notes:
+- iteration: Game cycle number when input was received
+- player1_key: Key pressed by player 1 (empty if none)
+- player2_key: Key pressed by player 2 (empty if none)
+- Both players can have input on the same iteration (same line)
+- Keys are stored as single characters (case-insensitive during replay)
+
+--------------------------------------------------------------------------------
+RESULTS FILE: adv-world.result
+--------------------------------------------------------------------------------
+
+Purpose: Records game events for verification during replay.
+
+Format:
+Line 1: Number of events (integer)
+Lines 2+: Event entries in format: <iteration> <event_type> [event_data]
+
+Event Types:
+- 0 (lostLife): Player lost a life
+- 1 (screenChange): Player moved to another screen
+- 2 (riddle): Riddle was encountered
+- 3 (gameEnded): Game finished
+
+Event Data by Type:
+- lostLife: No additional data
+- screenChange: Screen number (1, 2, 3, 4=Final)
+- riddle: "question" "answer" correct(0/1)
+- gameEnded: Final score (integer)
+
+Example:
+```
+5
+38 0
+100 1 2
+150 2 "What is 2+2?" "b" 1
+200 1 3
+250 3 1500
+```
+
+Notes:
+- Events are stored in chronological order
+- Riddle questions and answers are quoted strings
+- Screen numbers correspond to ScreenId enum (1=First, 2=Second, 3=Third, 4=Final)
+
+--------------------------------------------------------------------------------
+COMMAND LINE USAGE
+--------------------------------------------------------------------------------
+
+Normal mode (no save/load):
+  cpp-texy-adventure.exe
+
+Save mode (play and record):
+  cpp-texy-adventure.exe -save
+  - Creates adv-world.steps and adv-world.result
+  - Shows normal menu, plays normally
+  - Files are saved when game ends
+
+Load mode (replay from file):
+  cpp-texy-adventure.exe -load
+  - Reads adv-world.steps and adv-world.result
+  - No menu, runs directly
+  - Displays game at faster speed
+  - Verifies results match expected
+
+Silent mode (fast verification):
+  cpp-texy-adventure.exe -load -silent
+  - No display, runs as fast as possible
+  - Only reports TEST PASSED or TEST FAILED
+  - Used for automated testing

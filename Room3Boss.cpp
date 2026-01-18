@@ -60,6 +60,10 @@ void Room3Boss::initSwitchPositions()
 
 void Room3Boss::init()
 {
+    // Use global rand() to seed internal RNG
+    // This ensures determinism between Save (time-based seed) and Load (file-based seed)
+    rng_.seed(static_cast<unsigned>(std::rand()));
+
     state_ = BossState::PreBoss;
     currentTaskIndex_ = 0;
     taskValuesGenerated_ = false;
@@ -110,8 +114,10 @@ void Room3Boss::transitionTo(BossState newState)
 // Frame Update
 // ==========================================
 
-void Room3Boss::update(Screens& screens, Player& p1, Player& p2)
+void Room3Boss::update(Screens& screens, Player& p1, Player& p2, bool waitForInput, long long gameTimeMs)
 {
+    currentGameTime_ = gameTimeMs; // Updates deterministic time for this frame/task
+
     if (state_ == BossState::Inactive) {
         return;
     }
@@ -123,7 +129,7 @@ void Room3Boss::update(Screens& screens, Player& p1, Player& p2)
             Point hTile(H_TILE_X, H_TILE_Y);
             if (!briefingShown_ && (p1.getPosition() == hTile || p2.getPosition() == hTile)) {
                 // Show briefing (BLOCKING - draws once, waits for key)
-                showBriefing();
+                showBriefing(waitForInput);
                 // Mark briefing as shown
                 briefingShown_ = true;
                 // Remove H tile so it's visually gone
@@ -136,7 +142,7 @@ void Room3Boss::update(Screens& screens, Player& p1, Player& p2)
             Point startSwitch(START_SWITCH_X, START_SWITCH_Y);
             if (p1.getPosition() == startSwitch || p2.getPosition() == startSwitch) {
                 // Start countdown
-                countdownStartTime_ = std::chrono::steady_clock::now();
+                countdownStartTime_ = currentGameTime_;
                 countdownValue_ = 3;
                 
                 // Close both entrances
@@ -146,7 +152,6 @@ void Room3Boss::update(Screens& screens, Player& p1, Player& p2)
                 removeTorchesFromPlayers(p1, p2);
                 
                 // Teleport players to their designated start positions
-                // Left player (P1) to (20, 15), Right player (P2) to (52, 15)
                 p1.setPosition(Point(20, 15));
                 p2.setPosition(Point(52, 15));
                 
@@ -161,12 +166,11 @@ void Room3Boss::update(Screens& screens, Player& p1, Player& p2)
             break;
         
         case BossState::Countdown: {
-            auto now = std::chrono::steady_clock::now();
-            auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
-                now - countdownStartTime_
-            ).count();
+            // Use deterministic game time
+            long long elapsedMs = currentGameTime_ - countdownStartTime_;
+            long long elapsedSec = elapsedMs / 1000;
             
-            countdownValue_ = 3 - static_cast<int>(elapsed);
+            countdownValue_ = 3 - static_cast<int>(elapsedSec);
             
             if (countdownValue_ <= 0) {
                 // Countdown finished, start first task
@@ -446,7 +450,7 @@ void Room3Boss::startTask(Screens& screens, Player& p1, Player& p2)
     takeSnapshot(screens, p1, p2);
     
     // Start timer
-    taskStartTime_ = std::chrono::steady_clock::now();
+    taskStartTime_ = currentGameTime_;
     blinkStartTime_ = taskStartTime_;
     bombsVisible_ = true;
 }
@@ -454,6 +458,7 @@ void Room3Boss::startTask(Screens& screens, Player& p1, Player& p2)
 void Room3Boss::handleTaskSuccess(Screens& screens)
 {
     currentTaskIndex_++;
+    pendingTaskComplete_ = currentTaskIndex_;  // Signal which task was completed (1, 2, or 3)
     taskValuesGenerated_ = false;  // Allow new values for next task
     
     if (currentTaskIndex_ >= 3) {
@@ -487,7 +492,7 @@ void Room3Boss::handleTaskFailure(Screens& screens, Player& p1, Player& p2)
     restoreSnapshot(screens, p1, p2);
     
     // Restart same task (values remain the same)
-    taskStartTime_ = std::chrono::steady_clock::now();
+    taskStartTime_ = currentGameTime_;
     blinkStartTime_ = taskStartTime_;
     bombsVisible_ = true;
     
@@ -501,12 +506,11 @@ int Room3Boss::getTimeRemaining() const
         return 0;
     }
     
-    auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
-        now - taskStartTime_
-    ).count();
+    // Use deterministic game time
+    long long elapsedMs = currentGameTime_ - taskStartTime_;
+    int elapsedSec = static_cast<int>(elapsedMs / 1000);
     
-    int remaining = taskData_.timeLimit - static_cast<int>(elapsed);
+    int remaining = taskData_.timeLimit - elapsedSec;
     return (remaining > 0) ? remaining : 0;
 }
 
@@ -559,13 +563,11 @@ void Room3Boss::updateBombBlink()
     }
     
     // In last 10 seconds - blink every 0.5s
-    auto now = std::chrono::steady_clock::now();
-    auto sinceBlinkStart = std::chrono::duration_cast<std::chrono::milliseconds>(
-        now - blinkStartTime_
-    ).count();
+    // Use deterministic time
+    long long sinceBlinkStartMs = currentGameTime_ - blinkStartTime_;
     
     // Toggle every BOMB_BLINK_INTERVAL_MS
-    int cycles = static_cast<int>(sinceBlinkStart / BOMB_BLINK_INTERVAL_MS);
+    long long cycles = sinceBlinkStartMs / BOMB_BLINK_INTERVAL_MS;
     bombsVisible_ = (cycles % 2 == 0);
 }
 
@@ -612,8 +614,14 @@ void Room3Boss::drawOverlay() const
     }
 }
 
-void Room3Boss::showBriefing()
+void Room3Boss::showBriefing(bool waitForInput)
 {
+    // If not interactive (Load/Silent mode), skip display and blocking wait
+    if (!waitForInput) {
+        state_ = BossState::PreBoss;
+        return;
+    }
+
     // This is a BLOCKING method - displays once and waits for key
     
     // Clear screen once

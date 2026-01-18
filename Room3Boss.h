@@ -75,10 +75,14 @@ public:
     // ==========================================
     
     // Called every frame from Game::updateLogic() when on Room 3
-    void update(Screens& screens, Player& p1, Player& p2);
+    void update(Screens& screens, Player& p1, Player& p2, bool waitForInput, long long gameTimeMs);
     
     // Handle input (returns true if input was consumed by boss)
     bool handleInput(char key, Screens& screens, Player& p1, Player& p2);
+
+    // ... (unchanged) ...
+
+
 
     // ==========================================
     // Rendering
@@ -91,7 +95,8 @@ public:
     void drawTaskBar(int legendY) const;
     
     // Show briefing (BLOCKING - draws once, waits for key, then returns)
-    void showBriefing();
+    // If waitForInput is false, skips display/blocking (for load mode)
+    void showBriefing(bool waitForInput = true);
 
     // ==========================================
     // State Queries
@@ -121,6 +126,10 @@ public:
     int getLifePenalty() const { return pendingLifePenalty_; }
     void clearPenalties() { pendingScorePenalty_ = 0; pendingLifePenalty_ = 0; }
     
+    // Task completion tracking (for save/load verification)
+    int getCompletedTaskNumber() const { return pendingTaskComplete_; }  // Returns 0 if no completion, 1-3 otherwise
+    void clearCompletedTask() { pendingTaskComplete_ = 0; }
+    
     // Check if 'R' key should be disabled
     bool isRestartDisabled() const;
 
@@ -141,8 +150,9 @@ private:
     bool taskValuesGenerated_ = false;
     
     // Timing
-    std::chrono::steady_clock::time_point taskStartTime_;
-    std::chrono::steady_clock::time_point countdownStartTime_;
+    long long taskStartTime_ = 0;
+    long long countdownStartTime_ = 0;
+    long long currentGameTime_ = 0; // Tracks current game time
     int countdownValue_ = 3;
     
     // Briefing shown flag (prevents re-trigger while on H tile)
@@ -199,7 +209,7 @@ private:
     // Bomb Blinking
     // ==========================================
     
-    std::chrono::steady_clock::time_point blinkStartTime_;
+    long long blinkStartTime_ = 0;
     bool bombsVisible_ = true;
     void updateBombBlink();
 
@@ -209,6 +219,7 @@ private:
     
     int pendingScorePenalty_ = 0;
     int pendingLifePenalty_ = 0;
+    int pendingTaskComplete_ = 0;  // Task number that was just completed (0 = none, 1-3 = task number)
 
     // ==========================================
     // Key Coordinates (Y, X format)
@@ -242,5 +253,5 @@ private:
     static constexpr int BOMB_BLINK_THRESHOLD = 10;  // Last 10 seconds
     static constexpr int BOMB_BLINK_INTERVAL_MS = 500;
     static constexpr int SCORE_PENALTY = 500;
-    static constexpr int LIFE_PENALTY = 2;
+    static constexpr int LIFE_PENALTY = 1;
 };

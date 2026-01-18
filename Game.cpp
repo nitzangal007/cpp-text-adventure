@@ -95,26 +95,19 @@ void Game::initGame() {
 		return;
 	}
 	
-	currentScreen.setCurrentScreen(Screens::ScreenId::First);
-	player1.reset(player1Start);
-	player2.reset(player2Start);
+	// Reset bomb for new game
 	bomb = Bomb();
-	
-	// Initialize Room 3 Boss if starting on Room 3
-	if (currentScreen.isThirdScreen()) {
-		room3Boss.init();
-	}
 	
 	// Reset lives & score for new game
 	lives = Lives::STARTING_LIVES;
 	score = 0;
-	levelStartTime = getCurrentTimeSeconds();
+	gameTimeMs = 0;
 	
-	// Initialize M-trap timer
+	// Initialize M-trap timer (not really needed with gameTimeMs, but good to reset)
 	mTrapTimerStart = std::chrono::steady_clock::now();
 	mTrapVisible = true;
 	
-	// Reset pause tracking
+	// Reset pause tracking (deprecated)
 	accumulatedPauseMs = 0;
 	accumulatedPauseSec = 0;
 	
@@ -126,8 +119,8 @@ void Game::initGame() {
 	player2.draw();
 	drawStatusBar();
 	
-	// Show STORY_1 at start of game (only once)
-	if (!shownStory1) {
+	// Show STORY_1 at start of game (only once, and not in load mode)
+	if (!shownStory1 && shouldShowOverlay()) {
 		render();
 		showStoryOverlay(1);
 		shownStory1 = true;
@@ -140,17 +133,29 @@ void Game::runGame()
 	bool paused = false;
 	bool running = true;
 
+	// Reset iteration counter for new game
+	iteration = 0;
+
 	cls();
-	render();
+	doRender();
 	
 	while (running)
 	{
-		if (_kbhit())
+		// Check if we should finish automatically (for load mode)
+		if (shouldFinishGame()) {
+			return;
+		}
+
+		if (hasInput())
 		{
-			char ch = _getch();
+			char ch = getNextInput();
 
 			if (!paused)
 			{
+				// Track input for recording
+				char p1Key = '\0';
+				char p2Key = '\0';
+				
 				// ========================================
 				// Room 3 Boss Input Handling
 				// ========================================
@@ -159,21 +164,34 @@ void Game::runGame()
 					// Handle V submission and other boss input
 					if (room3Boss.handleInput(ch, currentScreen, player1, player2))
 					{
-						// Apply any pending penalties
-						if (room3Boss.getLifePenalty() > 0) {
-							lives -= room3Boss.getLifePenalty();
+						// Apply any pending penalties - record each life lost
+						int penalty = room3Boss.getLifePenalty();
+						for (int i = 0; i < penalty; ++i) {
+							lives--;
 							if (lives <= 0) {
 								lives = 0;
 								showGameOverScreen();
+								recordGameEnded(score);
 								gameOver = true;
 								return;
 							}
+							recordLostLife();
 						}
 						if (room3Boss.getScorePenalty() > 0) {
 							score = (score >= room3Boss.getScorePenalty()) 
 								? score - room3Boss.getScorePenalty() : 0;
 						}
-						room3Boss.clearPenalties();
+							room3Boss.clearPenalties();
+						
+						// Check if a task was completed and record it
+						if (room3Boss.getCompletedTaskNumber() > 0) {
+							recordBossTaskComplete(room3Boss.getCompletedTaskNumber());
+							room3Boss.clearCompletedTask();
+						}
+						
+						// Record the boss input as a step
+						// Boss input is handled specially - consider all as player1 input
+						recordStep(ch, '\0');
 						continue;
 					}
 				}
@@ -192,12 +210,14 @@ void Game::runGame()
 						dropTorch(player1);
 					else
 						tryPlaceBomb(player1);
+					p1Key = ch;
 				}
 				else if (ch == 'O' || ch == 'o') {
 					if (player2.hasTorch())
 						dropTorch(player2);
 					else
 						tryPlaceBomb(player2);
+					p2Key = ch;
 				}
 				else if (ch == 'R' || ch == 'r') {
 					// Disable R during active boss fight
@@ -205,13 +225,25 @@ void Game::runGame()
 						// R is disabled during boss - do nothing
 					}
 					else {
+						// Record R key press before reset (lostLife will be recorded in decrementLife)
+						recordStep(ch, '\0');
 						resetCurrentGame();
 					}
 				}
 				else
 				{
-					player1.handleKeyPress(ch);
-					player2.handleKeyPress(ch);
+					// Check which player this input belongs to
+					if (player1.handleKeyPress(ch)) {
+						p1Key = ch;
+					}
+					if (player2.handleKeyPress(ch)) {
+						p2Key = ch;
+					}
+				}
+				
+				// Record step if any player had input
+				if (p1Key != '\0' || p2Key != '\0') {
+					recordStep(p1Key, p2Key);
 				}
 			}
 			else
@@ -228,7 +260,7 @@ void Game::runGame()
 					
 					paused = false;
 					cls();
-					render();
+					doRender();
 				}
 				else if (ch == 'h' || ch == 'H')
 				{
@@ -245,12 +277,15 @@ void Game::runGame()
 				gameOver = false;
 				return;
 			}
-			render();
+			doRender();
+			++iteration;  // Increment iteration counter
+			gameTimeMs += Timing::GAME_TICK_MS; // Deterministic time step
 		}
 
-		Sleep(Timing::GAME_TICK_MS);
+		Sleep(getSleepDuration());
 	}
 }
+
 
 void Game::resetCurrentGame()
 {
@@ -383,15 +418,18 @@ void Game::updateLogic()
 			{
 				room3Boss.onBombStepped(currentScreen, player1, player2);
 				
-				// Apply penalties
-				if (room3Boss.getLifePenalty() > 0) {
-					lives -= room3Boss.getLifePenalty();
+				// Apply penalties - record each life lost
+				int penalty = room3Boss.getLifePenalty();
+				for (int i = 0; i < penalty; ++i) {
+					lives--;
 					if (lives <= 0) {
 						lives = 0;
 						showGameOverScreen();
+						recordGameEnded(score);
 						gameOver = true;
 						return;
 					}
+					recordLostLife();
 				}
 				if (room3Boss.getScorePenalty() > 0) {
 					score = (score >= room3Boss.getScorePenalty()) 
@@ -403,17 +441,20 @@ void Game::updateLogic()
 		}
 		
 		// Regular boss update
-		room3Boss.update(currentScreen, player1, player2);
+		room3Boss.update(currentScreen, player1, player2, shouldShowOverlay(), gameTimeMs);
 		
 		// Apply any penalties generated during update (e.g., timeout)
-		if (room3Boss.getLifePenalty() > 0) {
-			lives -= room3Boss.getLifePenalty();
+		int penalty = room3Boss.getLifePenalty();
+		for (int i = 0; i < penalty; ++i) {
+			lives--;
 			if (lives <= 0) {
 				lives = 0;
 				showGameOverScreen();
+				recordGameEnded(score);
 				gameOver = true;
 				return;
 			}
+			recordLostLife();
 		}
 		if (room3Boss.getScorePenalty() > 0) {
 			score = (score >= room3Boss.getScorePenalty()) 
@@ -855,37 +896,55 @@ bool Game::handleRiddleEncounter(Player& player, const Point& nextPos)
 		return true;
 	}
 
-	// נשתמש באזור הסטטוס/legend (השורות שמתחת ללוח)
-	const int y = currentScreen.getLegendY(); // שורה ראשונה של הסטטוס
+	// Polymorphic solve riddle (interactive or file-based)
+	bool ok = solveRiddle(r);
+
+	if (ok)
+	{
+		currentScreen.removeRiddleAt(nextPos);
+		player.move();
+	}
+	else
+	{
+		score = (score >= 400 ? score - 400 : 0);
+		player.stop();
+	}
+
+	drawStatusBar();
+	return true;
+}
+
+bool Game::solveRiddle(Riddle* r)
+{
+	// Base implementation: Interactive riddle solving (Screen display + Keyboard input)
+	
+	const int y = currentScreen.getLegendY();
 	int x = 0;
-	auto clearLine = [&](int yy)
-		{
-			gotoxy(0, yy);
-			std::cout << "                                                                                ";
-		};
+	auto clearLine = [&](int yy) {
+		gotoxy(0, yy);
+		std::cout << "                                                                                ";
+	};
 
-	// ננקה מספיק שורות בשביל סטטוס + חידה + הודעה
-	for (int i = 0; i <= 3; ++i)
-		clearLine(y + i);
+	// Clear area
+	for (int i = 0; i <= 3; ++i) clearLine(y + i);
 
-
-	// ---- הדפסת החידה ----
+	// Display Riddle
 	const auto& opts = r->getOptions();
 
 	gotoxy(x, y);
 	std::cout << "RIDDLE: " << r->getQuestion();
 
-	gotoxy(x, y+1);
+	gotoxy(x, y + 1);
 	std::cout << "A) " << opts[0] << "   B) " << opts[1];
 
-	gotoxy(x, y+2);
+	gotoxy(x, y + 2);
 	std::cout << "C) " << opts[2] << "   D) " << opts[3];
 
-	gotoxy(x, y+3);
+	gotoxy(x, y + 3);
 	std::cout << "Choose (A-D / 1-4): ";
 
-	// ---- קלט ----
-	char ch = _getch();
+	// Get Input
+	char ch = _getch(); // Interactive input via console (base Game behavior)
 	std::string input(1, ch);
 	int choiceIndex = Riddle::parseChoice(input);
 
@@ -893,9 +952,11 @@ bool Game::handleRiddleEncounter(Player& player, const Point& nextPos)
 	if (choiceIndex != -1)
 		ok = r->trySolve(choiceIndex);
 
-	
-	for (int i = 0; i <= 3; ++i)
-		clearLine(y + i);
+	// Record riddle result (virtual call - saves in GameKeyboard, does nothing in Game)
+	recordRiddle(r->getQuestion(), input, ok);
+
+	// Display Result
+	for (int i = 0; i <= 3; ++i) clearLine(y + i);
 	gotoxy(0, y + 1);
 
 	if (ok)
@@ -904,28 +965,15 @@ bool Game::handleRiddleEncounter(Player& player, const Point& nextPos)
 	}
 	else
 	{
-		score = (score >= 400 ? score - 400 : 0);
 		std::cout << "Wrong! -400 score. Press any key to continue...";
-		player.stop();
 	}
 
-	_getch();
+	_getch(); // Wait for key press
 
-	// ---- סיום: אם הצליח, מוחקים את הרידל ומכניסים את השחקן ----
-	if (ok)
-	{
-		currentScreen.removeRiddleAt(nextPos);
-		player.move();
-	}
+	// Cleanup
+	for (int i = 0; i <= 3; ++i) clearLine(y + i);
 
-	 
-	for (int i = 0; i <= 3; ++i)
-		clearLine(y + i);
-
-
-	 drawStatusBar();
-
-	return true;
+	return ok;
 }
 
 
@@ -1188,6 +1236,9 @@ void Game::tryAdvanceToNextScreen()
 
 		currentScreen.setCurrentScreen(exit.to);
 
+		// Record screen change for save/load verification
+		recordScreenChange(static_cast<int>(exit.to));
+
 		player1.reset(exit.nextStartP1);
 		player2.reset(exit.nextStartP2);
 
@@ -1205,6 +1256,7 @@ void Game::tryAdvanceToNextScreen()
 			std::cout << "Final Score: " << score;
 			gotoxy(18, 19);
 			std::cout << "Congratulations! Press any key to return to menu...";
+			recordGameEnded(score);  // Record victory with final score
 			_getch();      
 			gameOver = true;
 		}
@@ -1213,8 +1265,8 @@ void Game::tryAdvanceToNextScreen()
 			// Reset timer for next level
 			levelStartTime = getCurrentTimeSeconds();
 			
-			// Show STORY_2 when entering Screen 2 for first time
-			if (currentScreen.isSecondScreen() && !shownStory2) {
+			// Show STORY_2 when entering Screen 2 for first time (not in load mode)
+			if (currentScreen.isSecondScreen() && !shownStory2 && shouldShowOverlay()) {
 				render();
 				showStoryOverlay(2);
 				shownStory2 = true;
@@ -1271,8 +1323,10 @@ bool Game::isExitWaitPosition(const Point& p) const
 void Game::decrementLife()
 {
 	lives--;
+	recordLostLife();  // Record for save/load verification
 	if (lives <= 0)
 	{
+		recordGameEnded(score);  // Record game ending
 		showGameOverScreen();
 		gameOver = true;
 	}
@@ -1282,7 +1336,7 @@ void Game::addLevelCompletionScore()
 {
 	// Time-based score (faster = more points)
 	// Subtract accumulated pause time to freeze timer during pause
-	int elapsedSeconds = getCurrentTimeSeconds() - levelStartTime - static_cast<int>(accumulatedPauseSec);
+	int elapsedSeconds = getCurrentTimeSeconds() - levelStartTime;
 	if (elapsedSeconds < 0) elapsedSeconds = 0;  // Safety check
 	int timeScore;
 	if (elapsedSeconds <= Score::TIER1_SECONDS)        // Under 1 minute
@@ -1304,6 +1358,12 @@ void Game::addLevelCompletionScore()
 
 void Game::showGameOverScreen()
 {
+	// In silent mode (load -silent), skip the visual Game Over screen
+	// to allow immediate reporting of verification results
+	if (getSleepDuration() == 0) {
+		return;
+	}
+
 	cls();
 	// Use FINAL_SCREEN_TEMPLATE (which shows "GAME OVER")
 	currentScreen.setCurrentScreen(Screens::ScreenId::Final);
@@ -1313,14 +1373,16 @@ void Game::showGameOverScreen()
 	std::cout << "Final Score: " << score;
 	gotoxy(22, 19);
 	std::cout << "Press any key to return to the main menu...";
+	
+    // Wait for key
+    if (hasInput()) getNextInput(); // Flush one key
 	_getch();
 }
 
 int Game::getCurrentTimeSeconds() const
 {
-	auto now = std::chrono::system_clock::now();
-	auto duration = now.time_since_epoch();
-	return static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(duration).count());
+	// Return deterministic game time in seconds
+	return static_cast<int>(gameTimeMs / 1000);
 }
 
 // ==========================================
@@ -1329,15 +1391,9 @@ int Game::getCurrentTimeSeconds() const
 
 void Game::updateMTrapTimer()
 {
-	auto now = std::chrono::steady_clock::now();
-	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-		now - mTrapTimerStart
-	).count();
-	
-	// Subtract accumulated pause time to freeze timer during pause
-	elapsed -= accumulatedPauseMs;
-	if (elapsed < 0) elapsed = 0;  // Safety check
-	
+	// Use deterministic gameTimeMs
+	long long elapsed = gameTimeMs;
+
 	// Calculate position in cycle (0 to CYCLE_MS-1)
 	int cyclePos = static_cast<int>(elapsed % Timing::M_TRAP_CYCLE_MS);
 	
@@ -1401,4 +1457,75 @@ void Game::showStoryOverlay(int storyNumber)
 	// Clear and re-render the game
 	cls();
 	render();
+}
+
+// ==========================================
+// Virtual Functions - Base Implementation
+// (Override in derived classes for different modes)
+// ==========================================
+
+bool Game::hasInput()
+{
+	// Base implementation: check keyboard
+	return _kbhit() != 0;
+}
+
+char Game::getNextInput()
+{
+	// Base implementation: read from keyboard
+	return _getch();
+}
+
+void Game::doRender()
+{
+	// Base implementation: full render
+	render();
+}
+
+int Game::getSleepDuration() const
+{
+	// Base implementation: normal game speed
+	return Timing::GAME_TICK_MS;
+}
+
+bool Game::shouldShowOverlay() const
+{
+	// Base implementation: show overlays
+	return true;
+}
+
+void Game::recordStep(char p1Key, char p2Key)
+{
+	// Base implementation: do nothing (not in save mode)
+}
+
+void Game::recordLostLife()
+{
+	// Base implementation: do nothing
+}
+
+void Game::recordScreenChange(int screenNumber)
+{
+	// Base implementation: do nothing
+}
+
+void Game::recordRiddle(const std::string& question, const std::string& answer, bool correct)
+{
+	// Base implementation: do nothing
+}
+
+void Game::recordGameEnded(int finalScore)
+{
+	// Base implementation: do nothing
+}
+
+void Game::recordBossTaskComplete(int taskNumber)
+{
+	// Base implementation: do nothing
+}
+
+bool Game::shouldFinishGame() const
+{
+	// Base implementation: never force finish (wait for user exit/game over)
+	return false;
 }
