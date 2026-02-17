@@ -24,6 +24,12 @@ enum class GameMode {
     LoadSilent   // Load silent - no display, just verify
 };
 
+// Story overlay types (Issue H fix: discrete options as enum)
+enum class StoryType {
+    GoniWarning1,   // Game start - first warning message
+    GoniWarning2    // Screen 2 entry - second warning message
+};
+
 class Game
 {
     // ==========================================
@@ -259,6 +265,6 @@ private:
     // ==========================================
     
     // Display a story message overlay (waits for keypress)
-    void showStoryOverlay(int storyNumber);
+    void showStoryOverlay(StoryType type);
 
 };

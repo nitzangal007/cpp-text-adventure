@@ -1,6 +1,7 @@
 #include "Menu.h"
 #include "utils.h"
 #include "ColorUtils.h"
+#include "GameConstants.h"
 #include <conio.h>
 #include <iostream>
 #include <windows.h>
@@ -24,7 +25,8 @@ Options Menu::getUserChoice() {
     char ch = _getch();
     
     // Handle color toggle separately
-    if (ch == 'C' || ch == 'c') {
+    char upperCh = (ch >= 'a' && ch <= 'z') ? (ch - 32) : ch;  // Convert to uppercase
+    if (upperCh == Keys::COLOR_TOGGLE) {
         g_colorsEnabled = !g_colorsEnabled;
         return INVALID;  // Redisplay menu with updated status
     }

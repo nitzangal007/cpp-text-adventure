@@ -39,6 +39,7 @@ namespace Keys {
     constexpr char PLAYER2_ACTION = 'O';  // Bomb/drop for player 2
     constexpr char RESTART = 'R';
     constexpr char MENU = 'H';
+    constexpr char COLOR_TOGGLE = 'C';    // Toggle color mode in menu
 }
 
 // ==========================================

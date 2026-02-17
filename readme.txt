@@ -11,9 +11,6 @@ GENERAL INSTRUCTIONS
 - Pause menu: Press ESC (resume with ESC, return to main menu with 'H').
 - Recommended to play the game with colors!!
 
-- Most exercise 2 new features are in screen3. if you want to skip screen 1 and 2 go to game.cpp/Game::initGame() and switch the comments for player1 and player2 starting positions and
-setCurrentscreen from 1 to 3
-
 ====================
 REQUIRED SUBMISSION FILES
 ====================
@@ -22,12 +19,16 @@ REQUIRED SUBMISSION FILES
 - riddles.txt
 - adv-world_01.screen, adv-world_02.screen, adv-world_03.screen, adv-world_04.screen
   (Screens are loaded in lexicographical order as required.)
+- files_format.txt (for result, steps)
+EXAMPLE FILES: 
+- adv-world-example1.steps, adv-world-example1.result
+- adv-world-example2.steps, adv-world-example2.result
+- adv-world-example3.steps, adv-world-example3.result
+====================
+NOTE: TO BE ABLE TO RUN THEM NEED TO DELETE -EXAMPLE... AND RENAME THEM adv-world.steps, adv-world.result
+====================
 
-====================
-COLOR MODE (BONUS)
-====================
-- Colors can be toggled ON/OFF from the main menu by pressing 'C'.
-- MONO mode behaves identically to the required specification.
+
 
 ====================
 LEVEL 1 SOLUTION
@@ -87,6 +88,15 @@ RIDDLES FILE FORMAT
 - Lines starting with '#' are comments.
 
 ====================
+EXERCISE 3 - SAVE/LOAD MODES
+====================
+Command line options (run from project folder):
+  cpp-texy-adventure.exe           Normal game
+  .\x64\Release\cpp-texy-adventure.exe -save    Record gameplay to adv-world.steps + adv-world.result
+  cpp-texy-adventure.exe -load     Replay from saved files (no menu, auto-play)
+  cpp-texy-adventure.exe -load -silent   Fast replay without display (for testing)
+
+====================
 AI ASSISTANCE & METHODOLOGY
 ====================
 We utilized AI tools to enhance workflow, brainstorm ideas, and improve efficiency while
@@ -94,3 +104,4 @@ maintaining full responsibility for the codebase and its logic.
 - ChatGPT: Used for high-level planning, class design, and comment generation.
 - GitHub Copilot: Assisted in implementation tasks inside Visual Studio 2022.
 - Gemini Pro: Consulted for complex logic related to interactive mechanics.
+

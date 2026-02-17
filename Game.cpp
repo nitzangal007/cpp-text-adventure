@@ -76,6 +76,8 @@ void Game::run()
 void Game::initGame() {
 	cls();
 	player1Start = Point(5, 2, 0, 0, Players::PLAYER1_SYMBOL);
+	player1Start = Point(5, 2, 0, 0, Players::PLAYER1_SYMBOL);
+	player2Start = Point(9, 2, 0, 0, Players::PLAYER2_SYMBOL);
 	player2Start = Point(9, 2, 0, 0, Players::PLAYER2_SYMBOL);
 	currentScreen.init();
 	
@@ -122,7 +124,7 @@ void Game::initGame() {
 	// Show STORY_1 at start of game (only once, and not in load mode)
 	if (!shownStory1 && shouldShowOverlay()) {
 		render();
-		showStoryOverlay(1);
+		showStoryOverlay(StoryType::GoniWarning1);
 		shownStory1 = true;
 	}
 }
@@ -206,21 +208,21 @@ void Game::runGame()
 					printCentered("       Game Paused        ", 8);
 					printCentered("Press ESC to continue or H for Menu", 9);
 				}
-				else if (ch == 'E' || ch == 'e') {
+				else if (ch == Keys::PLAYER1_ACTION || ch == (Keys::PLAYER1_ACTION + 32)) {
 					if (player1.hasTorch())
 						dropTorch(player1);
 					else
 						tryPlaceBomb(player1);
 					p1Key = ch;
 				}
-				else if (ch == 'O' || ch == 'o') {
+				else if (ch == Keys::PLAYER2_ACTION || ch == (Keys::PLAYER2_ACTION + 32)) {
 					if (player2.hasTorch())
 						dropTorch(player2);
 					else
 						tryPlaceBomb(player2);
 					p2Key = ch;
 				}
-				else if (ch == 'R' || ch == 'r') {
+				else if (ch == Keys::RESTART || ch == (Keys::RESTART + 32)) {
 					// Disable R during active boss fight
 					if (currentScreen.isThirdScreen() && room3Boss.isRestartDisabled()) {
 						// R is disabled during boss - do nothing
@@ -263,7 +265,7 @@ void Game::runGame()
 					cls();
 					doRender();
 				}
-				else if (ch == 'h' || ch == 'H')
+				else if (ch == Keys::MENU || ch == (Keys::MENU + 32))
 				{
 					return;  
 				}
@@ -1277,7 +1279,7 @@ void Game::tryAdvanceToNextScreen()
 			// Show STORY_2 when entering Screen 2 for first time (not in load mode)
 			if (currentScreen.isSecondScreen() && !shownStory2 && shouldShowOverlay()) {
 				render();
-				showStoryOverlay(2);
+				showStoryOverlay(StoryType::GoniWarning2);
 				shownStory2 = true;
 			}
 			
@@ -1435,29 +1437,30 @@ bool Game::checkMTrapDeath(const Player& player) const
 // Story Overlay System
 // ==========================================
 
-void Game::showStoryOverlay(int storyNumber)
+void Game::showStoryOverlay(StoryType type)
 {
 	cls();
 	
-	if (storyNumber == 1)
+	switch (type)
 	{
-		// STORY_1: Game start - Goni's Warning #1
+	case StoryType::GoniWarning1:
+		// Game start - Goni's Warning #1
 		printCentered("=== GONI'S WARNING #1 ===", 5);
 		printCentered("Welcome, brave geniuses. I'm Goni.", 8);
 		printCentered("This maze is not a game - it's a career-ending decision.", 10);
 		printCentered("Fun fact: 73 people tried to beat it. 0 succeeded.", 12);
 		printCentered("If you value your dignity, turn back now.", 14);
 		printCentered("(Yes, I'm counting you as 74 and 75. Don't argue.)", 16);
-	}
-	else if (storyNumber == 2)
-	{
-		// STORY_2: Screen 2 entry - Goni's Warning #2
+		break;
+	case StoryType::GoniWarning2:
+		// Screen 2 entry - Goni's Warning #2
 		printCentered("=== GONI'S WARNING #2 ===", 5);
 		printCentered("You made it here?!", 8);
 		printCentered("Wow. This brings back memories...", 10);
 		printCentered("The last time I felt this shocked was during my 12th divorce.", 12);
 		printCentered("Same confusion. Same regret.", 14);
 		printCentered("Turn back now. Let's not make this number 13.", 16);
+		break;
 	}
 	
 	printCentered("Press any key to continue...", 20);
